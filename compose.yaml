@@ -1,0 +1,41 @@
+name: cs261-group4
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      - "127.0.0.1:1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          SQLCMDPASSWORD="$${MSSQL_SA_PASSWORD}"
+          /opt/mssql-tools18/bin/sqlcmd
+          -S localhost -U sa -C -b
+          -Q "SELECT 1" -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  backend:
+    build: ./backend
+    environment:
+      DB_CONNECTION_STRING: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=sqlserver,1433;DATABASE=CS261Group4Dev;UID=sa;Encrypt=yes;TrustServerCertificate=yes"
+      DB_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+  frontend:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5000:5000"
+volumes:
+  sqlserver_data:

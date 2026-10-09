@@ -6,7 +6,7 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, '../public')));
 
-app.listen(5000, '127.0.0.1', () => {
+app.listen(5000, process.env.HOST || '127.0.0.1', () => {
  
   console.log('Frontend: http://127.0.0.1:5000');
 });

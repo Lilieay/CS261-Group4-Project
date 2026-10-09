@@ -13,3 +13,12 @@ if not DB_CONNECTION_STRING:
     raise RuntimeError(
         "Set DB_CONNECTION_STRING in backend/.env or environment."
     )
+
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+if DB_PASSWORD is not None:
+    escape_password = DB_PASSWORD.replace("}", "}}")
+    DB_CONNECTION_STRING = (
+        DB_CONNECTION_STRING.rstrip(";")
+        + ";PWD={" + escape_password + "};"
+    )
