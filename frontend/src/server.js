@@ -1,17 +1,12 @@
-const http = require('node:http');
-const fs = require('node:fs');
+const express = require('express');
+const { error } = require('node:console');
 const path = require('node:path');
 
-const page = fs.readFileSync(path.join(__dirname, '../public/index.html'));
+const app = express();
 
-http.createServer((req, res) => {
-  if (req.url !== '/') {
-    res.writeHead(404);
-    return res.end();
-  }
+app.use(express.static(path.join(__dirname, '../public')));
 
-  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-  res.end(page);
-}).listen(3000, '127.0.0.1', () => {
-  console.log('Frontend: http://127.0.0.1:3000');
+app.listen(5000, '127.0.0.1', () => {
+ 
+  console.log('Frontend: http://127.0.0.1:5000');
 });
