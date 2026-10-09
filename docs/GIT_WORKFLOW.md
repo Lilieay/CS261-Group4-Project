@@ -75,7 +75,7 @@ git branch --show-current
 
 ### เตรียม integration branch ครั้งแรกของ Sprint
 
-ให้ผู้ประสานงานหนึ่งคนทำครั้งเดียว หลังจากโค้ดตั้งต้นบน `main` ถูกแชร์ให้ทีมแล้ว และ working tree พร้อม:
+ให้ผู้ประสานงานหนึ่งคนทำครั้งเดียวจากฐานเริ่มต้นที่ทีมตกลง หรือ `main` เวอร์ชัน Demo ล่าสุด โดย working tree พร้อม:
 
 ```powershell
 git switch main
@@ -86,7 +86,16 @@ git push -u origin integration/sprint1
 
 ### สมาชิกนำ integration branch มาใช้ครั้งแรก
 
-สำหรับเครื่องที่ยังไม่มี local branch ชื่อนี้:
+เพื่อนที่ยังไม่มี repo ให้ clone branch พัฒนาโดยตรง:
+
+```powershell
+git clone --branch integration/sprint1 https://github.com/Lilieay/CS261-Group4-Project.git
+cd CS261-Group4-Project
+```
+
+คำสั่งนี้มี local branch `integration/sprint1` พร้อมแล้ว ให้ติดตั้งตาม README และใช้หัวข้อเริ่ม task ใหม่ด้านล่าง
+
+สำหรับเครื่องที่มี repo อยู่แล้ว แต่ยังไม่มี local branch ชื่อนี้:
 
 ```powershell
 git fetch origin
@@ -105,7 +114,7 @@ git switch -c feat/task5-login-ui
 
 `git switch -c` สร้าง branch ใหม่และเปลี่ยนไปทำงานบน branch นั้น
 `--ff-only` อัปเดตเมื่อทำได้โดยไม่สร้าง merge commit; ถ้าขึ้นว่า fast-forward ไม่ได้ ให้ตรวจประวัติร่วมกับทีมก่อนดำเนินการต่อ
-ถ้า `main` ในเครื่องมี commit ที่ยังไม่ได้แชร์ ให้ตกลงรวม commit ตั้งต้นนั้นก่อนให้เพื่อนแตก branch เพื่อให้ทุกคนเริ่มจากฐานเดียวกัน
+ก่อนให้เพื่อนแตก branch ให้ตรวจว่าโค้ดตั้งต้นและเอกสารที่ต้องใช้ถูก commit และ push บน integration branch ครบแล้ว เพื่อให้ทุกคนเริ่มจากฐานเดียวกัน
 
 ## 3. Implement และบันทึก commit
 

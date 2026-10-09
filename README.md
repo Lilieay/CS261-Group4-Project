@@ -29,11 +29,12 @@ Task2 ยังต้องเติม config ตัวอย่างและ
 ## ดาวน์โหลดและติดตั้ง
 
 ```powershell
-git clone https://github.com/Lilieay/CS261-Group4-Project.git
+git clone --branch integration/sprint1 https://github.com/Lilieay/CS261-Group4-Project.git
 cd CS261-Group4-Project
 ```
 
-ถ้ามี repo ในเครื่องแล้ว ให้เริ่มจากขั้นติดตั้งด้านล่าง
+คำสั่งนี้เลือก branch พัฒนาของ Sprint 1 เพื่อให้ได้โค้ดตั้งต้นและคู่มือที่ทีมแชร์ไว้
+ถ้ามี repo ในเครื่องแล้ว ให้เลือก `integration/sprint1` ตาม [คู่มือ Git](docs/GIT_WORKFLOW.md) ก่อนเริ่มติดตั้งด้านล่าง
 
 ### Frontend
 
