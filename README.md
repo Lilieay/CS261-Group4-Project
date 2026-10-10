@@ -972,10 +972,7 @@ Scope `Process` หมดผลเมื่อปิด terminal หากอง
 
 ## เอกสารและแหล่งอ้างอิง
 
-ข้อกำหนดรายวิชาคงไว้ใน `docs`:
-
-- [Requirement Board ของโปรเจกต์](<docs/requirement-board-print-round-1-no-labels cs261.pdf>)
-- [เฉลย Task ใน Workshop 3](docs/เฉลยTaskในWorkshop3.pdf)
+เอกสาร Requirement Board และเฉลย Workshop 3 ของรายวิชาไม่ได้รวมใน Git repo สมาชิกที่ต้องใช้เอกสารเหล่านี้ให้รับไฟล์ผ่านช่องทางที่ทีมใช้แชร์เอกสาร
 
 คู่มือตั้งค่า โครงสร้างโปรเจกต์และ Git ของทีมอยู่ใน README นี้ ส่วนรายละเอียดฟีเจอร์ การเทียบ Workshop และเอกสารผลทดสอบให้เก็บใน `docs` แล้วเพิ่มลิงก์ตามเอกสารที่ทีมจัดทำ
 
