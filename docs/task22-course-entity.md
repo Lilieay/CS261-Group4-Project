@@ -30,7 +30,7 @@
 
 ## โครงสร้าง Entity
 
-```text
+
 Course
 ├── id
 ├── course_code
@@ -40,13 +40,13 @@ Course
 ├── created_by
 ├── created_at
 └── updated_at
-```
 
-## Entity ใน Python
+
+ Entity ใน Python
 
 Entity `Course` ใช้ SQLAlchemy แทนตาราง `courses` ในฐานข้อมูล
 
-```python
+
 from datetime import datetime
 
 from sqlalchemy import DateTime, Integer, String, Text
@@ -85,6 +85,6 @@ class Course(Base):
         onupdate=datetime.utcnow,
         nullable=False,
     )
-```
 
-https://docs.google.com/document/d/1ED9GAX8_YccRXROtNuYREAZHAc5-OlWLRJ83aMESWc4/edit?usp=sharing ลื้งดูdocsตัวต้นแบบเผื่ออ่านไม่เข้าใจในนี้
+
+https://docs.google.com/document/d/1ED9GAX8_YccRXROtNuYREAZHAc5-OlWLRJ83aMESWc4/edit?usp=sharing ลื้งไฟล์docsสำหรับดูและแก้ไข
