@@ -16,7 +16,7 @@
 
 | id | course_code | course_name | instructor_name  | description | 
 |---:|---|---|---|---|
-| 1 | CS261 | Software Engineering | songsakdi rongviriyapanish |  วิชาวิศวกรรมซอฟต์แวร์   |
+| 1 | CS261 | Software Engineering | songsakdi rongviriyapanish,theepprakorn rakfaen |  วิชาวิศวกรรมซอฟต์แวร์   |
 | 2 | CS230 | Database Systems | -  |  วิชาฐานข้อมูล  |
 
 
