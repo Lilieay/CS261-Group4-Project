@@ -11,96 +11,13 @@ Frontend: แสดงช่องค้นหาและผลลัพธ์�
 Backend API: รับคำขอและประมวลผลข้อมูล
 Database: ค้นหาและส่งข้อมูลรายวิชา
 
+API ที่เกี่ยวข้อง
 
-## Flow 1 ค้นหารายวิชา
-
-```mermaid
-sequenceDiagram
-    actor User as ผู้ใช้
-    participant UI as Frontend
-    participant API as Backend API
-    participant DB as Database
-
-    User->>UI: กรอกรหัสหรือชื่อรายวิชา
-    User->>UI: กดปุ่มค้นหา
-    UI->>API: GET /courses?search=คำค้น
-    API->>API: ตรวจสอบและทำความสะอาดคำค้น
-    API->>DB: ค้นหาจาก course_code หรือ course_name
-    DB-->>API: ส่งรายการรายวิชา
-    API-->>UI: HTTP 200 และข้อมูลรายวิชา
-    UI-->>User: แสดงผลการค้นหา
-```
-
-ตัวอย่างคำขอ:
-
-```http
-GET /courses?search=CS261
-```
-
-ตัวอย่างผลลัพธ์:
-
-```json
-[
-  {
-    "id": 1,
-    "course_code": "CS261",
-    "course_name": "Software Engineering",
-    "instructor_name": "อาจารย์สมชาย",
-    "instructor_name_2": "อาจารย์สุดา",
-    "description": "วิชาวิศวกรรมซอฟต์แวร์"
-  }
-]
-```
-
-## Flow 2 เปิดดูรายละเอียดรายวิชา
-
-```mermaid
-sequenceDiagram
-    actor User as ผู้ใช้
-    participant UI as Frontend
-    participant API as Backend API
-    participant DB as Database
-
-    User->>UI: เลือกรายวิชาจากผลการค้นหา
-    UI->>API: GET /courses/{course_id}
-    API->>DB: ค้นหารายวิชาตาม id
-    alt พบรายวิชา
-        DB-->>API: ส่งรายละเอียดรายวิชา
-        API-->>UI: HTTP 200 และรายละเอียด
-        UI-->>User: แสดงหน้ารายละเอียดรายวิชา
-    else ไม่พบรายวิชา
-        DB-->>API: ไม่พบข้อมูล
-        API-->>UI: HTTP 404 Course not found
-        UI-->>User: แสดงข้อความไม่พบรายวิชา
-    end
-```
-
-ตัวอย่างคำขอ:
-
-```http
-GET /courses/1
-```
-
-## กรณีผิดพลาด
-
-```mermaid
-sequenceDiagram
-    actor User as ผู้ใช้
-    participant UI as Frontend
-    participant API as Backend API
-
-    User->>UI: กดค้นหาโดยไม่กรอกคำค้น
-    UI->>API: GET /courses?search=
-    API-->>UI: HTTP 422 หรือรายการทั้งหมดตามข้อกำหนด
-    UI-->>User: แสดงข้อความแจ้งเตือน
-
-    User->>UI: ค้นหาขณะ Backend ไม่พร้อม
-    UI->>API: GET /courses?search=CS261
-    API-->>UI: Connection error หรือ HTTP 5xx
-    UI-->>User: แจ้งว่าไม่สามารถเชื่อมต่อระบบได้
-```
-
-
+| API | Method | หน้าที่ |
+|---|---|---|
+| `/courses` | `GET` | ดึงรายวิชาทั้งหมด |
+| `/courses?search={keyword}` | `GET` | ค้นหารายวิชาจากรหัสหรือชื่อ |
+| `/courses/{course_id}` | `GET` | เปิดดูรายละเอียดรายวิชา
 
 สรุป
 
