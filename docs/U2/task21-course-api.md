@@ -25,6 +25,8 @@ GET /courses/{course_id} ใช้สำหรับเปิดดูราย�
   "id": 1,
   "course_code": "CS261",
   "course_name": "Software Engineering",
+  "instructor_name": "อาจารย์ทรงศักดิ์",
+  "instructor_name_2": "อาจารย์สุดา",
   "description": "วิชาวิศวกรรมซอฟต์แวร์"
 }
 
