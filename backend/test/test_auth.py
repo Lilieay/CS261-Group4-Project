@@ -29,3 +29,17 @@ def test_logout_invalidates_token():
 
     assert client.post("/api/auth/logout", headers=headers).status_code == 200
     assert client.get("/api/auth/me", headers=headers).status_code == 401
+
+
+def test_protected_api_rejects_missing_token():
+    response = client.get("/api/protected/check")
+    assert response.status_code == 401
+
+
+def test_protected_api_accepts_valid_token():
+    from app.services.auth import USERS, create_session
+
+    token = create_session(USERS["student"])
+    response = client.get("/api/protected/check", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json()["username"] == "student"

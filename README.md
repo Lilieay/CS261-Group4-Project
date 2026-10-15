@@ -72,3 +72,19 @@ curl http://127.0.0.1:8000/api/auth/status \
 ## หมายเหตุด้านการเก็บข้อมูล
 
 โค้ดชุดนี้เก็บผู้ใช้และ session ไว้ในหน่วยความจำเพื่อให้เหมาะกับการสาธิตและการทดสอบ Task เมื่อหยุดหรือ restart server session จะหายทั้งหมด สำหรับระบบจริงควรเปลี่ยนเป็นฐานข้อมูล, เก็บ password เป็น hash และใช้ token/session store ที่มีอายุหมดอายุและรองรับหลาย instance
+
+## Task13: ตัวตรวจสถานะ Login สำหรับ Backend
+
+เพิ่ม `require_login` ที่ `backend/app/dependencies/auth.py` เป็นตัวตรวจสถานะ Login กลาง โดย API อื่นสามารถเรียกใช้ผ่าน `Depends(require_login)` ได้ ถ้าไม่มี Bearer token หรือ token ไม่ถูกต้อง ระบบจะตอบ HTTP 401 ก่อนเข้า logic ของ API
+
+ตัวอย่าง API ที่เรียกใช้ตัวตรวจกลาง:
+
+```text
+GET /api/protected/check
+Authorization: Bearer <access_token>
+```
+
+- ไม่มี token: ไม่ผ่านการตรวจสอบและได้ HTTP 401
+- มี token ที่ถูกต้อง: ได้ HTTP 200 พร้อมข้อมูล `UserDTO`
+
+ไฟล์ Postman Collection อยู่ที่ `docs/postman/task13-login-status.postman_collection.json` โดยใช้ `{{username}}`, `{{password}}` และ `{{access_token}}` เป็นตัวแปร placeholder จึงไม่มีรหัสผ่านหรือ token จริงติดอยู่ในไฟล์ ให้กรอกค่าทดสอบเฉพาะใน Postman Environment ของเครื่องตนเอง
