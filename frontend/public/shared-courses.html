@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>รายวิชาที่แบ่งปัน | พี่จ๋า ขอแนวข้อสอบหน่อย</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared-courses.css">
+  <link rel="stylesheet" href="css/edit-form.css">
+  <script src="js/shared-courses.js" defer></script>
+  <script src="js/edit-form.js" defer></script>
+</head>
+
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-file" viewBox="0 0 24 24">
+      <path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h8" />
+    </symbol>
+    <symbol id="i-search" viewBox="0 0 24 24">
+      <circle cx="10.5" cy="10.5" r="7" />
+      <path d="m16 16 5 5" />
+    </symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24">
+      <path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3" />
+    </symbol>
+    <symbol id="i-shared" viewBox="0 0 24 24">
+      <path d="M3 5h7l2 3h9v12H3zM14 12h4m-2-2 2 2-2 2M12 17h6" />
+    </symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24">
+      <path d="M6 3h12v18l-6-4-6 4z" />
+    </symbol>
+    <symbol id="i-book" viewBox="0 0 24 24">
+      <path d="M5 2h15v20H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM3 18h17" />
+    </symbol>
+    <symbol id="i-openbook" viewBox="0 0 24 24">
+      <path d="M12 5v17M12 5C9 2 3 3 2 3v16c4-1 7 0 10 3 3-3 6-4 10-3V3c-4-1-7 0-10 2Z" />
+    </symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24">
+      <path d="M5 6h14M8 12h8M10 18h4" />
+    </symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24">
+      <path d="m15 4 5 5M3 21l5-1L21 7l-5-5L3 15z" />
+    </symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24">
+      <path d="M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7" />
+    </symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </symbol>
+    <symbol id="i-download" viewBox="0 0 24 24">
+      <path d="M12 2v13m-4-4 4 4 4-4M4 17v5h16v-5" />
+    </symbol>
+  </svg>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="icon" aria-hidden="true">
+        <use href="#i-file" />
+      </svg>
+
+      <div class="brand-copy">
+        <b class="brand-name">พี่จ๋า</b>
+        <span class="brand-tagline">ขอแนวข้อสอบหน่อย</span>
+      </div>
+    </div>
+    <nav aria-label="เมนูหลัก">
+      <a href="index.html"><svg class="icon">
+          <use href="#i-search" />
+        </svg>ค้นหา</a>
+      <a href="upload.html"><svg class="icon">
+          <use href="#i-upload" />
+        </svg>อัปโหลดเอกสาร</a>
+      <a href="shared-courses.html" aria-current="page"><svg class="icon">
+          <use href="#i-shared" />
+        </svg>รายวิชาที่แบ่งปัน</a>
+      <a href="saved-courses.html"><svg class="icon">
+          <use href="#i-bookmark" />
+        </svg>รายวิชาที่บันทึก</a>
+    </nav>
+    <div class="profile"><span class="avatar">65</span><span><b>stu650965xxxx <i></i></b><small>CS Thammasat ·
+          บัญชีตัวอย่าง</small></span></div>
+  </header>
+  <main>
+    <h1>จัดการรายการแนวข้อสอบภาควิชาวิทยาการคอมพิวเตอร์ที่คุณเคยเผยแพร่</h1>
+    <div class="tabs" role="tablist" aria-label="ประเภทผลงาน">
+      <button id="exams-tab" role="tab" aria-selected="true" aria-controls="exams-panel"><svg class="icon">
+          <use href="#i-book" />
+        </svg>แนวข้อสอบของฉัน</button>
+      <button id="summaries-tab" role="tab" aria-selected="false" aria-controls="summaries-panel" tabindex="-1"><svg
+          class="icon">
+          <use href="#i-openbook" />
+        </svg>สรุปของฉัน</button>
+    </div>
+    <section id="exams-panel" role="tabpanel" aria-labelledby="exams-tab" class="workspace">
+      <aside aria-label="ค้นหาและกรองแนวข้อสอบ">
+        <form id="search-form" class="search-box" role="search"><svg class="icon">
+            <use href="#i-search" />
+          </svg><input id="search" aria-label="ค้นหาจากรหัสวิชา ชื่อแนวข้อสอบ หรือปีการศึกษา"
+            placeholder="ค้นหาจากรหัสวิชา, ชื่อแนวข้อสอบ หรือปีการศึกษา..."><button type="button" id="filter-toggle"
+            aria-label="ตัวกรอง" aria-expanded="false" aria-controls="filters"><svg class="icon">
+              <use href="#i-filter" />
+            </svg></button></form>
+        <div id="filters" class="filters" hidden>
+          <label for="course-filter">
+            รายวิชา
+          </label>
+          <select id="course-filter" size="5">
+            <option value="">ทุกรายวิชา</option>
+          </select>
+
+          <label for="year-filter">
+            ปีการศึกษา
+          </label>
+          <select id="year-filter" size="3">
+            <option value="">ทุกปีการศึกษา</option>
+          </select>
+        </div>
+        <div id="chips" class="chips" aria-label="ตัวกรองที่เลือก"></div>
+        <p class="demo-note">ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ<br>ยังไม่ได้เชื่อมต่อบัญชีและฐานข้อมูลจริง</p>
+        <button class="reset-demo" id="reset-demo">คืนค่าข้อมูลตัวอย่าง</button>
+      </aside>
+      <section aria-labelledby="list-title">
+        <h2 id="list-title">รายการแนวข้อสอบที่คุณเป็นเจ้าของ</h2>
+        <div id="exam-list"></div>
+      </section>
+    </section>
+    <section id="summaries-panel" role="tabpanel" aria-labelledby="summaries-tab" hidden class="empty">
+      <h2>สรุปของฉัน</h2>
+      <p>ส่วนสรุปจะเปิดให้ใช้งานใน Sprint 2</p>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </main>
+  <footer>
+    <div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><br>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต
+    </div>
+    <div>ข้อกำหนดการใช้งาน <span>•</span> แจ้งปัญหา</div>
+  </footer>
+  <dialog id="reader">
+    <div class="dialog-heading">
+      <h2>รายละเอียดแนวข้อสอบ</h2><button type="button" data-close="reader" aria-label="ปิดรายละเอียด">×</button>
+    </div>
+    <div id="reader-content"></div><button type="button" data-close="reader" class="primary">ปิด</button>
+  </dialog>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="edit-form" novalidate>
+      <header class="edit-header">
+        <span class="edit-heading-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3H5v18h7M13 3v6h5l-5-6ZM14 17l5-5 3 3-5 5-4 1zM18 13l3 3"/></svg></span>
+        <h2 id="editor-title">แก้ไขข้อมูลแนวข้อสอบ</h2>
+      </header>
+      <div class="edit-body">
+        <div id="edit-error" class="edit-error-summary" role="alert" tabindex="-1" hidden></div>
+        <div class="edit-field">
+          <label for="edit-course">รายวิชาประจำภาควิชา <span>*</span></label>
+          <select name="course_code" id="edit-course" required aria-describedby="edit-course-error"></select>
+          <p id="edit-course-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-field">
+          <label for="edit-title">ชื่อแนวข้อสอบ <span>*</span></label>
+          <input id="edit-title" name="title" required maxlength="255" aria-describedby="edit-title-error">
+          <p id="edit-title-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-row edit-row-three">
+          <div class="edit-field"><label for="edit-year">ปีการศึกษา <span>*</span></label><select id="edit-year" name="year" required aria-describedby="edit-year-error"><option>2566</option><option>2567</option><option>2568</option><option>2569</option></select><p id="edit-year-error" class="field-error" hidden></p></div>
+          <div class="edit-field"><label for="edit-semester">ภาคเรียน <span>*</span></label><select id="edit-semester" name="semester" required aria-describedby="edit-semester-error"><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="ฤดูร้อน">ฤดูร้อน</option></select><p id="edit-semester-error" class="field-error" hidden></p></div>
+          <div class="edit-field"><label for="edit-period">ช่วงการสอบ <span>*</span></label><select id="edit-period" name="period" required aria-describedby="edit-period-error"><option value="กลางภาค">สอบกลางภาค</option><option value="ปลายภาค">สอบปลายภาค</option></select><p id="edit-period-error" class="field-error" hidden></p></div>
+        </div>
+        <div class="edit-row">
+          <div class="edit-field"><label for="edit-formats">รูปแบบข้อสอบ</label><select id="edit-formats" name="formats" required aria-describedby="edit-formats-error"><option value="ปรนัย">ข้อสอบปรนัย</option><option value="อัตนัย">ข้อเขียนและโจทย์เขียนโค้ด</option><option value="ผสม">ข้อสอบผสม</option><option value="อื่น ๆ">อื่น ๆ</option></select><p id="edit-formats-error" class="field-error" hidden></p></div>
+          <div class="edit-field"><label for="edit-count">จำนวนข้อสอบ</label><input id="edit-count" name="question_count" type="number" min="1" step="1" placeholder="ไม่ระบุ" aria-describedby="edit-count-error"><p id="edit-count-error" class="field-error" hidden></p></div>
+        </div>
+        <div class="edit-field">
+          <label for="edit-tag-input">หัวข้อเนื้อหาที่ครอบคลุม (Tags)</label>
+          <div class="edit-tag-box" id="edit-tags" aria-describedby="edit-topics-error">
+            <div id="edit-tag-list" class="edit-tag-list"></div>
+            <input id="edit-tag-input" type="text" placeholder="+ พิมพ์เพื่อเพิ่มแท็ก..." aria-describedby="edit-tag-hint edit-topics-error" autocomplete="off">
+          </div>
+          <span id="edit-tag-hint" class="visually-hidden">พิมพ์หัวข้อแล้วกด Enter หรือเครื่องหมายจุลภาคเพื่อเพิ่มแท็ก</span>
+          <p id="edit-topics-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-row">
+          <div class="edit-field"><label for="edit-instructor">อาจารย์ผู้สอน</label><input id="edit-instructor" name="instructor" readonly title="อ้างอิงข้อมูลผู้สอนประจำรายวิชา"></div>
+          <div class="edit-field"><label for="edit-notes">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label><input id="edit-notes" name="notes"></div>
+        </div>
+      </div>
+      <footer class="edit-footer">
+        <button type="button" data-close="editor" class="edit-cancel">ยกเลิก</button>
+        <button type="submit" class="edit-save"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h13l3 3v15H4zM8 3v6h8V3M8 21v-8h8v8M13 5h1"/></svg>บันทึกการแก้ไข</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="delete-dialog">
+    <h2>ยืนยันการลบแนวข้อสอบ</h2>
+    <p id="delete-title"></p>
+    <p>รายการนี้จะถูกนำออกจากข้อมูลตัวอย่างในเบราว์เซอร์</p>
+    <div class="dialog-actions"><button type="button" data-close="delete-dialog" autofocus>ยกเลิก</button><button
+        type="button" id="confirm-delete" class="danger">ยืนยันลบรายการ</button></div>
+  </dialog>
+</body>
+
+</html>
