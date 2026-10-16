@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหารายวิชา - คลังสรุปและแนวข้อสอบ ภาควิชาวิทยาการคอมพิวเตอร์</title>
+    <link rel="stylesheet" href="css/courses.css">
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-left">
+            <span class="nav-logo-icon">📄</span>
+            <span class="nav-brand">พี่จ๋า<b>ขอแนวข้อสอบหน่อย</b></span>
+        </div>
+        <nav class="nav-center">
+            <a href="#" class="nav-link active">🔍 ค้นหา</a>
+            <a href="#" class="nav-link">📤 อัปโหลดเอกสาร</a>
+            <a href="#" class="nav-link">📁 รายวิชาที่แบ่งปัน</a>
+            <a href="#" class="nav-link">⭐ รายวิชาที่บันทึก</a>
+        </nav>
+        <div class="nav-right">
+            <div class="user-badge">
+                <span class="user-id">65</span>
+                <div class="user-info">
+                    <span class="user-code">stu650965xxxx <span class="dot"></span></span>
+                    <span class="user-faculty">CS Thammasat</span>
+                </div>
+                <span class="logout-icon">🚪</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="content-wrapper">
+            
+            <!-- Page Title Header -->
+            <div class="page-header">
+                <h1>คลังวิชาภาควิชาวิทยาการคอมพิวเตอร์</h1>
+                <p>ค้นหาชีทสรุปและแนวข้อสอบตามรหัสวิชาหรือชื่อวิชา</p>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-box-container">
+                <div class="search-input-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" placeholder="ค้นหารหัสวิชา หรือชื่อวิชา เช่น CS101, CS261, Data Structures...">
+                </div>
+                <button class="btn-search">ค้นหา</button>
+            </div>
+
+            <!-- Course Grid -->
+            <div class="course-grid">
+                
+                <!-- Card 1 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS101</span>
+                        <span class="semester-text">Semester 1</span>
+                    </div>
+                    <h3 class="course-name">Computer Programming 1</h3>
+                    <p class="course-desc">การเขียนโปรแกรมคอมพิวเตอร์เบื้องต้น พื้นฐานภาษา C/C++ และตรรกะอัลกอริทึม</p>
+                    <div class="card-footer">
+                        <span class="course-stats">18 สรุป · 12 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS102</span>
+                        <span class="semester-text">Semester 2</span>
+                    </div>
+                    <h3 class="course-name">Object-Oriented Programming</h3>
+                    <p class="course-desc">การเขียนโปรแกรมเชิงวัตถุ การออกแบบ Class, Inheritance, Polymorphism ด้วย Java</p>
+                    <div class="card-footer">
+                        <span class="course-stats">14 สรุป · 9 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS211</span>
+                        <span class="semester-text">Semester 1</span>
+                    </div>
+                    <h3 class="course-name">Computer Organization & Arch.</h3>
+                    <p class="course-desc">สถาปัตยกรรมคอมพิวเตอร์ วงจอร์ดิจิทัล ชุดคำสั่ง Assembly และหน่วยประมวลผล</p>
+                    <div class="card-footer">
+                        <span class="course-stats">9 สรุป · 15 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS261</span>
+                        <span class="semester-text">Semester 1</span>
+                    </div>
+                    <h3 class="course-name">Data Structures & Algorithms</h3>
+                    <p class="course-desc">โครงสร้างข้อมูลและขั้นตอนนี้ Tree, Graph, Sorting, Dynamic Programming</p>
+                    <div class="card-footer">
+                        <span class="course-stats">25 สรุป · 21 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS284</span>
+                        <span class="semester-text">Semester 2</span>
+                    </div>
+                    <h3 class="course-name">Database Systems</h3>
+                    <p class="course-desc">ระบบจัดการฐานข้อมูล การออกแบบ ER-Diagram, SQL Normalization และ Indexing</p>
+                    <div class="card-footer">
+                        <span class="course-stats">11 สรุป · 7 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="course-card">
+                    <div class="card-top">
+                        <span class="course-code-badge">CS311</span>
+                        <span class="semester-text">Semester 1</span>
+                    </div>
+                    <h3 class="course-name">Theory of Computation</h3>
+                    <p class="course-desc">ทฤษฎีการคำนวณ Automata, Regular Languages, Turing Machine และความซับซ้อน</p>
+                    <div class="card-footer">
+                        <span class="course-stats">8 สรุป · 14 แนวข้อสอบ</span>
+                        <a href="#" class="btn-open-course">เปิดคลัง →</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- View All Link -->
+            <div class="view-all-container">
+                <a href="#" class="view-all-link">ดูรายวิชาทั้งหมดในหลักสูตร (40+ วิชา) →</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-left">
+            ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี<br>
+            มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต
+        </div>
+        <div class="footer-right">
+            <a href="#">ข้อกำหนดการใช้งาน</a>
+            <span>•</span>
+            <a href="#">แจ้งปัญหา</a>
+        </div>
+    </footer>
+
+</body>
+</html>
