@@ -7,7 +7,7 @@
   <title>รายวิชาที่แบ่งปัน | พี่จ๋า ขอแนวข้อสอบหน่อย</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/shared-courses.css">
   <link rel="stylesheet" href="css/edit-form.css">
   <script src="js/shared-courses.js" defer></script>
@@ -16,22 +16,11 @@
 
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <symbol id="i-file" viewBox="0 0 24 24">
-      <path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h8" />
-    </symbol>
-    <symbol id="i-search" viewBox="0 0 24 24">
-      <circle cx="10.5" cy="10.5" r="7" />
-      <path d="m16 16 5 5" />
-    </symbol>
-    <symbol id="i-upload" viewBox="0 0 24 24">
-      <path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3" />
-    </symbol>
-    <symbol id="i-shared" viewBox="0 0 24 24">
-      <path d="M3 5h7l2 3h9v12H3zM14 12h4m-2-2 2 2-2 2M12 17h6" />
-    </symbol>
-    <symbol id="i-bookmark" viewBox="0 0 24 24">
-      <path d="M6 3h12v18l-6-4-6 4z" />
-    </symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h8"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3"/></symbol>
+    <symbol id="i-shared" viewBox="0 0 24 24"><path d="M3 5h7l2 3h9v12H3zM14 12h4m-2-2 2 2-2 2M12 17h6"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
     <symbol id="i-book" viewBox="0 0 24 24">
       <path d="M5 2h15v20H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM3 18h17" />
     </symbol>
@@ -56,32 +45,21 @@
     </symbol>
   </svg>
   <header class="topbar">
-    <div class="brand">
-      <svg class="icon" aria-hidden="true">
-        <use href="#i-file" />
-      </svg>
-
-      <div class="brand-copy">
-        <b class="brand-name">พี่จ๋า</b>
-        <span class="brand-tagline">ขอแนวข้อสอบหน่อย</span>
-      </div>
-    </div>
+    <a class="brand" href="index.html" aria-label="หน้าแรก">
+      <svg class="icon brand-icon"><use href="#i-file"/></svg>
+      <span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span>
+    </a>
     <nav aria-label="เมนูหลัก">
-      <a href="index.html"><svg class="icon">
-          <use href="#i-search" />
-        </svg>ค้นหา</a>
-      <a href="upload.html"><svg class="icon">
-          <use href="#i-upload" />
-        </svg>อัปโหลดเอกสาร</a>
-      <a href="shared-courses.html" aria-current="page"><svg class="icon">
-          <use href="#i-shared" />
-        </svg>รายวิชาที่แบ่งปัน</a>
-      <a href="saved-courses.html"><svg class="icon">
-          <use href="#i-bookmark" />
-        </svg>รายวิชาที่บันทึก</a>
+      <a href="index.html"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
+      <a href="upload.html"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
+      <a class="active" href="shared-courses.html" aria-current="page"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
+      <a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
     </nav>
-    <div class="profile"><span class="avatar">65</span><span><b>stu650965xxxx <i></i></b><small>CS Thammasat ·
-          บัญชีตัวอย่าง</small></span></div>
+    <div class="profile">
+      <span class="avatar">65</span>
+      <span class="profile-copy"><b>stu650965xxxx <i></i></b><small>CS Thammasat</small></span>
+      <span class="logout" aria-label="ออกจากระบบ">⇥</span>
+    </div>
   </header>
   <main>
     <h1>จัดการรายการแนวข้อสอบภาควิชาวิทยาการคอมพิวเตอร์ที่คุณเคยเผยแพร่</h1>

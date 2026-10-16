@@ -35,7 +35,9 @@ function validateEditValues(values, courses) {
     if (count !== null && (!Number.isSafeInteger(count) || count < 0)) errors[key] = 'กรุณาระบุจำนวนเต็มตั้งแต่ 0 ขึ้นไป หรือเว้นว่าง';
   }
   if (!errors.essay_count && !errors.objective_count && values.question_count !== null && (!Number.isSafeInteger(values.question_count) || values.question_count <= 0)) {
-    errors.essay_count = 'จำนวนข้อสอบรวมต้องมากกว่า 0 หรือเว้นว่างทั้งสองช่อง';
+    const target = values.formats.length === 1 && values.formats[0] === 'ปรนัย'
+      ? 'objective_count' : 'essay_count';
+    errors[target] = 'จำนวนข้อสอบรวมต้องมากกว่า 0 หรือเว้นว่างทั้งสองช่อง';
   }
   return errors;
 }
@@ -57,7 +59,11 @@ function clearEditorErrors() {
 function readEditorValues() {
   const form = $('#edit-form');
   const value = key => String(form.elements.namedItem(key).value ?? '').trim();
-  const count = key => value(key) === '' ? null : Number(value(key));
+  const count = key => {
+    const input = form.elements.namedItem(key);
+    const text = String(input.value ?? '').trim();
+    return input.disabled || text === '' ? null : Number(text);
+  };
   const essay = count('essay_count');
   const objective = count('objective_count');
   return {
@@ -95,6 +101,7 @@ function showEditor(id) {
   legacyEditorTotal = counts.legacy;
   $('#edit-count-hint').textContent = counts.legacy === null ? '' : `ข้อมูลเดิมระบุรวม ${counts.legacy} ข้อ โดยยังไม่แยกประเภท หากเว้นว่างทั้งสองช่องจะเก็บจำนวนเดิมไว้`;
   $('#edit-count-hint').hidden = counts.legacy === null;
+  syncExamCountFields();
   $('#editor').showModal();
   $('#editor .edit-body').scrollTop = 0;
   $('#edit-course').focus();
@@ -104,7 +111,7 @@ for (const key of Object.keys(editFieldIds)) {
   const control = document.getElementById(editFieldIds[key]);
   const validateField = () => {
     const errors = validateEditValues(readEditorValues(), COURSE_CATALOG);
-    if (control.validity.badInput) errors[key] = 'กรุณากรอกจำนวนข้อเป็นตัวเลข';
+    if (!control.disabled && control.validity.badInput) errors[key] = 'กรุณากรอกจำนวนข้อเป็นตัวเลข';
     showEditorFieldError(key, errors[key]);
     if (key === 'essay_count' || key === 'objective_count') {
       const other = key === 'essay_count' ? 'objective_count' : 'essay_count';
@@ -119,11 +126,12 @@ for (const key of Object.keys(editFieldIds)) {
 
 $('#edit-form').addEventListener('submit', event => {
   event.preventDefault();
+  syncExamCountFields();
   clearEditorErrors();
   const changes = readEditorValues();
   const errors = validateEditValues(changes, COURSE_CATALOG);
   for (const key of ['essay_count', 'objective_count']) {
-    if (document.getElementById(editFieldIds[key]).validity.badInput) errors[key] = 'กรุณากรอกจำนวนข้อเป็นตัวเลข';
+    if (!document.getElementById(editFieldIds[key]).disabled && document.getElementById(editFieldIds[key]).validity.badInput) errors[key] = 'กรุณากรอกจำนวนข้อเป็นตัวเลข';
   }
   const entries = Object.entries(errors);
   if (entries.length) {
@@ -165,4 +173,30 @@ $('#edit-error').addEventListener('click', event => {
   if (!link) return;
   const control = document.getElementById(link.getAttribute('href').slice(1));
   if (control) { event.preventDefault(); control.focus(); }
+});
+
+
+function syncExamCountFields() {
+  const formats = $('#edit-formats').value.split('|').filter(Boolean);
+  const onlyEssay = formats.length === 1 && formats[0] === 'อัตนัย';
+  const onlyObjective = formats.length === 1 && formats[0] === 'ปรนัย';
+  const controls = [
+    ['edit-essay-count', onlyObjective, 'essay_count'],
+    ['edit-objective-count', onlyEssay, 'objective_count']
+  ];
+  for (const [id, disabled, key] of controls) {
+    const input = document.getElementById(id);
+    input.disabled = disabled;
+    input.placeholder = disabled ? 'ไม่ใช้กับรูปแบบนี้' : 'จำนวนข้อ';
+    if (disabled) {
+      input.value = '';
+      showEditorFieldError(key);
+    }
+  }
+}
+
+$('#edit-formats').addEventListener('change', () => {
+  legacyEditorTotal = null;
+  $('#edit-count-hint').hidden = true;
+  syncExamCountFields();
 });
