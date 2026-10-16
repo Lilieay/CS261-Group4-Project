@@ -1195,3 +1195,6 @@ button:hover {
   background: #e8edff;
   color: #243c77;
 }
+
+/* Optional split counts shown after editing. */
+.metadata .question-breakdown { display: block; margin-top: 3px; color: #68758f; font-size: 10px; }
