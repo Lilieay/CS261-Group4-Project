@@ -89,19 +89,3 @@ def verify_tu_account(username: str, password: str) -> TUAccount | None:
         return _real_verify(username, password)
     raise TUVerificationError("Unsupported TU_API_MODE")
 
-
-def verify_with_tu_api(username: str, password: str):
-    """Compatibility response for the standalone ``/verify-tu`` endpoint."""
-
-    from app.schemas.tu_auth import TUVerifyResponse
-
-    try:
-        account = verify_tu_account(username.strip(), password)
-    except TUVerificationError:
-        return TUVerifyResponse(verified=False, message="ไม่สามารถเชื่อมต่อ TU API ได้", source="tu_api")
-    return TUVerifyResponse(
-        verified=account is not None,
-        message="ยืนยันบัญชีสำเร็จ" if account else "ยืนยันบัญชีไม่ผ่าน",
-        source="mock" if os.getenv("TU_API_MODE", "mock").lower() == "mock" else "tu_api",
-    )
-
