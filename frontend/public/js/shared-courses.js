@@ -42,9 +42,44 @@ function questionBreakdown(row) {
   if (row.objective_count != null) parts.push(`ปรนัย ${row.objective_count} ข้อ`);
   return parts.join(' / ');
 }
+function cardQuestionCounts(row) {
+  const validCount = value => Number.isSafeInteger(value) && value >= 0 ? value : null;
+  // Current preview uses essay_count; the design document calls it subjective_count.
+  const hasSplit = ['essay_count', 'subjective_count', 'objective_count']
+    .some(key => Object.hasOwn(row, key));
+  if (hasSplit) {
+    return {
+      essay: validCount(Object.hasOwn(row, 'essay_count') ? row.essay_count : row.subjective_count),
+      objective: validCount(row.objective_count)
+    };
+  }
+  // Old records only have a total. Infer a count only for a single known format.
+  const single = row.formats.length === 1 ? row.formats[0] : '';
+  return {
+    essay: single === 'อัตนัย' ? validCount(row.question_count) : null,
+    objective: single === 'ปรนัย' ? validCount(row.question_count) : null
+  };
+}
+
+function formatQuestionCount(count) {
+  return count === null ? 'ไม่ระบุ' : `${count} ข้อ`;
+}
+
+function compactExamTitle(row) {
+  const title = String(row.title ?? '').trim();
+  const course = courseName(row.course_code);
+  const automaticTitle = `แนวข้อสอบ${row.period} ${row.course_code} ${course} ปีการศึกษา ${row.year}`;
+  const normalize = value => value.replace(/\s+/gu, '').toLocaleLowerCase();
+  // Only shorten the standard generated title; preserve custom exam names.
+  return normalize(title) === normalize(automaticTitle)
+    ? `แนวข้อสอบ${row.period} — ${course}`
+    : title;
+}
+
 function card(row) {
   const e = escapeHtml;
-  return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3>${e(row.title)}</h3><p class="description">แนวข้อสอบที่รวบรวมจากหัวข้อ ${e(row.topics)}<br>${e(row.notes)}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>‹ › ${e(row.formats.join(' / '))}</b></div><div><span>จำนวนข้อสอบ:</span><b>▤ ${row.question_count == null ? 'ไม่ระบุ' : e(row.question_count) + ' ข้อ'}</b><small class="question-breakdown">${e(questionBreakdown(row))}</small></div><div><span>อาจารย์ผู้สอนประจำภาค:</span><b>${e(row.instructor)}</b></div></div><div class="tags">หัวข้อที่ออกสอบ: ${row.topics.split(',').map(topic => `<span class="tag">#${e(topic.trim().replaceAll(' ', ''))}</span>`).join('')}</div></div><aside class="card-side"><dl class="stats"><div><dt><span class="star">★</span>คะแนนรีวิว</dt><dd>${e(row.rating)}<small>( ${e(row.reviews)} รีวิว)</small></dd></div><div><dt>${icon('eye')}ผู้เปิดอ่าน</dt><dd>${e(row.views)} ครั้ง</dd></div><div><dt>${icon('download')}ดาวน์โหลด</dt><dd>${e(row.downloads)} ครั้ง</dd></div></dl><p class="updated">อัปเดตเมื่อ: ${e(new Date(row.updated_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }))}</p><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button><button data-action="edit" data-id="${e(row.id)}">${icon('edit')}แก้ไขข้อมูล</button><button class="delete" data-action="delete" data-id="${e(row.id)}">${icon('trash')}ลบรายการ</button></div></aside></article>`;
+  const counts = cardQuestionCounts(row);
+  return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3 class="exam-card-title" title="${e(row.title)}">${e(compactExamTitle(row))}</h3><p class="description">แนวข้อสอบที่รวบรวมจากหัวข้อ ${e(row.topics)}${String(row.notes ?? "").trim() ? `<br>${e(row.notes)}` : ""}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>${e(row.formats.join(' / ') || 'ไม่ระบุ')}</b></div><div><span>อัตนัย:</span><b>${e(formatQuestionCount(counts.essay))}</b></div><div><span>ปรนัย:</span><b>${e(formatQuestionCount(counts.objective))}</b></div></div></div><aside class="card-side"><dl class="stats"><div><dt><span class="star">★</span>คะแนนรีวิว</dt><dd>${e(row.rating)}<small>( ${e(row.reviews)} รีวิว)</small></dd></div><div><dt>${icon('eye')}ผู้เปิดอ่าน</dt><dd>${e(row.views)} ครั้ง</dd></div><div><dt>${icon('download')}ดาวน์โหลด</dt><dd>${e(row.downloads)} ครั้ง</dd></div></dl><p class="updated">อัปเดตเมื่อ: ${e(new Date(row.updated_at).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }))}</p><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button><button data-action="edit" data-id="${e(row.id)}">${icon('edit')}แก้ไขข้อมูล</button><button class="delete" data-action="delete" data-id="${e(row.id)}">${icon('trash')}ลบรายการ</button></div></aside></article>`;
 }
 function render() {
   const rows = repository.list();
