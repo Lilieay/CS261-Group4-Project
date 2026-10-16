@@ -38,8 +38,7 @@
       rows = course ? data.loadExams().filter(row => row.course_code === course.code) : [];
       loadError = '';
     } catch (error) { rows = []; loadError = error.message; }
-    const instructors = [...new Set(rows.map(row => row.instructor).filter(name => name && name !== 'ยังไม่มีข้อมูลผู้สอน'))];
-    $('#courseInstructor').textContent = course ? `อาจารย์ผู้สอน: ${instructors.join(' / ') || 'ยังไม่มีข้อมูลผู้สอน'}` : '';
+  
     const unique = key => [...new Set(rows.map(row => row[key]).filter(Boolean))];
     selectOptions('#periodFilter', unique('period').sort(), 'ช่วงสอบ');
     selectOptions('#yearFilter', unique('year').sort((a, b) => Number(b) - Number(a)), 'ปีการศึกษา');
