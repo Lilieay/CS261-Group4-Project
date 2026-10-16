@@ -75,6 +75,7 @@ curl http://127.0.0.1:8000/api/auth/status \
 
 ## Task11: ยืนยันบัญชีกับ TU API
 
-เพิ่ม `POST /api/auth/verify-tu` สำหรับรับ username/password แล้วส่งต่อไปยัง service ยืนยันบัญชี ค่าเริ่มต้นใช้ Mock เพื่อทดสอบในเครื่อง และสามารถเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL` และ `TU_API_KEY` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
+การ Login เรียก service ยืนยันบัญชีกับ TU API ก่อนสร้าง session โดยค่าเริ่มต้นใช้ Mock สำหรับทดสอบในเครื่อง และเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL` และ `TU_API_TIMEOUT` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
 
-ผลลัพธ์มี `verified`, `message` และ `source` เพื่อแยกผล `mock` กับ `tu_api` ไฟล์ Postman อยู่ที่ `docs/postman/task11-tu-api.postman_collection.json` และรายงานผลทดสอบอยู่ที่ `docs/task11-tu-api-test-report.md`
+ระบบอนุญาตเฉพาะบัญชีนักศึกษาที่มีสถานะ active และ fail-closed เมื่อ TU API ใช้งานไม่ได้หรือข้อมูลยืนยันไม่ครบ รายงาน Task11 อยู่ที่ `docs/U1/Task11-tu-api-verification.md`
+
