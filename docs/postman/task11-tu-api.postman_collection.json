@@ -1,0 +1,41 @@
+{
+  "info": {
+    "name": "CS261 Task11 - TU Account Verification",
+    "description": "ทดสอบการยืนยันบัญชีแบบ Mock หรือ TU API จริง โดยไม่เก็บ password/API key จริงใน Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "tu_username", "value": "mock_student" },
+    { "key": "tu_password", "value": "<ใส่ใน Environment ของเครื่อง>" }
+  ],
+  "item": [
+    {
+      "name": "ยืนยันบัญชี - สำเร็จ (Mock)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{tu_username}}\",\n  \"password\": \"{{tu_password}}\"\n}" },
+        "url": { "raw": "{{base_url}}/api/auth/verify-tu", "host": ["{{base_url}}"], "path": ["api", "auth", "verify-tu"] }
+      }
+    },
+    {
+      "name": "ยืนยันบัญชี - ไม่ผ่าน",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"wrong_user\",\n  \"password\": \"wrong_password\"\n}" },
+        "url": { "raw": "{{base_url}}/api/auth/verify-tu", "host": ["{{base_url}}"], "path": ["api", "auth", "verify-tu"] }
+      }
+    },
+    {
+      "name": "ข้อมูลไม่ครบ - ต้องได้ 422",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"username\": \"mock_student\"\n}" },
+        "url": { "raw": "{{base_url}}/api/auth/verify-tu", "host": ["{{base_url}}"], "path": ["api", "auth", "verify-tu"] }
+      }
+    }
+  ]
+}
