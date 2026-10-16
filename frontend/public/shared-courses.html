@@ -154,7 +154,7 @@
         <div id="edit-error" class="edit-error-summary" role="alert" tabindex="-1" hidden></div>
         <div class="edit-field">
           <label for="edit-course">รายวิชาประจำภาควิชา <span>*</span></label>
-          <select name="course_code" id="edit-course" required aria-describedby="edit-course-error"></select>
+          <select id="edit-course" name="course_code" required aria-describedby="edit-course-error"></select>
           <p id="edit-course-error" class="field-error" hidden></p>
         </div>
         <div class="edit-field">
@@ -163,26 +163,48 @@
           <p id="edit-title-error" class="field-error" hidden></p>
         </div>
         <div class="edit-row edit-row-three">
-          <div class="edit-field"><label for="edit-year">ปีการศึกษา <span>*</span></label><select id="edit-year" name="year" required aria-describedby="edit-year-error"><option>2566</option><option>2567</option><option>2568</option><option>2569</option></select><p id="edit-year-error" class="field-error" hidden></p></div>
-          <div class="edit-field"><label for="edit-semester">ภาคเรียน <span>*</span></label><select id="edit-semester" name="semester" required aria-describedby="edit-semester-error"><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="ฤดูร้อน">ฤดูร้อน</option></select><p id="edit-semester-error" class="field-error" hidden></p></div>
-          <div class="edit-field"><label for="edit-period">ช่วงการสอบ <span>*</span></label><select id="edit-period" name="period" required aria-describedby="edit-period-error"><option value="กลางภาค">สอบกลางภาค</option><option value="ปลายภาค">สอบปลายภาค</option></select><p id="edit-period-error" class="field-error" hidden></p></div>
-        </div>
-        <div class="edit-row">
-          <div class="edit-field"><label for="edit-formats">รูปแบบข้อสอบ</label><select id="edit-formats" name="formats" required aria-describedby="edit-formats-error"><option value="ปรนัย">ข้อสอบปรนัย</option><option value="อัตนัย">ข้อเขียนและโจทย์เขียนโค้ด</option><option value="ผสม">ข้อสอบผสม</option><option value="อื่น ๆ">อื่น ๆ</option></select><p id="edit-formats-error" class="field-error" hidden></p></div>
-          <div class="edit-field"><label for="edit-count">จำนวนข้อสอบ</label><input id="edit-count" name="question_count" type="number" min="1" step="1" placeholder="ไม่ระบุ" aria-describedby="edit-count-error"><p id="edit-count-error" class="field-error" hidden></p></div>
+          <div class="edit-field">
+            <label for="edit-year">ปีการศึกษา <span>*</span></label>
+            <select id="edit-year" name="year" required aria-describedby="edit-year-error"><option>2566</option><option>2567</option><option>2568</option><option>2569</option></select>
+            <p id="edit-year-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-semester">ภาคเรียน <span>*</span></label>
+            <select id="edit-semester" name="semester" required aria-describedby="edit-semester-error"><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="ฤดูร้อน">ฤดูร้อน</option></select>
+            <p id="edit-semester-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-period">ช่วงการสอบ <span>*</span></label>
+            <select id="edit-period" name="period" required aria-describedby="edit-period-error"><option value="กลางภาค">สอบกลางภาค</option><option value="ปลายภาค">สอบปลายภาค</option></select>
+            <p id="edit-period-error" class="field-error" hidden></p>
+          </div>
         </div>
         <div class="edit-field">
-          <label for="edit-tag-input">หัวข้อเนื้อหาที่ครอบคลุม (Tags)</label>
-          <div class="edit-tag-box" id="edit-tags" aria-describedby="edit-topics-error">
-            <div id="edit-tag-list" class="edit-tag-list"></div>
-            <input id="edit-tag-input" type="text" placeholder="+ พิมพ์เพื่อเพิ่มแท็ก..." aria-describedby="edit-tag-hint edit-topics-error" autocomplete="off">
-          </div>
-          <span id="edit-tag-hint" class="visually-hidden">พิมพ์หัวข้อแล้วกด Enter หรือเครื่องหมายจุลภาคเพื่อเพิ่มแท็ก</span>
-          <p id="edit-topics-error" class="field-error" hidden></p>
+          <label for="edit-formats">รูปแบบข้อสอบ</label>
+          <select id="edit-formats" name="formats" required aria-describedby="edit-formats-error"><option value="อัตนัย">ข้อเขียนและโจทย์เขียนโค้ด</option><option value="ปรนัย">ข้อสอบปรนัย</option><option value="ผสม">ข้อสอบผสม</option><option value="อื่น ๆ">อื่น ๆ</option></select>
+          <p id="edit-formats-error" class="field-error" hidden></p>
         </div>
         <div class="edit-row">
-          <div class="edit-field"><label for="edit-instructor">อาจารย์ผู้สอน</label><input id="edit-instructor" name="instructor" readonly title="อ้างอิงข้อมูลผู้สอนประจำรายวิชา"></div>
-          <div class="edit-field"><label for="edit-notes">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label><input id="edit-notes" name="notes"></div>
+          <div class="edit-field">
+            <label for="edit-essay-count">อัตนัย</label>
+            <input id="edit-essay-count" name="essay_count" type="number" min="0" step="1" placeholder="จำนวนข้อ" aria-describedby="edit-essay-count-error edit-count-hint">
+            <p id="edit-essay-count-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-objective-count">ปรนัย</label>
+            <input id="edit-objective-count" name="objective_count" type="number" min="0" step="1" placeholder="จำนวนข้อ" aria-describedby="edit-objective-count-error edit-count-hint">
+            <p id="edit-objective-count-error" class="field-error" hidden></p>
+          </div>
+        </div>
+        <p id="edit-count-hint" class="edit-count-hint" hidden></p>
+        <div class="edit-field">
+          <label for="edit-topics">หัวข้อเนื้อหาที่ครอบคลุม</label>
+          <textarea id="edit-topics" name="topics" rows="2" required aria-describedby="edit-topics-error"></textarea>
+          <p id="edit-topics-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-field">
+          <label for="edit-notes">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label>
+          <textarea id="edit-notes" name="notes" rows="2"></textarea>
         </div>
       </div>
       <footer class="edit-footer">
