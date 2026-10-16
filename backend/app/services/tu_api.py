@@ -1,54 +1,107 @@
+"""TU account verification adapter.
+
+Production uses the endpoint configured by TU_API_URL. The mock provider is
+available only for local tests/demo and is never treated as a real TU result.
+"""
+
+import json
 import os
 import secrets
+from dataclasses import dataclass
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
-import httpx
 
-from app.schemas.tu_auth import TUVerifyResponse
+@dataclass(frozen=True)
+class TUAccount:
+    username: str
+    display_name: str
+    account_type: str
+    active: bool
 
 
-def _mock_verify(username: str, password: str) -> TUVerifyResponse:
-    """ผลจำลองสำหรับทดสอบโดยไม่ใช้บัญชี TU จริง"""
-    mock_username = os.getenv("TU_MOCK_USERNAME", "mock_student")
-    mock_password = os.getenv("TU_MOCK_PASSWORD", "mock_password")
-    verified = secrets.compare_digest(username, mock_username) and secrets.compare_digest(password, mock_password)
-    return TUVerifyResponse(
-        verified=verified,
-        message="ยืนยันบัญชีจำลองสำเร็จ" if verified else "ชื่อผู้ใช้หรือรหัสผ่านจำลองไม่ถูกต้อง",
-        source="mock",
+class TUVerificationError(Exception):
+    """Raised when TU cannot verify the submitted credentials."""
+
+
+def _mock_verify(username: str, password: str) -> TUAccount | None:
+    # Demo-only credentials. They are not persisted in User/profile data.
+    demo_accounts = {
+        os.getenv("TU_MOCK_USERNAME", "student"): (
+            os.getenv("TU_MOCK_PASSWORD", "password123"),
+            "Student User",
+            "student",
+            True,
+        ),
+        "admin": ("admin123", "Administrator", "staff", True),
+    }
+    account = demo_accounts.get(username)
+    if account is None or not secrets.compare_digest(account[0], password):
+        return None
+    return TUAccount(username, account[1], account[2], account[3])
+
+
+def _real_verify(username: str, password: str) -> TUAccount | None:
+    endpoint = os.getenv("TU_API_URL", "").strip()
+    if not endpoint:
+        raise TUVerificationError("TU_API_URL is not configured")
+
+    payload = json.dumps({"username": username, "password": password}).encode("utf-8")
+    request = Request(
+        endpoint,
+        data=payload,
+        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
     )
+    try:
+        with urlopen(request, timeout=float(os.getenv("TU_API_TIMEOUT", "5"))) as response:
+            if response.status != 200:
+                raise TUVerificationError("TU API rejected the request")
+            body = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+        raise TUVerificationError("TU API is unavailable or returned invalid data") from error
+
+    if not isinstance(body, dict):
+        raise TUVerificationError("TU API returned an invalid response shape")
+
+    # The integration contract requires explicit proof of identity and status.
+    if body.get("authenticated") is not True or body.get("active") is not True:
+        return None
+    account_type = str(body.get("account_type", "")).strip().lower()
+    verified_username = str(body.get("username", "")).strip()
+    display_name = str(body.get("display_name", "")).strip()
+    if account_type != "student" or not verified_username or not display_name:
+        return None
+    return TUAccount(verified_username, display_name, account_type, True)
 
 
-def verify_with_tu_api(username: str, password: str) -> TUVerifyResponse:
-    """เรียก TU API จริงเมื่อกำหนด TU_API_MODE=real มิฉะนั้นใช้ mock"""
-    mode = os.getenv("TU_API_MODE", "mock").lower()
-    if mode != "real":
+def verify_tu_account(username: str, password: str) -> TUAccount | None:
+    """Verify credentials and student eligibility; return None on rejection.
+
+    Any provider/network/configuration error raises TUVerificationError so the
+    caller can fail closed without treating an outage as a bad password.
+    """
+
+    mode = os.getenv("TU_API_MODE", "mock").strip().lower()
+    if mode == "mock":
         return _mock_verify(username, password)
+    if mode == "real":
+        return _real_verify(username, password)
+    raise TUVerificationError("Unsupported TU_API_MODE")
 
-    url = os.getenv("TU_API_URL")
-    api_key = os.getenv("TU_API_KEY")
-    if not url:
-        return TUVerifyResponse(verified=False, message="ยังไม่ได้ตั้งค่า TU_API_URL", source="tu_api")
 
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["X-API-Key"] = api_key
+def verify_with_tu_api(username: str, password: str):
+    """Compatibility response for the standalone ``/verify-tu`` endpoint."""
+
+    from app.schemas.tu_auth import TUVerifyResponse
 
     try:
-        response = httpx.post(
-            url,
-            json={"username": username, "password": password},
-            headers=headers,
-            timeout=10.0,
-        )
-        if response.status_code in (401, 403):
-            return TUVerifyResponse(verified=False, message="TU API ปฏิเสธการยืนยันบัญชี", source="tu_api")
-        response.raise_for_status()
-        data = response.json()
-        verified = bool(data.get("verified", data.get("success", False)))
-        return TUVerifyResponse(
-            verified=verified,
-            message="ยืนยันบัญชีกับ TU API สำเร็จ" if verified else "TU API ยืนยันบัญชีไม่ผ่าน",
-            source="tu_api",
-        )
-    except (httpx.HTTPError, ValueError):
+        account = verify_tu_account(username.strip(), password)
+    except TUVerificationError:
         return TUVerifyResponse(verified=False, message="ไม่สามารถเชื่อมต่อ TU API ได้", source="tu_api")
+    return TUVerifyResponse(
+        verified=account is not None,
+        message="ยืนยันบัญชีสำเร็จ" if account else "ยืนยันบัญชีไม่ผ่าน",
+        source="mock" if os.getenv("TU_API_MODE", "mock").lower() == "mock" else "tu_api",
+    )
+
