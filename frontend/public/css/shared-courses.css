@@ -1,4 +1,4 @@
-/* Cleaned from current project styles; source order and media rules preserved. */
+/* Page styles retained; navbar is copied from read-courses.css below. */
 
 :root {
   --ink: #191e2a;
@@ -58,111 +58,6 @@ a {
   stroke-linecap: round;
   stroke-linejoin: round;
   flex-shrink: 0;
-}
-
-.topbar {
-  min-height: 76px;
-  background: var(--nav);
-  color: #999;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px 0 32px;
-  gap: 24px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  color: #fff;
-  white-space: nowrap;
-  font-size: 17px;
-  letter-spacing: -.6px;
-}
-
-.brand .icon {
-  width: 25px;
-  height: 29px;
-  margin-right: 6px;
-}
-
-.brand b {
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.topbar nav {
-  display: flex;
-  align-self: stretch;
-  align-items: center;
-  gap: 6px;
-}
-
-.topbar nav a {
-  height: 50px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 0 17px;
-  border-bottom: 3px solid transparent;
-  font-size: 16px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.topbar nav .icon {
-  width: 15px;
-  height: 15px;
-}
-
-.topbar nav a[aria-current] {
-  color: #fff;
-  border-color: #fff;
-}
-
-.topbar nav a:hover {
-  color: #fff;
-}
-
-.profile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fff;
-  color: #18202c;
-  border: 1px solid #e4e5ef;
-  border-radius: 4px;
-  padding: 5px;
-  min-width: 183px;
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  border-radius: 50%;
-  background: #4b6591;
-  color: #fff;
-}
-
-.profile b {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.profile small {
-  display: block;
-  font-size: 9px;
-  color: #325080;
-}
-
-.profile i {
-  display: inline-block;
-  background: #10b981;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
 }
 
 main {
@@ -654,18 +549,6 @@ button:hover {
 }
 
 @media(max-width:1250px) {
-  .topbar {
-    flex-wrap: wrap;
-    padding: 12px 24px;
-    gap: 10px;
-  }
-
-  .topbar nav {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-
   h1 {
     font-size: 24px;
   }
@@ -709,41 +592,6 @@ button:hover {
 }
 
 @media(max-width:760px) {
-  .topbar {
-    padding: 12px 16px;
-  }
-
-  .brand {
-    font-size: 13px;
-  }
-
-  .brand b {
-    font-size: 23px;
-  }
-
-  .profile {
-    min-width: 0;
-  }
-
-  .profile small {
-    font-size: 8px;
-  }
-
-  .topbar nav {
-    overflow-x: auto;
-    justify-content: flex-start;
-  }
-
-  .topbar nav a {
-    padding: 0 9px;
-    font-size: 12px;
-    min-height: 44px;
-  }
-
-  .topbar nav .icon {
-    display: none;
-  }
-
   main {
     padding: 24px 16px;
   }
@@ -824,44 +672,6 @@ button:hover {
 
   .reader-grid dd {
     margin-bottom: 12px;
-  }
-
-  .topbar .brand {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 10px;
-    color: #fff;
-    letter-spacing: normal;
-  }
-
-  .topbar .brand>.icon {
-    width: 26px;
-    height: 32px;
-    margin: 0;
-    flex-shrink: 0;
-  }
-
-  .brand-copy {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .topbar .brand .brand-name {
-    font-family: "Prompt", sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    line-height: 1.35;
-    letter-spacing: normal;
-  }
-
-  .brand-tagline {
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.5;
-    color: #f2f2f2;
   }
 
   .search-box {
@@ -957,16 +767,6 @@ button:hover {
   #filters option:checked {
     background: #e5ebff;
     color: #243c77;
-  }
-
-  @media (max-width: 760px) {
-    .topbar .brand .brand-name {
-      font-size: 24px;
-    }
-
-    .brand-tagline {
-      font-size: 11px;
-    }
   }
 }
 
@@ -1067,59 +867,6 @@ button:hover {
 
 #filters option {
   padding: 8px 10px;
-}
-
-.brand-copy {
-  overflow: visible;
-}
-
-.brand-tagline {
-  font-weight: 400;
-}
-
-@media (max-width: 760px) {
-  .topbar .brand .brand-name {
-    font-size: 24px;
-  }
-}
-
-.topbar .brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: visible;
-}
-
-.topbar .brand .brand-copy {
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 6px;
-  overflow: visible;
-  white-space: nowrap;
-}
-
-.topbar .brand .brand-name {
-  margin: 0;
-  font-family: "Prompt", sans-serif;
-  font-size: 26px;
-  font-weight: 400;
-  line-height: 1.7;
-  letter-spacing: normal;
-}
-
-.topbar .brand .brand-tagline {
-  font-family: "Prompt", sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.6;
-  color: #fff;
-}
-
-.topbar .brand > .icon {
-  width: 21px;
-  height: 26px;
-  margin: 0;
 }
 
 #filters select option {
@@ -1305,5 +1052,194 @@ button:hover {
     padding: 12px 14px;
     gap: 12px;
     grid-template-columns: 1fr;
+  }
+}
+
+/* Navbar source: read-courses.css, including its mobile breakpoints. */
+.topbar {
+  height: 76px;
+  background: var(--nav);
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 32px;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  white-space: nowrap;
+  gap: 7px;
+}
+
+.brand-icon {
+  width: 25px;
+  height: 29px;
+}
+
+.brand-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  letter-spacing: -.5px;
+}
+
+.brand-copy b {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.brand-copy span {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.topbar nav {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar nav a {
+  height: 50px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 17px;
+  border-bottom: 3px solid transparent;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.topbar nav .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.topbar nav a.active {
+  color: #fff;
+  border-color: #fff;
+}
+
+.topbar nav a:hover {
+  color: #fff;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #18202c;
+  border: 1px solid #e4e5ef;
+  border-radius: 4px;
+  padding: 5px;
+  min-width: 183px;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  background: #4b6591;
+  color: #fff;
+}
+
+.profile-copy b {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.profile-copy small {
+  display: block;
+  font-size: 9px;
+  color: #325080;
+}
+
+.profile-copy i {
+  display: inline-block;
+  background: #10b981;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.logout {
+  margin-left: auto;
+  font-size: 18px;
+  color: #654b4b;
+  padding: 0 6px;
+}
+
+@media (max-width: 1100px) {
+  .topbar {
+    padding-left: 20px;
+    gap: 12px;
+  }
+
+  .topbar nav a {
+    padding: 0 9px;
+    font-size: 13px;
+  }
+
+  .brand-copy b {
+    font-size: 23px;
+  }
+
+  .brand-copy span {
+    font-size: 13px;
+  }
+
+  .profile {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .topbar {
+    height: auto;
+    min-height: 76px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+
+  .topbar nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .topbar nav a {
+    flex: 0 0 auto;
+  }
+
+  .profile {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-copy b {
+    font-size: 21px;
+  }
+
+  .brand-copy span {
+    font-size: 11px;
+  }
+
+  .profile-copy b {
+    font-size: 10px;
+  }
+
+  .profile-copy small {
+    font-size: 8px;
   }
 }
