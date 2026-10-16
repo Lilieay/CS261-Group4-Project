@@ -1,60 +1,51 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LOGIN - Computer Science Summary & Exam Archive</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบ - คลังสรุปบทเรียนและแนวข้อสอบ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
-
-    <div class="top-bar">
-        LOGIN
-    </div>
-
-    <div class="main-container">
-        <div class="login-card">
-            <div class="login-header">
-                <h1>เข้าสู่ระบบ</h1>
-                <p>คลังสรุปบทเรียนและแนวข้อสอบ สาขาวิชาวิทยาการคอมพิวเตอร์</p>
-            </div>
-
-            <form>
-                <div class="form-group">
-                    <label>รหัสนักศึกษา หรือ อีเมล</label>
-                    <div class="input-wrapper">
-                        <!-- User Icon -->
-                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                        <input type="text" class="form-control" placeholder="6xxxxxxx หรือ email@dome.tu.ac.th">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <div class="form-label-row">
-                        <label>รหัสผ่าน</label>
-                        <a href="#" class="forgot-password">ลืมรหัสผ่าน?</a>
-                    </div>
-                    <div class="input-wrapper">
-                        <!-- Lock Icon -->
-                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
-                        <input type="password" class="form-control" value="************">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
-
-                <div class="divider">
-                    <span>หรือ</span>
-                </div>
-
-                <button type="button" class="btn-sso">
-                    <!-- University / Building Icon -->
-                    <svg viewBox="0 0 24 24"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l4-2.18L12 3zm6.82 9L12 15.72 5.18 12v-2.58L12 13l6.82-3.58V12z"/></svg>
-                    Sign in with University Account
-                </button>
-            </form>
+  <main class="login-page">
+    <header class="login-header">
+      <h1>เข้าสู่ระบบ</h1>
+      <p>คลังสรุปบทเรียนและแนวข้อสอบ สาขาวิชาวิทยาการคอมพิวเตอร์</p>
+    </header>
+    <section class="login-card" aria-label="แบบฟอร์มเข้าสู่ระบบ">
+      <!-- Connect authentication before using this page in production. -->
+      <form onsubmit="event.preventDefault()">
+        <div class="form-group">
+          <label for="username">รหัสนักศึกษา หรือ อีเมล</label>
+          <div class="input-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 19v-2c0-3 14-3 14 0v2z"/></svg>
+            <input id="username" name="username" type="text" class="form-control" placeholder="6xxxxxxxx หรือ email@dome.tu.ac.th" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+          </div>
         </div>
-    </div>
-
+        <div class="form-group">
+          <div class="form-label-row">
+            <label for="password">รหัสผ่าน</label>
+            <!-- Replace # with the password recovery URL when available. -->
+            <a href="#" class="forgot-password" onclick="event.preventDefault()">ลืมรหัสผ่าน?</a>
+          </div>
+          <div class="input-wrapper">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="9" width="14" height="12" rx="1"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1"/><path d="M12 16v2"/></svg>
+            <input id="password" name="password" type="password" class="form-control" placeholder="************" autocomplete="current-password" required>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+        <div class="divider"><span>หรือ</span></div>
+        <!-- Connect this button to the university SSO endpoint when available. -->
+        <button type="button" class="btn-sso">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-5 9 5v1H3zM5 11v6m7-6v6m7-6v6M3 21h18M3 18h18"/></svg>
+          <span>Sign in with University Account</span>
+        </button>
+      </form>
+    </section>
+  </main>
 </body>
 </html>
+
