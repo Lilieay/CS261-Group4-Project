@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class GuideListItemDTO(BaseModel):
@@ -53,6 +53,4 @@ class ErrorDetailDTO(BaseModel):
 
 
 class ErrorResponseDTO(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
     error: ErrorDetailDTO

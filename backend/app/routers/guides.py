@@ -23,8 +23,13 @@ router = APIRouter(
 SessionDependency = Annotated[Session, Depends(get_db_session)]
 
 
-def _service(session: Session) -> ReadGuideService:
+def get_read_guide_service(session: SessionDependency) -> ReadGuideService:
     return ReadGuideService(CourseDAO(session), ReadGuideDAO(session))
+
+
+ReadGuideServiceDependency = Annotated[
+    ReadGuideService, Depends(get_read_guide_service)
+]
 
 
 def _validate_query_parameters(request: Request) -> None:
@@ -37,23 +42,21 @@ def _validate_query_parameters(request: Request) -> None:
 @router.get("/courses/{course_id}/guides", response_model=GuideListResponseDTO)
 def list_guides(
     course_id: Annotated[int, Path(gt=0)],
-    session: SessionDependency,
+    service: ReadGuideServiceDependency,
     request: Request,
     academic_year: Annotated[int | None, Query(ge=1, le=32767)] = None,
     semester: Annotated[int | None, Query(ge=1, le=3)] = None,
     exam_period: Annotated[Literal["midterm", "final"] | None, Query()] = None,
 ) -> GuideListResponseDTO:
     _validate_query_parameters(request)
-    return _service(session).list_guides(
-        course_id, academic_year, semester, exam_period
-    )
+    return service.list_guides(course_id, academic_year, semester, exam_period)
 
 
 @router.get("/guides/{guide_id}", response_model=GuideDetailResponseDTO)
 def read_guide(
-    guide_id: Annotated[int, Path(gt=0)], session: SessionDependency
+    guide_id: Annotated[int, Path(gt=0)], service: ReadGuideServiceDependency
 ) -> GuideDetailResponseDTO:
-    return _service(session).read_guide(guide_id)
+    return service.read_guide(guide_id)
 
 
 @router.get(
@@ -61,6 +64,6 @@ def read_guide(
     response_model=GuideFilterOptionsResponseDTO,
 )
 def read_filter_options(
-    course_id: Annotated[int, Path(gt=0)], session: SessionDependency
+    course_id: Annotated[int, Path(gt=0)], service: ReadGuideServiceDependency
 ) -> GuideFilterOptionsResponseDTO:
-    return _service(session).filter_options(course_id)
+    return service.filter_options(course_id)

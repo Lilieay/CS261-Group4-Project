@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
@@ -7,16 +7,19 @@ from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.schemas.guides import ErrorDetailDTO, ErrorFieldDTO, ErrorResponseDTO
 from app.services.read_guide import GuideReadNotFound
 
 logger = logging.getLogger(__name__)
 
 
 class GuideApiRoute(APIRoute):
-    def get_route_handler(self) -> Callable:
+    def get_route_handler(
+        self,
+    ) -> Callable[[Request], Awaitable[JSONResponse]]:
         original_handler = super().get_route_handler()
 
-        async def handle(request: Request):
+        async def handle(request: Request) -> JSONResponse:
             try:
                 return await original_handler(request)
             except GuideReadNotFound as exc:
@@ -31,10 +34,10 @@ class GuideApiRoute(APIRoute):
                 return _error_response(exc.status_code, code, message, headers=exc.headers)
             except RequestValidationError as exc:
                 fields = [
-                    {
-                        "field": ".".join(str(part) for part in error["loc"][1:]),
-                        "message": error["msg"],
-                    }
+                    ErrorFieldDTO(
+                        field=".".join(str(part) for part in error["loc"][1:]),
+                        message=error["msg"],
+                    )
                     for error in exc.errors()
                 ]
                 return _error_response(
@@ -66,17 +69,18 @@ def _error_response(
     status_code: int,
     code: str,
     message: str,
-    fields: list[dict[str, str]] | None = None,
+    fields: list[ErrorFieldDTO] | None = None,
     headers: dict[str, str] | None = None,
 ) -> JSONResponse:
+    body = ErrorResponseDTO(
+        error=ErrorDetailDTO(
+            code=code,
+            message=message,
+            fields=fields or [],
+        )
+    )
     return JSONResponse(
         status_code=status_code,
-        content={
-            "error": {
-                "code": code,
-                "message": message,
-                "fields": fields or [],
-            }
-        },
+        content=body.model_dump(),
         headers=headers,
     )

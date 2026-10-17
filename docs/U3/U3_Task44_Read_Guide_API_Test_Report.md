@@ -29,7 +29,7 @@
 
 ## Postman
 
-Collection: [`Task44-read-guide.postman_collection.json`](postman/Task44-read-guide.postman_collection.json)
+Collection: [U3_Task44_Read_Guide_API.postman_collection.json](U3_Task44_Read_Guide_API.postman_collection.json)
 
 ตั้งค่า `base_url`, `username`, `password`, `course_id`, `guide_id` และตัวแปร filter ใน Postman Environment ก่อนรัน Login และ request อื่น ๆ Collection เก็บ token ไว้ใน collection variable หลัง Login แต่ไม่มีรหัสผ่านหรือ token จริง
 
