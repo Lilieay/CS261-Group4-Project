@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/read-courses.css">
+<script src="js/course-data.js" defer></script>
+  <script src="js/read-courses.js" defer></script>
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -26,7 +28,7 @@
       <span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span>
     </a>
     <nav aria-label="เมนูหลัก">
-      <a class="active" href="index.html"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
+      <a class="active" href="courses.html" aria-current="page"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
       <a href="upload.html"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
       <a href="shared-courses.html"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
       <a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
@@ -39,48 +41,8 @@
   </header>
 
   <main class="page">
-    <a class="back-link" href="course.html" aria-label="กลับหน้ารายวิชา"><svg class="icon"><use href="#i-back"/></svg></a>
-    <section class="content">
-      <h1>สรุปโครงสร้างข้อมูล Data Structures &amp; Algorithms<br class="desktop-break"> ฉบับเตรียมสอบกลางภาค (30หน้ากระชับ)</h1>
-      <div class="subheading">
-        <p>อาจารย์ผู้สอน : ผศ.ดร.ทรงศักดิ์ รองวริยะพานิช</p>
-        <p>แบ่งปันโดย กิตติศักดิ์ ช.</p>
-      </div>
-
-      <div class="meta-grid">
-        <div>รายวิชา : <strong>CS261</strong></div>
-        <div>ปีการศึกษา: <strong>2566</strong></div>
-        <div>ภาคเรียน: <strong>ที่ 1</strong></div>
-        <div>ช่วงสอบ : <strong>กลางภาค</strong></div>
-      </div>
-
-      <section class="info-card topics-card">
-        <h2>หัวข้อที่เคยออกสอบ</h2>
-        <ol>
-          <li>Big-O Notation <span>(การวิเคราะห์ประสิทธิภาพ)</span></li>
-          <li>Linear Data Structures <span>(โครงสร้างข้อมูลเชิงเส้น)</span></li>
-          <li>Tree Data Structures <span>(โครงสร้างข้อมูลแบบต้นไม้)</span></li>
-        </ol>
-      </section>
-
-      <section class="info-card format-card">
-        <h2>รูปแบบแนวข้อสอบ</h2>
-        <div class="format-grid">
-          <div>ปรนัย : <strong>10</strong> ข้อ</div>
-          <div>อัตนัย : <strong>20</strong> ข้อ</div>
-        </div>
-      </section>
-
-      <section class="info-card advice-card">
-        <h2>คำแนะนำเพิ่มเติม</h2>
-        <p>ตั้งใจเรียนในคาบเยอะๆ อาจารย์ชอบแอบบอกแนวข้อสอบ</p>
-      </section>
-
-      <div class="actions">
-        <button class="save-button" type="button"><svg class="icon"><use href="#i-save"/></svg> บันทึก</button>
-        <button class="review-button" type="button"><span>★</span> รีวิว</button>
-      </div>
-    </section>
+    <a class="back-link" id="readingBack" href="courses.html" aria-label="กลับหน้ารายวิชา"><svg class="icon"><use href="#i-back"/></svg></a>
+    <section class="content" id="readingContent" aria-live="polite"></section>
   </main>
 
   <footer class="footer">

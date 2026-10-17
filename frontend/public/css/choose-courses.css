@@ -16,3 +16,13 @@
 @media(max-width:1100px){.topbar{padding-left:20px;gap:12px}.topbar nav a{padding:0 9px;font-size:13px}.brand-copy b{font-size:23px}.brand-copy span{font-size:13px}.profile{min-width:auto}}
 @media(max-width:760px){.topbar{height:auto;min-height:76px;padding:12px 16px;flex-wrap:wrap}.topbar nav{order:3;width:100%;overflow-x:auto}.topbar nav a{flex:0 0 auto}.profile{margin-left:auto}.page{padding:76px 16px 30px}.back-link{top:18px;left:17px}.back-link .icon{width:36px;height:36px}.content{width:100%}h1{font-size:21px;margin-bottom:18px}.filters{grid-template-columns:1fr;gap:8px;margin-bottom:22px}.result-toolbar{align-items:flex-start;flex-direction:column;margin-bottom:22px}.sort-label{align-self:flex-end}.document-card{padding:17px;gap:12px}.document-card h2{font-size:15px}.document-bottom{align-items:flex-start;flex-direction:column;gap:6px}.view-button{padding:8px 10px;font-size:12px}.footer{padding:12px 16px;gap:14px;align-items:flex-start;flex-direction:column}}
 @media(max-width:480px){.brand-copy b{font-size:21px}.brand-copy span{font-size:11px}.profile-copy b{font-size:10px}.profile-copy small{font-size:8px}.document-card{flex-direction:column}.view-button{align-self:flex-end}.pagination{gap:5px}.pagination button{min-width:29px}}
+
+/* Dynamic course details and actual results. */
+[hidden] { display: none !important; }
+.selected-course-name { margin: -12px 0 20px; color: #63799b; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.preview-note { margin-top: 20px; color: #8490a5; font-size: 11px; line-height: 1.7; }
+.empty-state a { display: inline-block; padding: 9px 14px; border: 1px solid #aab9d5; border-radius: 4px; background: white; color: #344f80; }
+:where(button, a, select):focus-visible { outline: 3px solid #6686c4; outline-offset: 3px; }
+@media(max-width:480px) { .document-card { flex-direction: column; } .view-button { align-self: flex-end; } }
+
+.selected-course-instructor { margin: -10px 0 18px; color: #80615e; font-size: 12px; }
