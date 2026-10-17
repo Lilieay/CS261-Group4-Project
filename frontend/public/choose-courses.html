@@ -4,6 +4,8 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>เลือกแนวข้อสอบรายวิชา | พี่จ๋า</title>
 <link rel="stylesheet" href="css/choose-courses.css">
+<script src="js/course-data.js" defer></script>
+<script src="js/choose-courses.js" defer></script>
 </head>
 
 <body>
@@ -19,7 +21,7 @@
 <header class="topbar">
 <a class="brand" href="index.html"><svg class="icon brand-icon"><use href="#i-file"/></svg><span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span></a>
 <nav aria-label="เมนูหลัก">
-<a class="active" href="index.html"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
+<a class="active" href="courses.html" aria-current="page"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
 <a href="upload.html"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
 <a href="shared-courses.html"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
 <a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
@@ -29,57 +31,29 @@
 <main class="page">
 <a class="back-link" href="courses.html" aria-label="กลับหน้ารายวิชา"><svg class="icon"><use href="#i-back"/></svg></a>
 <section class="content">
-<h1>ชีตสรุปและแนวข้อสอบ CS261</h1>
+<h1 id="courseHeading">เลือกรายวิชา</h1>
+<p id="courseName" class="selected-course-name"></p>
+
 <div class="tabs" role="tablist" aria-label="ประเภทเอกสาร">
-<button class="tab active" type="button" data-tab="guides" aria-selected="true"><svg class="icon"><use href="#i-document"/></svg>แนวข้อสอบ</button>
-<button class="tab" type="button" data-tab="summaries" aria-selected="false"><svg class="icon"><use href="#i-document"/></svg>สรุป</button>
+<button id="guides-tab" class="tab active" type="button" role="tab" data-tab="guides" aria-selected="true" aria-controls="documentPanel"><svg class="icon" aria-hidden="true"><use href="#i-document"/></svg>แนวข้อสอบ</button>
+<button id="summaries-tab" class="tab" type="button" role="tab" data-tab="summaries" aria-selected="false" aria-controls="documentPanel" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-document"/></svg>สรุป</button>
 </div>
-<div class="filters">
-<label><span class="sr-only">ช่วงสอบ</span><select id="periodFilter"><option value="all">ช่วงสอบ : ทั้งหมด</option><option value="midterm">ช่วงสอบ : กลางภาค</option><option value="final">ช่วงสอบ : ปลายภาค</option></select></label>
-<label><span class="sr-only">ปีการศึกษา</span><select id="yearFilter"><option value="all">ปีการศึกษา: ทั้งหมด</option><option value="2566" selected>ปีการศึกษา: 2566</option><option value="2567">ปีการศึกษา: 2567</option><option value="2568">ปีการศึกษา: 2568</option></select></label>
-<label><span class="sr-only">ภาคเรียน</span><select id="semesterFilter"><option value="all">ภาคเรียน: ทั้งหมด</option><option value="1">ภาคเรียนที่ 1</option><option value="2">ภาคเรียนที่ 2</option><option value="3">ซัมเมอร์</option></select></label>
+<div id="filters" class="filters">
+<label><span class="sr-only">ช่วงสอบ</span><select id="periodFilter"><option value="all">ช่วงสอบ: ทั้งหมด</option></select></label>
+<label><span class="sr-only">ปีการศึกษา</span><select id="yearFilter"><option value="all">ปีการศึกษา: ทั้งหมด</option></select></label>
+<label><span class="sr-only">ภาคเรียน</span><select id="semesterFilter"><option value="all">ภาคเรียน: ทั้งหมด</option></select></label>
 </div>
-<div class="result-toolbar">
-<div class="result-left"><span id="resultCount">พบ 3 เอกสาร</span><div id="activeFilters" class="chips"></div><button id="clearFilters" class="clear-button" type="button">ล้างตัวกรองทั้งหมด</button></div>
+<div id="resultToolbar" class="result-toolbar">
+<div class="result-left"><span id="resultCount" role="status" aria-live="polite" tabindex="-1">พบ 0 เอกสาร</span><div id="activeFilters" class="chips"></div><button id="clearFilters" class="clear-button" type="button">ล้างตัวกรองทั้งหมด</button></div>
 <label class="sort-label">เรียงตาม: <select id="sortFilter"><option value="latest">ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="title">ชื่อเอกสาร</option></select></label>
 </div>
-<div id="documentList" class="document-list">
-<article class="document-card" data-type="guides" data-period="midterm" data-year="2566" data-semester="1" data-title="สรุปโครงสร้างข้อมูล Data Structures & Algorithms ฉบับเตรียมสอบกลางภาค (30หน้ากระชับ)" data-order="3">
-<div class="document-main"><div class="badges"><span class="course-badge">CS261</span><span class="type-badge">แนวข้อสอบ</span><span>ปี 2566</span><span>ภาคเรียนที่ 1</span><span>กลางภาค</span></div><h2>สรุปโครงสร้างข้อมูล Data Structures &amp; Algorithms ฉบับเตรียมสอบกลางภาค (30 หน้ากระชับ)</h2><div class="document-bottom"><span>แบ่งปันโดย กิตติศักดิ์ ช.</span><span class="rating">★ <span>คะแนนรีวิว 4.9 (19 รีวิว)</span></span></div></div><a class="view-button" href="u3.html">ดูเอกสาร <span>→</span></a>
-</article>
-<article class="document-card" data-type="guides" data-period="midterm" data-year="2566" data-semester="1" data-title="Cheat Sheet สรุปไวยากรณ์ Python & พื้นฐาน Object-Oriented Programming" data-order="2">
-<div class="document-main"><div class="badges"><span class="course-badge">CS261</span><span class="type-badge">แนวข้อสอบ</span><span>ปี 2566</span><span>ภาคเรียนที่ 1</span><span>กลางภาค</span></div><h2>Cheat Sheet สรุปไวยากรณ์ Python &amp; พื้นฐาน Object-Oriented Programming</h2><div class="document-bottom"><span>โดย นนท์วิชัย์ ก.</span><span class="rating">★ <span>คะแนนรีวิว 4.9 (19 รีวิว)</span></span></div></div><a class="view-button" href="u3.html">ดูเอกสาร <span>→</span></a>
-</article>
-<article class="document-card" data-type="guides" data-period="midterm" data-year="2566" data-semester="1" data-title="สรุปบททวน Database Systems: Relational Algebra, SQL Queries และ Normalization" data-order="1">
-<div class="document-main"><div class="badges"><span class="course-badge">CS261</span><span class="type-badge">แนวข้อสอบ</span><span>ปี 2566</span><span>ภาคเรียนที่ 1</span><span>กลางภาค</span></div><h2>สรุปบททวน Database Systems: Relational Algebra, SQL Queries และ Normalization</h2><div class="document-bottom"><span>โดย ชนิกานต์ ม.</span><span class="rating">★ <span>คะแนนรีวิว 4.9 (19 รีวิว)</span></span></div></div><a class="view-button" href="u3.html">ดูเอกสาร <span>→</span></a>
-</article>
-</div>
-<div id="emptyState" class="empty-state" hidden><strong>ไม่พบแนวข้อสอบที่ตรงกับที่กรอง</strong><p>ลองเปลี่ยนเงื่อนไข หรือล้างตัวกรองเพื่อดูเอกสารทั้งหมด</p><button id="emptyClear" type="button">ล้างตัวกรอง</button></div>
-<nav class="pagination" aria-label="แบ่งหน้า"><button class="page-muted" disabled>‹ ก่อนหน้า</button><button class="page-number current" aria-current="page">1</button><button class="page-number">2</button><button class="page-number">3</button><span class="ellipsis">…</span><button class="next-page">ถัดไป ›</button></nav>
+<section id="documentPanel" role="tabpanel" aria-labelledby="guides-tab">
+<div id="documentList" class="document-list"></div>
+<div id="emptyState" class="empty-state" hidden><strong id="emptyTitle"></strong><p id="emptyDescription"></p><button id="emptyClear" type="button" hidden>ล้างตัวกรอง</button><a id="backToSearch" href="courses.html" hidden>กลับหน้าค้นหารายวิชา</a></div>
+</section>
+<nav id="pagination" class="pagination" aria-label="แบ่งหน้า" hidden></nav>
+<p class="preview-note">ข้อมูลแนวข้อสอบตัวอย่างร่วมกับหน้ารายวิชาที่แบ่งปัน</p>
+<noscript>กรุณาเปิด JavaScript เพื่อแสดงข้อมูลรายวิชา</noscript>
 </section></main>
 <footer class="footer"><div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><small>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small></div><div class="footer-links"><a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a></div></footer>
-<script>
-const tabs=[...document.querySelectorAll('.tab')],cards=[...document.querySelectorAll('.document-card')];
-const period=document.querySelector('#periodFilter'),year=document.querySelector('#yearFilter'),semester=document.querySelector('#semesterFilter'),sort=document.querySelector('#sortFilter');
-const count=document.querySelector('#resultCount'),list=document.querySelector('#documentList'),empty=document.querySelector('#emptyState'),chips=document.querySelector('#activeFilters');
-let activeType='guides';
-tabs.forEach(tab=>tab.addEventListener('click',()=>{activeType=tab.dataset.tab;tabs.forEach(t=>{t.classList.toggle('active',t===tab);t.setAttribute('aria-selected',String(t===tab));});render();}));
-function render(){
- const visible=cards.filter(c=>c.dataset.type===activeType&&(period.value==='all'||c.dataset.period===period.value)&&(year.value==='all'||c.dataset.year===year.value)&&(semester.value==='all'||c.dataset.semester===semester.value));
- visible.sort((a,b)=>sort.value==='title'?a.dataset.title.localeCompare(b.dataset.title,'th'):sort.value==='latest'?Number(b.dataset.order)-Number(a.dataset.order):Number(a.dataset.order)-Number(b.dataset.order));
- cards.forEach(c=>c.hidden=!visible.includes(c));visible.forEach(c=>list.appendChild(c));
- count.textContent=`พบ ${visible.length} เอกสาร`;empty.hidden=visible.length!==0;list.hidden=visible.length===0;updateChips();
-}
-function updateChips(){
- chips.replaceChildren();
- [{label:'CS261',key:'course',active:true},{label:`ปี ${year.value}`,key:'year',active:year.value!=='all'},{label:period.value==='midterm'?'กลางภาค':'ปลายภาค',key:'period',active:period.value!=='all'},{label:semester.value==='1'?'ภาคเรียนที่ 1':semester.value==='2'?'ภาคเรียนที่ 2':'ซัมเมอร์',key:'semester',active:semester.value!=='all'}].filter(x=>x.active).forEach(x=>{
- const chip=document.createElement('span');chip.className='chip';chip.append(document.createTextNode(x.label+' '));
- if(x.key!=='course'){const b=document.createElement('button');b.type='button';b.textContent='×';b.setAttribute('aria-label','ล้างตัวกรอง'+x.label);b.addEventListener('click',()=>{if(x.key==='year')year.value='all';if(x.key==='period')period.value='all';if(x.key==='semester')semester.value='all';render();});chip.append(b);}chips.append(chip);
- });
-}
-function clearFilters(){period.value='all';year.value='all';semester.value='all';render();}
-[period,year,semester,sort].forEach(c=>c.addEventListener('change',render));
-document.querySelector('#clearFilters').addEventListener('click',clearFilters);document.querySelector('#emptyClear').addEventListener('click',clearFilters);
-document.querySelectorAll('.pagination .page-number').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.pagination .page-number').forEach(p=>{p.classList.toggle('current',p===b);if(p===b)p.setAttribute('aria-current','page');else p.removeAttribute('aria-current');});}));
-render();
-</script></body></html>
+</body></html>
