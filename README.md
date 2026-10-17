@@ -72,3 +72,10 @@ curl http://127.0.0.1:8000/api/auth/status \
 ## หมายเหตุด้านการเก็บข้อมูล
 
 โค้ดชุดนี้เก็บผู้ใช้และ session ไว้ในหน่วยความจำเพื่อให้เหมาะกับการสาธิตและการทดสอบ Task เมื่อหยุดหรือ restart server session จะหายทั้งหมด สำหรับระบบจริงควรเปลี่ยนเป็นฐานข้อมูล, เก็บ password เป็น hash และใช้ token/session store ที่มีอายุหมดอายุและรองรับหลาย instance
+
+## Task11: ยืนยันบัญชีกับ TU API
+
+การ Login เรียก service ยืนยันบัญชีกับ TU API ก่อนสร้าง session โดยค่าเริ่มต้นใช้ Mock สำหรับทดสอบในเครื่อง และเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL` และ `TU_API_TIMEOUT` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
+
+ระบบอนุญาตเฉพาะบัญชีนักศึกษาที่มีสถานะ active และ fail-closed เมื่อ TU API ใช้งานไม่ได้หรือข้อมูลยืนยันไม่ครบ รายงาน Task11 อยู่ที่ `docs/U1/Task11-tu-api-verification.md`
+
