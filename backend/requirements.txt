@@ -2,3 +2,6 @@ fastapi
 uvicorn
 pytest
 httpx
+SQLAlchemy
+pyodbc
+python-dotenv
