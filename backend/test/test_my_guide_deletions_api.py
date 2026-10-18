@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +15,9 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.services.auth import ACTIVE_SESSIONS, User as AuthUser, create_session
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
+from app.services.tu_api import TUAccount
 
 
 @pytest.fixture
@@ -68,13 +71,25 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
         yield session
 
     app.dependency_overrides[get_db_session] = override_db_session
-    ACTIVE_SESSIONS.clear()
+
+    @contextmanager
+    def auth_session():
+        yield session
+
+    auth_service = AuthService(
+        auth_session,
+        verify=lambda username, password: (
+            TUAccount(username, username, "student", True)
+            if password in {"password123", "admin123"}
+            else None
+        ),
+    )
+    app.dependency_overrides[get_auth_service] = lambda: auth_service
     try:
         with TestClient(app) as client:
             yield client, session, ids
     finally:
         app.dependency_overrides.clear()
-        ACTIVE_SESSIONS.clear()
         session.close()
         transaction.rollback()
         connection.close()
@@ -135,7 +150,7 @@ def test_delete_rejects_invalid_token(api):
 
 def test_non_owner_cannot_delete_another_users_guide(api):
     client, session, ids = api
-    token = create_session(AuthUser(99, "admin", "ผู้ใช้อื่น", "student"))
+    token = login(client, "admin")
     before = guide_ids(session)
 
     response = client.delete(
