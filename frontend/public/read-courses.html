@@ -8,7 +8,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/read-courses.css">
+  <link rel="stylesheet" href="css/guide-actions.css">
 <script src="js/course-data.js" defer></script>
+  <script src="js/upload-config.js" defer></script>
+  <script src="js/guide-api.js" defer></script>
   <script src="js/read-courses.js" defer></script>
 </head>
 <body>
@@ -42,10 +45,11 @@
 
   <main class="page">
     <a class="back-link" id="readingBack" href="courses.html" aria-label="กลับหน้ารายวิชา"><svg class="icon"><use href="#i-back"/></svg></a>
-    <section class="content" id="readingContent" aria-live="polite"></section>
+    <div class="content"><p id="reading-status" class="guide-action-status" role="status" aria-live="polite"></p></div>
+    <section class="content" id="readingContent"></section>
   </main>
 
-  <footer class="footer">
+<footer class="footer">
     <div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><small>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small></div>
     <div class="footer-links"><a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a></div>
   </footer>

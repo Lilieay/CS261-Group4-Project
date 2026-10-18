@@ -56,7 +56,8 @@
     const keyword = $('#course-search').value;
     const term = keyword.trim();
     const matches = findCourses(COURSE_CATALOG, keyword);
-    const featured = FEATURED_CODES.map(code => COURSE_CATALOG.find(course => course.code === code)).filter(Boolean);
+    const recentCodes = [...sharedRows].sort((a, b) => (Date.parse(b.created_at || b.updated_at) || 0) - (Date.parse(a.created_at || a.updated_at) || 0)).map(row => row.course_code);
+    const featured = [...new Set([...recentCodes, ...FEATURED_CODES])].map(code => COURSE_CATALOG.find(course => course.code === code)).filter(Boolean).slice(0, 6);
     const visible = !showAll && !term ? featured : matches;
     $('#course-grid').innerHTML = visible.length ? visible.map(courseCard).join('') : '<div class="course-empty"><h2>ไม่พบวิชาในระบบ</h2><p>ลองค้นหาด้วยรหัสวิชาหรือชื่อวิชาอื่น</p><button type="button" id="clear-search">แสดงรายวิชาทั้งหมด</button></div>';
     $('#view-all').hidden = Boolean(term) || showAll;
@@ -74,8 +75,7 @@
     $('#course-grid').addEventListener('click', event => {
       if (event.target.closest('#clear-search')) { $('#course-search').value = ''; showAll = true; renderCourses(true); $('#course-search').focus(); }
     });
-    window.addEventListener('storage', event => { if (event.key === window.CourseData.storageKey || event.key === null) { refreshSharedRows(); renderCourses(); } });
-    window.addEventListener('focus', () => { refreshSharedRows(); renderCourses(); });
+    window.CourseData.subscribe(() => { refreshSharedRows(); renderCourses(); });
   }
   start();
 })();
