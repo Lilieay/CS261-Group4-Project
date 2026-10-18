@@ -11,7 +11,7 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.services.auth import ACTIVE_SESSIONS
+from app.services.auth import ACTIVE_SESSIONS, User as AuthUser, create_session
 
 
 @pytest.fixture
@@ -156,7 +156,7 @@ def test_rejects_invalid_login_token(client):
 
 
 def test_returns_empty_list_when_authenticated_user_has_no_guides(client):
-    token = login(client, "admin")
+    token = create_session(AuthUser(99, "admin", "ผู้ใช้ทดสอบ", "student"))
 
     response = client.get(
         "/api/my-guides", headers={"Authorization": f"Bearer {token}"}

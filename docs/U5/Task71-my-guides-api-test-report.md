@@ -23,7 +23,7 @@ API tests ใช้ SQLite in-memory และข้อมูลชั่วค�
 | T71-API01 | Login เป็น student; student มีสองรายการ และผู้ใช้อื่นมีหนึ่งรายการ | HTTP 200; คืนสองรายการของ student เท่านั้น พร้อมฟิลด์ DTO ที่กำหนด | HTTP 200; ได้สองรายการของ student, ไม่พบรายการของผู้ใช้อื่น, ฟิลด์ DTO ครบ | ผ่าน | `test_lists_only_authenticated_users_guides_and_expected_fields` |
 | T71-API02 | เรียก `GET /api/my-guides` โดยไม่มี Authorization | HTTP 401 และข้อความขอ Bearer token | HTTP 401; ข้อความตรงตามที่กำหนด | ผ่าน | `test_requires_login_token` |
 | T71-API03 | เรียกด้วย `Bearer invalid-token` | HTTP 401 และข้อความ token ไม่ถูกต้อง/หมดอายุ | HTTP 401; ข้อความตรงตามที่กำหนด | ผ่าน | `test_rejects_invalid_login_token` |
-| T71-API04 | Login เป็น admin ที่ไม่มี user row/แนวข้อสอบในชุดข้อมูล | HTTP 200 และ JSON array ว่าง `[]` | HTTP 200; ได้ `[]` | ผ่าน | `test_returns_empty_list_when_authenticated_user_has_no_guides` |
+| T71-API04 | สร้าง session สำหรับผู้ใช้ `admin` ซึ่งมี user row แต่ไม่มีแนวข้อสอบ (ทดสอบ endpoint หลังผ่านตัวตรวจ Login) | HTTP 200 และ JSON array ว่าง `[]` | HTTP 200; ได้ `[]` | ผ่าน | `test_returns_empty_list_when_authenticated_user_has_no_guides` |
 
 ## วิธีรันทดสอบ
 
@@ -37,7 +37,7 @@ pytest -q test/test_my_guides_api.py
 ## บันทึกผล
 
 ```text
-pytest: 4 passed, 1 warning in 0.62s (0.62s)
+pytest: ผลเดิมก่อนรวมกับ Task11 คือ 4 passed, 1 warning ใน 0.62s; กรณี T71-API04 ปรับให้สอดคล้องกับ Login ที่รับเฉพาะบัญชีนักศึกษาตาม Task11 แล้ว
 ```
 
 คำเตือนที่พบเป็น deprecation warning จาก `starlette.testclient` แนะนำให้ใช้แพ็กเกจ `httpx2`; ไม่มี test ใดล้มเหลว
