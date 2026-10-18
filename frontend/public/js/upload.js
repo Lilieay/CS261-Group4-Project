@@ -102,7 +102,7 @@
     for (const key of ['subjectiveCount', 'objectiveCount']) {
       if (field(key).disabled) continue;
       if (field(key).validity.badInput || (input[key] !== ''
-          && (!/^[1-9]\d*$/.test(input[key]) || !Number.isSafeInteger(Number(input[key]))))) {
+        && (!/^[1-9]\d*$/.test(input[key]) || !Number.isSafeInteger(Number(input[key]))))) {
         errors[key] = 'จำนวนข้อต้องเป็นจำนวนเต็มมากกว่า 0 หรือเว้นว่างเมื่อไม่ระบุ';
       }
     }
@@ -130,10 +130,10 @@
       id, owner_id: 'demo-owner', course_code: input.course, title: input.title,
       year: input.academicYear, semester: input.semester === '3' ? 'ฤดูร้อน' : input.semester,
       period: input.examPeriod === 'midterm' ? 'กลางภาค' : 'ปลายภาค',
-      formats: [{objective: 'ปรนัย', subjective: 'อัตนัย', mixed: 'ผสม'}[input.examType]],
+      formats: [{ objective: 'ปรนัย', subjective: 'อัตนัย', mixed: 'ผสม' }[input.examType]],
       essay_count: essay, objective_count: objective,
       question_count: essay === null && objective === null ? null : (essay || 0) + (objective || 0),
-      topics: input.topics, notes: input.note, publisher_name: 'ผู้ใช้ทดลอง',
+      topics: input.topics, notes: input.note, publisher_name: user.display_name || user.username,
       rating: null, reviews: 0, views: 0, downloads: 0, created_at: now, updated_at: now
     };
     return data.createExam(row);
@@ -149,7 +149,7 @@
   }
 
   function detailUrl(courseCode, id) {
-    const query = new URLSearchParams({course: courseCode, guide: String(id)});
+    const query = new URLSearchParams({ course: courseCode, guide: String(id) });
     if (config.mode === 'api') query.set('source', 'api');
     return `read-courses.html?${query}`;
   }
@@ -171,8 +171,14 @@
     try {
       if (!['preview', 'api'].includes(config.mode)) throw new Error('โหมดเผยแพร่ไม่ถูกต้อง กรุณาตรวจ upload-config.js');
       if (!Array.isArray(config.academicYears) || !config.academicYears.length
-          || config.academicYears.some(year => !Number.isInteger(year) || year < 2400 || year > 32767)) {
+        || config.academicYears.some(year => !Number.isInteger(year) || year < 2400 || year > 32767)) {
         throw new Error('รายการปีการศึกษาไม่ถูกต้อง กรุณาตรวจ upload-config.js');
+      }
+      user = await window.currentUserReady;
+
+      if (!user) {
+        window.location.replace('login.html');
+        return;
       }
       if (config.mode === 'api') {
         user = await window.GuideApi.currentUser();
@@ -180,7 +186,7 @@
         $('#author').value = user.display_name || user.username;
       } else {
         catalog = data.catalog;
-        $('#author').value = 'ผู้ใช้ทดลอง (บันทึกเฉพาะเบราว์เซอร์นี้)';
+        $('#author').value = user.display_name || user.username;
         // Reading here detects unavailable or corrupted browser storage early.
         data.loadExams();
       }

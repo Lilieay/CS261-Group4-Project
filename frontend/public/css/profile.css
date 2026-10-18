@@ -1,0 +1,10 @@
+.profile { max-width: 280px; }
+.profile .avatar { flex-shrink: 0; }
+.profile-copy { min-width: 0; }
+.profile-copy b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-page { width: min(560px, calc(100% - 32px)); margin: 40px auto; padding: 24px; border: 1px solid #d9dff3; border-radius: 12px; }
+.profile-page h1 { margin-top: 24px; text-align: left; font-size: 24px; }
+.profile-page dl { display: grid; gap: 8px; }
+.profile-page dt { margin-top: 12px; color: #63708b; }
+.profile-page dd { margin: 0; overflow-wrap: anywhere; font-size: 16px; }
+.profile-page a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }

@@ -1,59 +1,129 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>เลือกแนวข้อสอบรายวิชา | พี่จ๋า</title>
-<link rel="stylesheet" href="css/choose-courses.css">
-<script src="js/course-data.js" defer></script>
-<script src="js/choose-courses.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>เลือกแนวข้อสอบรายวิชา | พี่จ๋า</title>
+    <link rel="stylesheet" href="css/choose-courses.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="js/profile.js" defer></script>
+    <script src="js/course-data.js" defer></script>
+    <script src="js/choose-courses.js" defer></script>
+
 </head>
 
 <body>
-<svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-<symbol id="i-file" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5"/></symbol>
-<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol>
-<symbol id="i-upload" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3"/></symbol>
-<symbol id="i-shared" viewBox="0 0 24 24"><path d="M3 5h7l2 3h9v12H3z"/></symbol>
-<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
-<symbol id="i-back" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7 7 12l5 5M7 12h10"/></symbol>
-<symbol id="i-document" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM15 3v5h4M8 12h8"/></symbol>
-</svg>
-<header class="topbar">
-<a class="brand" href="index.html"><svg class="icon brand-icon"><use href="#i-file"/></svg><span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span></a>
-<nav aria-label="เมนูหลัก">
-<a class="active" href="courses.html" aria-current="page"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
-<a href="upload.html"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
-<a href="shared-courses.html"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
-<a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
-</nav>
-<div class="profile"><span class="avatar">65</span><span class="profile-copy"><b>stu650965xxxx <i></i></b><small>CS Thammasat</small></span><span class="logout">⇥</span></div>
-</header>
-<main class="page">
-<a class="back-link" href="courses.html" aria-label="กลับหน้ารายวิชา"><svg class="icon"><use href="#i-back"/></svg></a>
-<section class="content">
-<h1 id="courseHeading">เลือกรายวิชา</h1>
-<p id="courseName" class="selected-course-name"></p>
+    <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <symbol id="i-file" viewBox="0 0 24 24">
+            <path d="M5 2h9l5 5v15H5zM14 2v6h5" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+            <circle cx="10.5" cy="10.5" r="7" />
+            <path d="m16 16 5 5" />
+        </symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24">
+            <path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3" />
+        </symbol>
+        <symbol id="i-shared" viewBox="0 0 24 24">
+            <path d="M3 5h7l2 3h9v12H3z" />
+        </symbol>
+        <symbol id="i-bookmark" viewBox="0 0 24 24">
+            <path d="M6 3h12v18l-6-4-6 4z" />
+        </symbol>
+        <symbol id="i-back" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 7 7 12l5 5M7 12h10" />
+        </symbol>
+        <symbol id="i-document" viewBox="0 0 24 24">
+            <path d="M5 3h10l4 4v14H5zM15 3v5h4M8 12h8" />
+        </symbol>
+    </svg>
+    <header class="topbar">
+        <a class="brand" href="index.html"><svg class="icon brand-icon">
+                <use href="#i-file" />
+            </svg><span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span></a>
+        <nav aria-label="เมนูหลัก">
+            <a class="active" href="courses.html" aria-current="page"><svg class="icon">
+                    <use href="#i-search" />
+                </svg>ค้นหา</a>
+            <a href="upload.html"><svg class="icon">
+                    <use href="#i-upload" />
+                </svg>อัปโหลดเอกสาร</a>
+            <a href="shared-courses.html"><svg class="icon">
+                    <use href="#i-shared" />
+                </svg>รายวิชาที่แบ่งปัน</a>
+            <a href="saved-courses.html"><svg class="icon">
+                    <use href="#i-bookmark" />
+                </svg>รายวิชาที่บันทึก</a>
+        </nav>
+        <div class="profile">
+  <span class="avatar" data-user-avatar>?</span>
+  <span class="profile-copy">
+    <b data-user-name>กำลังโหลด…</b>
+    <small data-user-id></small>
+  </span>
+</div>
+    </header>
+    <main class="page">
+        <a class="back-link" href="courses.html" aria-label="กลับหน้ารายวิชา"><svg class="icon">
+                <use href="#i-back" />
+            </svg></a>
+        <section class="content">
+            <h1 id="courseHeading">เลือกรายวิชา</h1>
+            <p id="courseName" class="selected-course-name"></p>
 
-<div class="tabs" role="tablist" aria-label="ประเภทเอกสาร">
-<button id="guides-tab" class="tab active" type="button" role="tab" data-tab="guides" aria-selected="true" aria-controls="documentPanel"><svg class="icon" aria-hidden="true"><use href="#i-document"/></svg>แนวข้อสอบ</button>
-<button id="summaries-tab" class="tab" type="button" role="tab" data-tab="summaries" aria-selected="false" aria-controls="documentPanel" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="#i-document"/></svg>สรุป</button>
-</div>
-<div id="filters" class="filters">
-<label><span class="sr-only">ช่วงสอบ</span><select id="periodFilter"><option value="all">ช่วงสอบ: ทั้งหมด</option></select></label>
-<label><span class="sr-only">ปีการศึกษา</span><select id="yearFilter"><option value="all">ปีการศึกษา: ทั้งหมด</option></select></label>
-<label><span class="sr-only">ภาคเรียน</span><select id="semesterFilter"><option value="all">ภาคเรียน: ทั้งหมด</option></select></label>
-</div>
-<div id="resultToolbar" class="result-toolbar">
-<div class="result-left"><span id="resultCount" role="status" aria-live="polite" tabindex="-1">พบ 0 เอกสาร</span><div id="activeFilters" class="chips"></div><button id="clearFilters" class="clear-button" type="button">ล้างตัวกรองทั้งหมด</button></div>
-<label class="sort-label">เรียงตาม: <select id="sortFilter"><option value="latest">ล่าสุด</option><option value="oldest">เก่าสุด</option><option value="title">ชื่อเอกสาร</option></select></label>
-</div>
-<section id="documentPanel" role="tabpanel" aria-labelledby="guides-tab">
-<div id="documentList" class="document-list"></div>
-<div id="emptyState" class="empty-state" hidden><strong id="emptyTitle"></strong><p id="emptyDescription"></p><button id="emptyClear" type="button" hidden>ล้างตัวกรอง</button><a id="backToSearch" href="courses.html" hidden>กลับหน้าค้นหารายวิชา</a></div>
-</section>
-<nav id="pagination" class="pagination" aria-label="แบ่งหน้า" hidden></nav>
-<p class="preview-note">ข้อมูลแนวข้อสอบตัวอย่างร่วมกับหน้ารายวิชาที่แบ่งปัน</p>
-<noscript>กรุณาเปิด JavaScript เพื่อแสดงข้อมูลรายวิชา</noscript>
-</section></main>
-<footer class="footer"><div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><small>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small></div><div class="footer-links"><a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a></div></footer>
-</body></html>
+            <div class="tabs" role="tablist" aria-label="ประเภทเอกสาร">
+                <button id="guides-tab" class="tab active" type="button" role="tab" data-tab="guides"
+                    aria-selected="true" aria-controls="documentPanel"><svg class="icon" aria-hidden="true">
+                        <use href="#i-document" />
+                    </svg>แนวข้อสอบ</button>
+                <button id="summaries-tab" class="tab" type="button" role="tab" data-tab="summaries"
+                    aria-selected="false" aria-controls="documentPanel" tabindex="-1"><svg class="icon"
+                        aria-hidden="true">
+                        <use href="#i-document" />
+                    </svg>สรุป</button>
+            </div>
+            <div id="filters" class="filters">
+                <label><span class="sr-only">ช่วงสอบ</span><select id="periodFilter">
+                        <option value="all">ช่วงสอบ: ทั้งหมด</option>
+                    </select></label>
+                <label><span class="sr-only">ปีการศึกษา</span><select id="yearFilter">
+                        <option value="all">ปีการศึกษา: ทั้งหมด</option>
+                    </select></label>
+                <label><span class="sr-only">ภาคเรียน</span><select id="semesterFilter">
+                        <option value="all">ภาคเรียน: ทั้งหมด</option>
+                    </select></label>
+            </div>
+            <div id="resultToolbar" class="result-toolbar">
+                <div class="result-left"><span id="resultCount" role="status" aria-live="polite" tabindex="-1">พบ 0
+                        เอกสาร</span>
+                    <div id="activeFilters" class="chips"></div><button id="clearFilters" class="clear-button"
+                        type="button">ล้างตัวกรองทั้งหมด</button>
+                </div>
+                <label class="sort-label">เรียงตาม: <select id="sortFilter">
+                        <option value="latest">ล่าสุด</option>
+                        <option value="oldest">เก่าสุด</option>
+                        <option value="title">ชื่อเอกสาร</option>
+                    </select></label>
+            </div>
+            <section id="documentPanel" role="tabpanel" aria-labelledby="guides-tab">
+                <div id="documentList" class="document-list"></div>
+                <div id="emptyState" class="empty-state" hidden><strong id="emptyTitle"></strong>
+                    <p id="emptyDescription"></p><button id="emptyClear" type="button" hidden>ล้างตัวกรอง</button><a
+                        id="backToSearch" href="courses.html" hidden>กลับหน้าค้นหารายวิชา</a>
+                </div>
+            </section>
+            <nav id="pagination" class="pagination" aria-label="แบ่งหน้า" hidden></nav>
+            <p class="preview-note">ข้อมูลแนวข้อสอบตัวอย่างร่วมกับหน้ารายวิชาที่แบ่งปัน</p>
+            <noscript>กรุณาเปิด JavaScript เพื่อแสดงข้อมูลรายวิชา</noscript>
+        </section>
+    </main>
+    <footer class="footer">
+        <div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><small>มหาวิทยาลัยธรรมศาสตร์
+                ศูนย์รังสิต</small></div>
+        <div class="footer-links"><a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a></div>
+    </footer>
+</body>
+
+</html>
