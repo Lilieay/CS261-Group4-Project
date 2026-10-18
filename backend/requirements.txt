@@ -1,4 +1,7 @@
-fastapi
+﻿fastapi
 uvicorn
 pytest
-httpx2
+httpx
+SQLAlchemy
+pyodbc
+python-dotenv

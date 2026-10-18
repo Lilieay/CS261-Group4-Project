@@ -1,0 +1,33 @@
+{
+  "publisher": {
+    "username": "t41_demo_publisher",
+    "displayname_th": "ผู้เผยแพร่ตัวอย่าง Task41",
+    "displayname_en": "Task41 Demo Publisher"
+  },
+  "guides": [
+    {
+      "course_code": "CS261",
+      "title": "[T41-DEMO] แนวข้อสอบ CS261: การออกแบบซอฟต์แวร์",
+      "academic_year": 2568,
+      "semester": 1,
+      "exam_period": "midterm",
+      "topics": "การเก็บความต้องการ\nการออกแบบ Use Case\nหลักการออกแบบซอฟต์แวร์",
+      "exam_format": "mixed",
+      "objective_count": 15,
+      "subjective_count": 3,
+      "additional_advice": "ข้อมูลตัวอย่างสำหรับสาธิตระบบ ไม่ใช่แนวข้อสอบจริง"
+    },
+    {
+      "course_code": "CS261",
+      "title": "[T41-DEMO] แนวข้อสอบ CS261: การทดสอบซอฟต์แวร์",
+      "academic_year": 2567,
+      "semester": 2,
+      "exam_period": "final",
+      "topics": "การทดสอบระดับหน่วย\nการทดสอบการทำงานร่วมกัน",
+      "exam_format": "subjective",
+      "objective_count": null,
+      "subjective_count": 5,
+      "additional_advice": "ข้อมูลตัวอย่างสำหรับสาธิตระบบ ไม่ใช่แนวข้อสอบจริง"
+    }
+  ]
+}
