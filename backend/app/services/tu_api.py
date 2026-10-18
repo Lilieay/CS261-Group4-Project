@@ -27,8 +27,8 @@ class TUVerificationError(Exception):
 def _mock_verify(username: str, password: str) -> TUAccount | None:
     # Demo-only credentials. They are not persisted in User/profile data.
     demo_accounts = {
-        os.getenv("TU_MOCK_USERNAME", "student"): (
-            os.getenv("TU_MOCK_PASSWORD", "password123"),
+        os.getenv("TU_MOCK_USERNAME", "6800000000"): (
+            os.getenv("TU_MOCK_PASSWORD", "0000000000000"),
             "Student User",
             "student",
             True,
