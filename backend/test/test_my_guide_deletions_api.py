@@ -29,7 +29,7 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
     Base.metadata.create_all(connection)
     session = Session(connection, join_transaction_mode="create_savepoint")
 
-    owner = User(username="student", displayname_th="เจ้าของทดสอบ")
+    owner = User(username="6800000000", displayname_th="เจ้าของทดสอบ")
     other = User(username="admin", displayname_th="ผู้ใช้อื่น")
     course = Course(course_code="CS261", course_name="Software Engineering")
     session.add_all([owner, other, course])
@@ -81,8 +81,8 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
         engine.dispose()
 
 
-def login(client: TestClient, username: str = "student") -> str:
-    password = "password123" if username == "student" else "admin123"
+def login(client: TestClient, username: str = "6800000000") -> str:
+    password = "0000000000000" if username == "6800000000" else "admin123"
     response = client.post(
         "/api/auth/login",
         json={"username": username, "password": password},
