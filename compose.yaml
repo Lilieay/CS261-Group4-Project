@@ -11,6 +11,7 @@ services:
       - "127.0.0.1:1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test:
         - CMD-SHELL
@@ -28,6 +29,9 @@ services:
     environment:
       DB_CONNECTION_STRING: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=sqlserver,1433;DATABASE=CS261Group4Dev;UID=sa;Encrypt=yes;TrustServerCertificate=yes"
       DB_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+      TU_API_MODE: "${TU_API_MODE:-mock}"
+      TU_API_URL: "${TU_API_URL:-}"
+      TU_API_TIMEOUT: "${TU_API_TIMEOUT:-5}"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
