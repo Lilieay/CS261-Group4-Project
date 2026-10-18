@@ -10,4 +10,3 @@ app.include_router(my_guide_updates_router)
 @app.get("/")
 def root():
     return {"message": "Backend is running"}
-
