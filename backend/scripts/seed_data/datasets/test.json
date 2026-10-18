@@ -1,0 +1,57 @@
+{
+  "publisher": {
+    "username": "t41_test_publisher",
+    "displayname_th": "ผู้เผยแพร่ชุดทดสอบ Task41",
+    "displayname_en": "Task41 Test Publisher"
+  },
+  "guides": [
+    {
+      "course_code": "CS261",
+      "title": "[T41-TEST] CS261 กลางภาค ปี 2568 ภาคเรียน 1",
+      "academic_year": 2568,
+      "semester": 1,
+      "exam_period": "midterm",
+      "topics": "การเก็บความต้องการ\nUse Case และ User Story\nการออกแบบ UML",
+      "exam_format": "mixed",
+      "objective_count": 20,
+      "subjective_count": 5,
+      "additional_advice": "ทบทวนตัวอย่างและฝึกอธิบายเหตุผลของการออกแบบ"
+    },
+    {
+      "course_code": "CS261",
+      "title": "[T41-TEST] CS261 ปลายภาค ปี 2568 ภาคเรียน 1",
+      "academic_year": 2568,
+      "semester": 1,
+      "exam_period": "final",
+      "topics": "การทดสอบซอฟต์แวร์\nการบำรุงรักษา",
+      "exam_format": "subjective",
+      "objective_count": null,
+      "subjective_count": 4,
+      "additional_advice": null
+    },
+    {
+      "course_code": "CS261",
+      "title": "[T41-TEST] CS261 กลางภาค ปี 2567 ภาคเรียน 2",
+      "academic_year": 2567,
+      "semester": 2,
+      "exam_period": "midterm",
+      "topics": "กระบวนการพัฒนาซอฟต์แวร์",
+      "exam_format": "objective",
+      "objective_count": 30,
+      "subjective_count": null,
+      "additional_advice": ""
+    },
+    {
+      "course_code": "CS102",
+      "title": "[T41-TEST] CS102 กลางภาค ปี 2568 ภาคเรียน 1",
+      "academic_year": 2568,
+      "semester": 1,
+      "exam_period": "midterm",
+      "topics": "การเขียนโปรแกรมพื้นฐาน",
+      "exam_format": "objective",
+      "objective_count": 25,
+      "subjective_count": null,
+      "additional_advice": null
+    }
+  ]
+}
