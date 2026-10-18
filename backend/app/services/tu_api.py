@@ -5,10 +5,11 @@ available only for local tests/demo and is never treated as a real TU result.
 """
 
 import json
+import http.client
+import math
 import os
 import secrets
 from dataclasses import dataclass
-from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -49,23 +50,30 @@ def _real_verify(username: str, password: str) -> TUAccount | None:
             "TU_API_URL and TU_API_KEY must be configured for real TU API"
         )
 
-    payload = json.dumps({"UserName": username, "PassWord": password}).encode("utf-8")
-    request = Request(
-        endpoint,
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Application-Key": application_key,
-        },
-        method="POST",
-    )
     try:
-        with urlopen(request, timeout=float(os.getenv("TU_API_TIMEOUT", "5"))) as response:
+        timeout = float(os.getenv("TU_API_TIMEOUT", "5"))
+    except ValueError as error:
+        raise TUVerificationError("TU_API_TIMEOUT must be a positive number") from error
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise TUVerificationError("TU_API_TIMEOUT must be a positive number")
+
+    try:
+        payload = json.dumps({"UserName": username, "PassWord": password}).encode("utf-8")
+        request = Request(
+            endpoint,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Application-Key": application_key,
+            },
+            method="POST",
+        )
+        with urlopen(request, timeout=timeout) as response:
             if response.status != 200:
                 raise TUVerificationError("TU API rejected the request")
             body = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+    except (http.client.HTTPException, OSError, ValueError) as error:
         raise TUVerificationError("TU API is unavailable or returned invalid data") from error
 
     if not isinstance(body, dict):
@@ -75,13 +83,19 @@ def _real_verify(username: str, password: str) -> TUAccount | None:
     # an explicit successful student response as an eligible account.
     if body.get("status") is not True:
         return None
-    account_type = str(body.get("type", "")).strip().lower()
-    display_name = (
-        str(body.get("displayname_th") or body.get("displayname_en") or "").strip()
-    )
-    if account_type != "student" or not username.strip() or not display_name:
+    raw_type = body.get("type")
+    if not isinstance(raw_type, str) or raw_type.strip().lower() != "student":
         return None
-    return TUAccount(username.strip(), display_name, account_type, True)
+    display_name = ""
+    for field in ("displayname_th", "displayname_en"):
+        value = body.get(field)
+        if isinstance(value, str) and value.strip():
+            display_name = value.strip()
+            break
+    normalized_username = username.strip()
+    if not normalized_username or not display_name:
+        return None
+    return TUAccount(normalized_username, display_name, "student", True)
 
 
 def verify_tu_account(username: str, password: str) -> TUAccount | None:
