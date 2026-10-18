@@ -14,6 +14,19 @@
 
 ใช้ `TU_API_MODE=mock` (ค่าเริ่มต้น) บัญชีเริ่มต้นคือ `6800000000 / 0000000000000` หาก environment ของ Backend กำหนด `TU_MOCK_USERNAME` หรือ `TU_MOCK_PASSWORD` อยู่แล้ว ค่านั้นจะทับค่าเริ่มต้น ต้องใช้ข้อมูลให้ตรงกับ environment และ username ต้องเป็นตัวเลขเพื่อผ่านฟอร์ม
 
+## การตั้งค่า TU API จริง
+
+โหมดจริงใช้ `TU_API_MODE=real` และอ่านค่าลับจาก environment เท่านั้น ห้ามใส่ Token Key หรือรหัสผ่านจริงลงใน source code, Postman Collection หรือ Git:
+
+```text
+TU_API_MODE=real
+TU_API_URL=<TU Authentication API endpoint>
+TU_API_KEY=<Application-Key จาก TU API Developer>
+TU_API_TIMEOUT=5
+```
+
+Backend จะส่ง `UserName` และ `PassWord` ใน JSON พร้อม Header `Application-Key` และรับ Response ที่มี `status=true`, `type=student` และ `displayname_th` หรือ `displayname_en` ตาม Contract ของ TU Authentication API หากไม่ผ่านเงื่อนไขจะปฏิเสธ Login แบบเดียวกับบัญชีไม่ถูกต้อง
+
 ## สถานะ UI–API จากการตรวจโค้ด
 
 ตารางนี้เป็นการตรวจเส้นทางโค้ด ไม่ใช่ผลทดสอบผ่าน browser จริง การทดสอบ Docker และ System Test อยู่ใน Task16

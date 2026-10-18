@@ -43,14 +43,21 @@ def _mock_verify(username: str, password: str) -> TUAccount | None:
 
 def _real_verify(username: str, password: str) -> TUAccount | None:
     endpoint = os.getenv("TU_API_URL", "").strip()
-    if not endpoint:
-        raise TUVerificationError("TU_API_URL is not configured")
+    application_key = os.getenv("TU_API_KEY", "").strip()
+    if not endpoint or not application_key:
+        raise TUVerificationError(
+            "TU_API_URL and TU_API_KEY must be configured for real TU API"
+        )
 
-    payload = json.dumps({"username": username, "password": password}).encode("utf-8")
+    payload = json.dumps({"UserName": username, "PassWord": password}).encode("utf-8")
     request = Request(
         endpoint,
         data=payload,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Application-Key": application_key,
+        },
         method="POST",
     )
     try:
@@ -64,15 +71,17 @@ def _real_verify(username: str, password: str) -> TUAccount | None:
     if not isinstance(body, dict):
         raise TUVerificationError("TU API returned an invalid response shape")
 
-    # The integration contract requires explicit proof of identity and status.
-    if body.get("authenticated") is not True or body.get("active") is not True:
+    # TU's Authentication API returns status/type/display names. Treat only
+    # an explicit successful student response as an eligible account.
+    if body.get("status") is not True:
         return None
-    account_type = str(body.get("account_type", "")).strip().lower()
-    verified_username = str(body.get("username", "")).strip()
-    display_name = str(body.get("display_name", "")).strip()
-    if account_type != "student" or not verified_username or not display_name:
+    account_type = str(body.get("type", "")).strip().lower()
+    display_name = (
+        str(body.get("displayname_th") or body.get("displayname_en") or "").strip()
+    )
+    if account_type != "student" or not username.strip() or not display_name:
         return None
-    return TUAccount(verified_username, display_name, account_type, True)
+    return TUAccount(username.strip(), display_name, account_type, True)
 
 
 def verify_tu_account(username: str, password: str) -> TUAccount | None:
