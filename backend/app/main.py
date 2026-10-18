@@ -8,3 +8,4 @@ app.include_router(auth_router)
 @app.get("/")
 def root():
     return {"message": "Backend is running"}
+
