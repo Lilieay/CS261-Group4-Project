@@ -1,0 +1,114 @@
+{
+  "info": {
+    "_postman_id": "8b25035d-6a0e-4a53-9eac-f2a1ad3c5d57",
+    "name": "Task57 - Publish Guide API",
+    "description": "Tests POST /guides. Set baseUrl, accessToken, and courseId variables locally. Obtain accessToken by logging in through the existing API; this collection contains no real credentials or token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "courseId", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Publish guide - valid request (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 201 Created', function () { pm.response.to.have.status(201); });",
+              "pm.test('returns the created guide and course', function () { const body = pm.response.json(); pm.expect(body.id).to.be.a('number'); pm.expect(body.course.id).to.equal(Number(pm.collectionVariables.get('courseId'))); pm.expect(body.publisher_name).to.be.a('string'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"Task57 Postman test guide\",\n  \"academic_year\": 2569,\n  \"semester\": 1,\n  \"exam_period\": \"midterm\",\n  \"topics\": \"Postman test topic\",\n  \"exam_format\": \"mixed\",\n  \"objective_count\": 10,\n  \"subjective_count\": 2,\n  \"additional_advice\": null\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/guides",
+          "host": ["{{baseUrl}}"],
+          "path": ["guides"]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+        },
+        "description": "Set the collection variables locally. Do not save a real token in the shared collection."
+      },
+      "response": []
+    },
+    {
+      "name": "Publish guide - missing token (401)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 401 Unauthorized', function () { pm.response.to.have.status(401); });",
+              "pm.test('uses the standard auth error code', function () { pm.expect(pm.response.json().error.code).to.equal('AUTH_REQUIRED'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"Task57 unauthenticated attempt\",\n  \"academic_year\": 2569,\n  \"semester\": 1,\n  \"exam_period\": \"midterm\",\n  \"topics\": \"Test topic\",\n  \"exam_format\": \"mixed\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/guides",
+          "host": ["{{baseUrl}}"],
+          "path": ["guides"]
+        },
+        "auth": { "type": "noauth" },
+        "description": "Confirms the existing current_user Login dependency protects publishing."
+      },
+      "response": []
+    },
+    {
+      "name": "Publish guide - invalid request (422)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('returns 422 Unprocessable Entity', function () { pm.response.to.have.status(422); });",
+              "pm.test('returns the standard validation error code', function () { pm.expect(pm.response.json().error.code).to.equal('INVALID_PARAMETERS'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"   \",\n  \"academic_year\": 2569,\n  \"semester\": 1,\n  \"exam_period\": \"midterm\",\n  \"topics\": \"Test topic\",\n  \"exam_format\": \"mixed\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/guides",
+          "host": ["{{baseUrl}}"],
+          "path": ["guides"]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+        },
+        "description": "Confirms whitespace-only required text is rejected and does not create a guide."
+      },
+      "response": []
+    }
+  ]
+}
