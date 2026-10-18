@@ -1,0 +1,75 @@
+{
+  "info": {
+    "_postman_id": "a8752a63-6f55-4eaa-b09e-71ef9dd3efbb",
+    "name": "CS261 Task71 - My Guides API",
+    "description": "ทดสอบการเข้าสู่ระบบและเรียกดูแนวข้อสอบของผู้ใช้ปัจจุบัน ตั้งค่า username/password ใน environment ของ Postman เองก่อนส่งคำขอ โดย collection นี้ไม่เก็บรหัสผ่านหรือ token จริง",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "username", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "accessToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/api/auth/login",
+        "description": "กำหนด username และ password ใน environment ส่วนตัวของ Postman ก่อนเรียกใช้ ไม่บันทึกค่าจริงไว้ใน collection"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Login succeeds', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "if (pm.response.code === 200) {",
+              "    pm.collectionVariables.set('accessToken', pm.response.json().access_token);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "List my guides",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+        },
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/my-guides",
+        "description": "ส่ง Bearer token ที่ได้จากคำขอ Login และแสดงเฉพาะแนวข้อสอบที่เป็นของบัญชีที่เข้าสู่ระบบ"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('My guides request succeeds', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response is an array', function () {",
+              "    pm.expect(pm.response.json()).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
