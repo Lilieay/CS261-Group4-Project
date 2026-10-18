@@ -1,4 +1,4 @@
-# Task5: U1 — กำหนด Login API และวิธีเก็บสถานะผู้ใช้
+﻿# Task5: U1 — กำหนด Login API และวิธีเก็บสถานะผู้ใช้
 
 ## ขอบเขต
 
@@ -15,6 +15,14 @@
 
 สถานะผู้ใช้เป็น session แบบ in-memory สำหรับการสาธิตและการทดสอบ เมื่อ Backend restart ค่า session จะหายทั้งหมดและผู้ใช้ต้อง Login ใหม่
 
+## บัญชี mock และกติกาของหน้าเว็บ
+
+บัญชีเริ่มต้นในโหมด mock คือ `6800000000 / 0000000000000` เป็นข้อมูลสมมติ ไม่ใช่บัญชีหรือเลขบัตรประชาชนจริง รหัสผ่าน 13 หลักนี้ใช้สำหรับ mock เท่านั้น ไม่ใช่ข้อบังคับรหัสผ่านจริง หากกำหนด `TU_MOCK_USERNAME` หรือ `TU_MOCK_PASSWORD` ใน environment ของ Backend ค่านั้นจะทับค่าเริ่มต้น
+
+หน้า Login รับ username เฉพาะตัวเลข ความยาวไม่เกิน 50 หลัก ส่วน API ตรวจ username เป็น string ความยาว 1–50 ตัวอักษรและตัดช่องว่างหัวท้ายก่อนยืนยันบัญชี จึงต้องแยกกติกาของฟอร์มออกจากกติกา API
+
+Frontend เก็บเฉพาะ token ใน `sessionStorage` key `access_token` เพื่อส่ง Bearer token ส่วน session ที่จับคู่ token กับผู้ใช้อยู่ในหน่วยความจำของ Backend ไม่เก็บรหัสผ่านใน browser storage
+
 ## API Contract
 
 ### `POST /api/auth/login`
@@ -30,8 +38,8 @@ Content-Type: application/json
 
 ```json
 {
-  "username": "student",
-  "password": "password123"
+  "username": "6800000000",
+  "password": "0000000000000"
 }
 ```
 
@@ -49,7 +57,7 @@ Content-Type: application/json
   "token_type": "bearer",
   "user": {
     "id": 1,
-    "username": "student",
+    "username": "6800000000",
     "display_name": "Student User",
     "role": "student"
   }
@@ -74,7 +82,7 @@ Authorization: Bearer <access_token>
   "logged_in": true,
   "user": {
     "id": 1,
-    "username": "student",
+    "username": "6800000000",
     "display_name": "Student User",
     "role": "student"
   }
@@ -104,7 +112,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "id": 1,
-  "username": "student",
+  "username": "6800000000",
   "display_name": "Student User",
   "role": "student"
 }
