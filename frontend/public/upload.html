@@ -10,6 +10,8 @@
   <link rel="stylesheet" href="css/shared-courses.css">
   <link rel="stylesheet" href="css/upload.css">
   <script src="js/course-data.js" defer></script>
+  <script src="js/upload-config.js" defer></script>
+  <script src="js/guide-api.js" defer></script>
   <script src="js/upload.js" defer></script>
   <style>
     .form-group label {
@@ -82,42 +84,51 @@
         <p>กรอกข้อมูลแนวข้อสอบของคุณเพื่อเป็นประโยชน์แก่เพื่อนๆ นักศึกษามหาวิทยาลัยธรรมศาสตร์ (โปรดกรอก/เลือก ในหัวข้อที่มี <span class="required">*</span> ให้ครบถ้วน)</p>
       </div>
 
-      <form class="upload-form" id="upload-form">
+      <p id="publish-mode" class="publish-mode">กำลังเตรียมข้อมูล…</p>
+      <noscript><p class="publish-notice">กรุณาเปิด JavaScript เพื่อใช้งานฟอร์มเผยแพร่</p></noscript>
+      <form class="upload-form" id="upload-form" novalidate>
+        <div id="publish-errors" class="publish-errors" role="alert" tabindex="-1" hidden></div>
+        <a id="publish-login" class="publish-help" href="login.html" hidden>เข้าสู่ระบบใหม่</a>
+        <p id="publish-check" class="publish-notice" hidden>ยังยืนยันผลบันทึกไม่ได้ กรุณาตรวจรายการของคุณก่อนส่งอีกครั้ง เพื่อหลีกเลี่ยงรายการซ้ำ</p>
+        <button id="publish-retry" class="publish-retry" type="button" hidden>ลองโหลดข้อมูลอีกครั้ง</button>
+        <p id="publish-status" class="publish-status" role="status" aria-live="polite"></p>
+        <fieldset id="upload-fields" disabled>
+          <legend class="upload-sr-only">ข้อมูลแนวข้อสอบ</legend>
         <div class="form-grid">
           <!-- ฝั่งซ้าย: ข้อมูลรายวิชาและรายละเอียด -->
           <div class="form-column">
             <div class="form-group">
               <label for="course-select">รายวิชาประจำภาควิชา CS <span class="required">*</span></label>
               <div class="select-wrapper">
-                <select id="course-select" name="course" required>
+                <select id="course-select" name="course" required aria-describedby="course-select-error">
                   <option value="" disabled selected>เลือกรายวิชา</option>
-                  <option value="CS101">CS101 - Introduction to Computer Science</option>
-                  <option value="CS261">CS261 - Computer Organization and Architecture</option>
+
                 </select>
                 <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
               </div>
+              <small id="course-select-error" class="upload-field-error" hidden></small>
             </div>
 
             <div class="form-group">
               <label for="exam-title">ชื่อแนวข้อสอบ <span class="required">*</span></label>
-              <input type="text" id="exam-title" name="title" placeholder="ตั้งชื่อแนวข้อสอบนี้" required>
+              <input type="text" id="exam-title" name="title" maxlength="200" placeholder="ตั้งชื่อแนวข้อสอบนี้" required aria-describedby="exam-title-error">
+              <small id="exam-title-error" class="upload-field-error" hidden></small>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label for="academic-year">ปีการศึกษา <span class="required">*</span></label>
                 <div class="select-wrapper">
-                  <select id="academic-year" name="academicYear" required>
+                  <select id="academic-year" name="academicYear" required aria-describedby="academic-year-error">
                     <option value="" disabled selected>เลือกปีการศึกษาของภาควิชานั้น</option>
-                    <option value="2567">2567</option>
-                    <option value="2566">2566</option>
                   </select>
                   <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
                 </div>
+              <small id="academic-year-error" class="upload-field-error" hidden></small>
               </div>
               <div class="form-group">
-                <label for="author">ชื่อผู้แบ่งปัน <span class="required">*</span></label>
-                <input type="text" id="author" name="author" value="[Avatar] stu650965xxxx (แสดงอัตโนมัติ)" readonly>
+                <label for="author">ชื่อผู้แบ่งปัน</label>
+                <input type="text" id="author" name="author" value="กำลังตรวจสอบบัญชี…" readonly>
               </div>
             </div>
 
@@ -125,7 +136,7 @@
               <div class="form-group">
                 <label for="semester">ภาคเรียน <span class="required">*</span></label>
                 <div class="select-wrapper">
-                  <select id="semester" name="semester" required>
+                  <select id="semester" name="semester" required aria-describedby="semester-error">
                     <option value="" disabled selected>เลือกภาคเรียน</option>
                     <option value="1">ภาคเรียนที่ 1</option>
                     <option value="2">ภาคเรียนที่ 2</option>
@@ -133,36 +144,53 @@
                   </select>
                   <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
                 </div>
+              <small id="semester-error" class="upload-field-error" hidden></small>
               </div>
               <div class="form-group">
                 <label for="exam-period">ช่วงการสอบ <span class="required">*</span></label>
                 <div class="select-wrapper">
-                  <select id="exam-period" name="examPeriod" required>
+                  <select id="exam-period" name="examPeriod" required aria-describedby="exam-period-error">
                     <option value="" disabled selected>เลือกช่วงการสอบ</option>
                     <option value="midterm">กลางภาค (Midterm)</option>
                     <option value="final">ปลายภาค (Final)</option>
                   </select>
                   <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
                 </div>
+              <small id="exam-period-error" class="upload-field-error" hidden></small>
               </div>
             </div>
 
             <div class="form-group">
               <label for="exam-type">รูปแบบข้อสอบ <span class="required">*</span></label>
               <div class="select-wrapper">
-                <select id="exam-type" name="examType" required>
+                <select id="exam-type" name="examType" required aria-describedby="exam-type-error">
                   <option value="" disabled selected>ใส่รูปแบบการสอบ</option>
-                  <option value="choice">ปรนัย (Choice)</option>
-                  <option value="writing">อัตนัย (เขียนตอบ)</option>
+                  <option value="objective">ปรนัย (Choice)</option>
+                  <option value="subjective">อัตนัย (เขียนตอบ)</option>
                   <option value="mixed">ปรนัย + อัตนัย</option>
                 </select>
                 <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
               </div>
+              <small id="exam-type-error" class="upload-field-error" hidden></small>
             </div>
 
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subjective-count">จำนวนข้ออัตนัย</label>
+                <input type="number" id="subjective-count" name="subjectiveCount" min="1" step="1" inputmode="numeric" placeholder="ไม่ระบุ" aria-describedby="subjective-count-error">
+              <small id="subjective-count-error" class="upload-field-error" hidden></small>
+              </div>
+              <div class="form-group">
+                <label for="objective-count">จำนวนข้อปรนัย</label>
+                <input type="number" id="objective-count" name="objectiveCount" min="1" step="1" inputmode="numeric" placeholder="ไม่ระบุ" aria-describedby="objective-count-error">
+              <small id="objective-count-error" class="upload-field-error" hidden></small>
+              </div>
+            </div>
+            <p class="upload-count-hint">เว้นว่างเมื่อไม่ระบุจำนวนข้อ เลือกอัตนัยหรือปรนัยเพื่อกรอกเฉพาะประเภทนั้น</p>
             <div class="form-group">
-              <label for="exam-topics">หัวข้อที่ออกสอบ</label>
-              <input type="text" id="exam-topics" name="topics" placeholder="หัวข้อที่ออกสอบ">
+              <label for="exam-topics">หัวข้อที่ออกสอบ <span class="required">*</span></label>
+              <textarea id="exam-topics" name="topics" rows="3" maxlength="2000" placeholder="หัวข้อที่ออกสอบ" required aria-describedby="exam-topics-error"></textarea>
+              <small id="exam-topics-error" class="upload-field-error" hidden></small>
             </div>
           </div>
 
@@ -170,16 +198,22 @@
           <div class="form-column form-column-right">
             <div class="form-group full-height">
               <label for="note">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label>
-              <textarea id="note" name="note" placeholder="คำแนะนำ"></textarea>
+              <textarea id="note" name="note" maxlength="2000" placeholder="คำแนะนำ" aria-describedby="note-error"></textarea>
+              <small id="note-error" class="upload-field-error" hidden></small>
             </div>
 
             <div class="form-actions">
               <a href="courses.html" class="btn-cancel">ยกเลิก</a>
-              <button type="submit" class="btn-submit">เผยแพร่</button>
+              <button type="submit" class="btn-submit" id="publish-submit">เผยแพร่</button>
             </div>
           </div>
         </div>
+        </fieldset>
       </form>
+      <section id="publish-success" class="publish-success" role="status" hidden>
+        <p id="publish-success-text"></p>
+        <a id="published-link" href="courses.html">เปิดรายละเอียดแนวข้อสอบ</a>
+      </section>
     </section>
   </main>
 
