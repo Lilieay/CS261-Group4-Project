@@ -133,3 +133,7 @@ h1 { margin: 0 0 15px; font-size: 30px; line-height: 1.38; font-weight: 600; let
 .reading-empty { padding: 36px 20px; border: 1px solid #d9dff3; border-radius: 8px; }
 .reading-back-button { display: inline-block; margin-top: 15px; padding: 10px 14px; border: 1px solid #aab9d5; border-radius: 4px; color: #344f80; }
 .reading-preview { margin: 16px 0 0; color: #8490a5; font-size: 11px; }
+
+html {
+  scrollbar-gutter: stable;
+}
