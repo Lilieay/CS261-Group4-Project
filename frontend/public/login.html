@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/login.css">
+  <script src="js/login-config.js" defer></script>
+  <script src="js/login.js" defer></script>
 </head>
 <body>
   <main class="login-page">
@@ -16,33 +18,30 @@
       <p>คลังสรุปบทเรียนและแนวข้อสอบ สาขาวิชาวิทยาการคอมพิวเตอร์</p>
     </header>
     <section class="login-card" aria-label="แบบฟอร์มเข้าสู่ระบบ">
-      <!-- Connect authentication before using this page in production. -->
-      <form onsubmit="event.preventDefault()">
+      <form id="login-form" novalidate>
         <div class="form-group">
-          <label for="username">รหัสนักศึกษา หรือ อีเมล</label>
+          <label for="username">รหัสนักศึกษา</label>
           <div class="input-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 19v-2c0-3 14-3 14 0v2z"/></svg>
-            <input id="username" name="username" type="text" class="form-control" placeholder="6xxxxxxxx หรือ email@dome.tu.ac.th" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            <input id="username" name="username" inputmode="numeric" maxlength="50" aria-describedby="username-error" type="text" class="form-control" placeholder="กรอกรหัสนักศึกษา" autocomplete="username" autocapitalize="none" spellcheck="false" required>
           </div>
+          <p id="username-error" class="login-field-error" role="alert" hidden></p>
         </div>
         <div class="form-group">
           <div class="form-label-row">
             <label for="password">รหัสผ่าน</label>
-            <!-- Replace # with the password recovery URL when available. -->
-            <a href="#" class="forgot-password" onclick="event.preventDefault()">ลืมรหัสผ่าน?</a>
+            <button id="forgot-password" type="button" class="forgot-password">ลืมรหัสผ่าน?</button>
           </div>
           <div class="input-wrapper">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="9" width="14" height="12" rx="1"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15" r="1"/><path d="M12 16v2"/></svg>
-            <input id="password" name="password" type="password" class="form-control" placeholder="************" autocomplete="current-password" required>
+            <input id="password" name="password" maxlength="100" aria-describedby="password-error" type="password" class="form-control" placeholder="************" autocomplete="current-password" required>
           </div>
+          <p id="password-error" class="login-field-error" role="alert" hidden></p>
         </div>
-        <button type="submit" class="btn-submit">เข้าสู่ระบบ</button>
-        <div class="divider"><span>หรือ</span></div>
-        <!-- Connect this button to the university SSO endpoint when available. -->
-        <button type="button" class="btn-sso">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 7 9-5 9 5v1H3zM5 11v6m7-6v6m7-6v6M3 21h18M3 18h18"/></svg>
-          <span>Sign in with University Account</span>
-        </button>
+        <button id="login-submit" type="submit" class="btn-submit">เข้าสู่ระบบ</button>
+
+        <p id="login-message" class="login-message" role="status" aria-live="polite" tabindex="-1" hidden></p>
+        <a id="login-next" class="login-next" href="courses.html" hidden>ไปหน้าค้นหารายวิชา →</a>
       </form>
     </section>
   </main>
