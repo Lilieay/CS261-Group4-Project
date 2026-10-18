@@ -7,7 +7,7 @@
 3. Run this command from the repository root in PowerShell:
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File scripts/task16/start.ps1
+   powershell -ExecutionPolicy Bypass -File scripts/start-backend.ps1
    ```
 
 The script builds the backend image, starts SQL Server, waits for its existing

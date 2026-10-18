@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 
 if (-not (Test-Path -LiteralPath '.env')) {
@@ -66,4 +66,4 @@ for ($attempt = 0; $attempt -lt 30; $attempt++) {
 if (-not $backendReady) { throw 'Backend did not become ready.' }
 
 Write-Output 'Backend: http://127.0.0.1:8000'
-Write-Output 'Login API: http://127.0.0.1:8000/api/auth/login'
+Write-Output 'API docs: http://127.0.0.1:8000/docs'
