@@ -5,3 +5,4 @@ httpx
 SQLAlchemy
 pyodbc
 python-dotenv
+truststore>=0.10,<0.11

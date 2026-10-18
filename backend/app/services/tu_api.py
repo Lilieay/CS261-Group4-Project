@@ -9,6 +9,8 @@ import http.client
 import math
 import os
 import secrets
+import ssl
+import truststore
 from dataclasses import dataclass
 from urllib.request import Request, urlopen
 
@@ -69,7 +71,9 @@ def _real_verify(username: str, password: str) -> TUAccount | None:
             },
             method="POST",
         )
-        with urlopen(request, timeout=timeout) as response:
+        # Verify TU's certificate using the operating system's trusted CAs.
+        context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        with urlopen(request, timeout=timeout, context=context) as response:
             if response.status != 200:
                 raise TUVerificationError("TU API rejected the request")
             body = json.loads(response.read().decode("utf-8"))
