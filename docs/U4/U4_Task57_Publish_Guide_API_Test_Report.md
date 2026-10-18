@@ -1,4 +1,4 @@
-# Task57: U4 — API เผยแพร่แนวข้อสอบและตรวจข้อมูลฝั่ง Backend
+﻿# Task57: U4 — API เผยแพร่แนวข้อสอบและตรวจข้อมูลฝั่ง Backend
 
 ## ขอบเขตและการทำงาน
 
@@ -38,7 +38,15 @@ API tests ใช้ SQLite ชั่วคราวและ FastAPI TestClient 
 | T57-API02 | ไม่มี token และ token ใช้ไม่ได้ | `401 AUTH_REQUIRED`, ไม่บันทึก Guide | ทั้งสองกรณีได้ `401 AUTH_REQUIRED` | ผ่าน | `test_publish_requires_a_valid_login_token` |
 | T57-API03 | ไม่ส่ง title, title/topics ว่าง, ปี/semester/period ไม่ถูกต้อง, count เป็น 0/ทศนิยม, count ไม่ตรงรูปแบบ, ส่ง `publisher_id` เพิ่ม | `422 INVALID_PARAMETERS`, ไม่บันทึก Guide | 10 payload ย่อยได้ `422`; จำนวน Guide ยังคงเป็น 0 | ผ่าน | `test_publish_rejects_missing_blank_invalid_and_spoofed_fields` (10 subtests) |
 | T57-API04 | course ID ไม่มีอยู่ หรือเป็น MA111 ที่ไม่ใช่วิชา CS | `404 COURSE_NOT_FOUND`, ไม่สร้าง Guide | ทั้งสองกรณีได้ `404 COURSE_NOT_FOUND`; ไม่มี Guide หรือ User ใหม่จากคำขอเหล่านี้ | ผ่าน | `test_publish_rejects_missing_and_out_of_scope_courses` (2 subtests) |
-| T57-API05 | payload ถูกต้องโดยไม่ระบุ counts และคำแนะนำเป็นช่องว่าง | `201`, counts และคำแนะนำยังเป็น `NULL` | ได้ `201`; `subjective_count` และ `additional_advice` เป็น `NULL` | ผ่าน | `test_publish_allows_nullable_optional_values_and_normalizes_advice` |
+| T57-API05 | payload แบบ objective, objective_count=10, subjective_count=NULL และคำแนะนำเป็นช่องว่าง | `201`, subjective_count และคำแนะนำเป็น `NULL` | ได้ `201`; `subjective_count` และ `additional_advice` เป็น `NULL` | ผ่าน | `test_publish_allows_nullable_optional_values_and_normalizes_advice` |
 | T57-API06 | จำลอง DAO create ล้มเหลวหลังตรวจข้อมูล | `500 INTERNAL_ERROR`, ไม่มี Guide บางส่วน | ได้ `500 INTERNAL_ERROR`; ไม่พบ Guide ที่สร้างค้างไว้ | ผ่าน | `test_database_failure_returns_500_and_rolls_back_guide` |
 
-**ผลรันจริง:** API Task57 `6 passed, 12 subtests passed` บน SQLite; เมื่อลองร่วมกับ DAO Task56 และ API อ่านเดิมได้ `19 passed, 15 subtests passed` มี Starlette deprecation warning จาก TestClient/httpx ซึ่งไม่ทำให้ test ล้มเหลว ไม่ได้ทดสอบกับ SQL Server ในรายงานนี้
+**ผลตรวจเพิ่มเติมก่อน merge PR #77:**
+
+- Code revision: `b913cec81931bb45dbff8e802a986ade08a678e2` หลังรวม `integration/sprint1` ที่มี PR #76 แล้ว
+- Environment: Windows PowerShell, Python 3.14.6, SQLite ชั่วคราวและ FastAPI TestClient
+- จาก backend รัน `.venv/Scripts/python.exe -m pytest -p no:cacheprovider test/test_publish_guide_api.py -q`: **6 passed, 12 subtests passed**
+- รันชุด backend ทั้งหมดด้วย `.venv/Scripts/python.exe -m pytest -p no:cacheprovider test -q`: **88 passed, 22 subtests passed**
+- Postman Collection อ่านเป็น JSON ได้ครบ 3 requests; ตรวจรูปแบบไฟล์เท่านั้น ยังไม่ได้รันด้วย Postman
+- DAO ที่ API ใช้เป็นไฟล์เดียวกับ Task56 ซึ่งมีผล SQL Server 5 กรณีใน [รายงาน Task56](U4_Task56_Publish_Guide_DAO_Test_Report.md)
+- API Task57 ในรายงานนี้ยังไม่ได้รันกับ SQL Server, TU API จริง หรือผ่านหน้าเว็บ/Docker; ผล TestClient ไม่ใช้แทนผล integration เหล่านั้น
