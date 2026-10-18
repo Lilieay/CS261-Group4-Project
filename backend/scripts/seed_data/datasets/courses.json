@@ -1,0 +1,200 @@
+[
+  {
+    "code": "CS100",
+    "name": "BASIC WEB DEVELOPMENT",
+    "instructors": [
+      "ผศ.ดร.วนิดา พฤทธิวิทยา",
+      "ผศ.ดร.ประภาพร รัตนธำรง"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS101",
+    "name": "DISCRETE STRUCTURES",
+    "instructors": [
+      "ผศ.ดร.วนิดา พฤทธิวิทยา",
+      "ผศ.ดร.ศาตนาฏ กิจศิรานุวัตร"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS102",
+    "name": "PROBLEM SOLVING BASICS AND COMPUTER PROGRAMMING",
+    "instructors": [
+      "ผศ.ดร.เสาวลักษณ์ วรรธนาภา",
+      "ผศ.ดร.ฐาปนา บุญชู"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS103",
+    "name": "INTRODUCTION TO COMPUTER PROGRAMMING",
+    "instructors": [
+      "รศ.ดร.ณัฐธนนท์ หงส์วริทธิ์ธร",
+      "อ.ดร.ภัคพร เสาร์ฝั้น"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS104",
+    "name": "INTRODUCTION TO COMPUTER PROGRAMMING USING PYTHON",
+    "instructors": [
+      "ผศ.ดร.อรจิรา สิทธิศักดิ์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS213",
+    "name": "DATA STRUCTURES",
+    "instructors": [
+      "ผศ.ดร.วิรัตน์ จารีวงศ์ไพบูลย์",
+      "ผศ.ดร.ฐาปนา บุญชู"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS221",
+    "name": "INTRODUCTION TO COMPUTER SYSTEM AND ORGANIZATION",
+    "instructors": [
+      "ผศ.ดร.เด่นดวง ประดับสุวรรณ"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS223",
+    "name": "VIRTUALIZATION TECHNOLOGY",
+    "instructors": [
+      "ผศ.ดร.กษิดิศ ชาญเชี่ยว"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS224",
+    "name": "LINUX ADMINISTRATION AND PERFORMANCE MONITORING",
+    "instructors": [
+      "ผศ.ดร.วิลาวรรณ รักผกาวงศ์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS240",
+    "name": "PRINCIPLES OF DATA SCIENCE",
+    "instructors": [
+      "ผศ.ดร.ศาตนาฏ กิจศิรานุวัตร",
+      "ผศ.ดร.วนิดา พฤทธิวิทยา"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS241",
+    "name": "PROGRAMMING LANGUAGES AND PARADIGMS",
+    "instructors": [
+      "ผศ.ดร.ทรงศักดิ์ รองวิริยะพานิช"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS261",
+    "name": "INTRODUCTION TO SOFTWARE ENGINEERING",
+    "instructors": [
+      "ผศ.ดร.ทรงศักดิ์ รองวิริยะพานิช"
+    ],
+    "description": "คุณลักษณะซอฟต์แวร์ คุณภาพของซอฟต์แวร์และโครงการซอฟต์แวร์ หลักการของวิศวกรรมซอฟต์แวร์ ระเบียบวิธีในการพัฒนาซอฟต์แวร์ กระบวนการพัฒนาซอฟต์แวร์ที่สำคัญ การวางแผนและจัดการโครงการ การประเมินเวลาและค่าใช้จ่าย วิเคราะห์และการระบุข้อกำหนด เทคนิคการวิเคราะห์และออกแบบซอฟต์แวร์ แนะนำสถาปัตยกรรมซอฟต์แวร์ เทคนิคการพัฒนาโปรแกรม การตรวจสอบและการทวนสอบซอฟต์แวร์ วิวัฒนาการของซอฟต์แวร์ สภาพแวดล้อมการผลิตซอฟต์แวร์และเครื่องมือช่วยจัดการโครงการ กรณีศึกษา มีฝึกปฏิบัตินอกเวลา"
+  },
+  {
+    "code": "CS263",
+    "name": "SOFTWARE REQUIREMENT SPECIFICATION",
+    "instructors": [
+      "ผศ.ดร.ลัมพาพรรณ พันธ์ชูจิตร์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS265",
+    "name": "BASIC MOBILE DEVELOPMENT",
+    "instructors": [
+      "ผศ.ดร.ปกรณ์ ลี้สุทธิพรชัย"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS331",
+    "name": "NET-CENTRIC COMPUTING",
+    "instructors": [
+      "ผศ.ดร.วิลาวรรณ รักผกาวงศ์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS341",
+    "name": "BIG DATA ENGINEERING",
+    "instructors": [
+      "ผศ.ดร.ประภาพร รัตนธำรง"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS345",
+    "name": "PRACTICAL MACHINE LEARNING",
+    "instructors": [
+      "ผศ.ดร.วิรัตน์ จารีวงศ์ไพบูลย์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS346",
+    "name": "BIG DATA APPLICATIONS AND ANALYTICS",
+    "instructors": [
+      "ผศ.ดร.วิรัตน์ จารีวงศ์ไพบูลย์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS361",
+    "name": "CLOUD-BASED SOFTWARE ARCHITECTING",
+    "instructors": [
+      "ผศ.ดร.ประภาพร รัตนธำรง"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS364",
+    "name": "MOBILE APPLICATION DEVELOPMENT",
+    "instructors": [
+      "ผศ.ดร.ปกรณ์ ลี้สุทธิพรชัย"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS373",
+    "name": "ADVANCED SEARCH STRATEGIES",
+    "instructors": [
+      "ผศ.ดร.ปกป้อง ส่องเมือง"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS374",
+    "name": "NATURAL LANGUAGE PROCESSING",
+    "instructors": [
+      "ผศ.ดร.ปกป้อง ส่องเมือง"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS384",
+    "name": "HUMAN - COMPUTER INTERACTION",
+    "instructors": [
+      "ผศ.ดร.ลัมพาพรรณ พันธ์ชูจิตร์"
+    ],
+    "description": null
+  },
+  {
+    "code": "CS440",
+    "name": "SELECTED TOPICS IN DATA SCIENCE",
+    "instructors": [
+      "รศ.ดร.ธนาธร ทะนานทอง"
+    ],
+    "description": null
+  }
+]
