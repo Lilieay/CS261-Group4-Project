@@ -1,0 +1,245 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Upload Page Specific Styles (Aligned with Project Design System)
+   ========================================================================== */
+
+.page {
+  max-width: 1140px;
+  width: 100%;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  color: #0f172a;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.back-link:hover {
+  background-color: #f1f5f9;
+  transform: translateX(-2px);
+}
+
+.back-link .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.content {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 0.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #e11d48;
+  font-weight: 700;
+}
+
+/* Form Layout Grid */
+.upload-form {
+  width: 100%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.form-column-right {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group.full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Inputs, Selects & Textarea Styling */
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background-color: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 0.925rem;
+  color: #334155;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #94a3b8;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.form-group input[readonly] {
+  background-color: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.select-icon {
+  position: absolute;
+  right: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 380px;
+  height: 100%;
+}
+
+/* Action Buttons */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel,
+.btn-submit {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 0.375rem;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-cancel {
+  background-color: #ffffff;
+  border: 1.5px solid #0f172a;
+  color: #0f172a;
+}
+
+.btn-cancel:hover {
+  background-color: #f8fafc;
+}
+
+.btn-submit {
+  background-color: #be123c;
+  border: none;
+  color: #ffffff;
+}
+
+.btn-submit:hover {
+  background-color: #9f1239;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group textarea {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .page {
+    padding: 0 1rem;
+  }
+}

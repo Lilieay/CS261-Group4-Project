@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เผยแพร่แนวข้อสอบวิชา CS | พี่จ๋า ขอแนวข้อสอบหน่อย</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared-courses.css">
+  <link rel="stylesheet" href="css/upload.css">
+  <script src="js/course-data.js" defer></script>
+  <script src="js/upload.js" defer></script>
+  <style>
+    .form-group label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .required {
+      color: #e11d48;
+      font-weight: 700;
+    }
+    /* ปรับแต่งปุ่มยกเลิกที่เป็นแท็ก <a> ให้แสดงผลเหมือนปุ่ม */
+    .btn-cancel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <!-- SVG Library -->
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h8"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3"/></symbol>
+    <symbol id="i-shared" viewBox="0 0 24 24"><path d="M3 5h7l2 3h9v12H3zM14 12h4m-2-2 2 2-2 2M12 17h6"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7 7 12l5 5M7 12h10"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 9 6 6 6-6"/></symbol>
+  </svg>
+
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="หน้าแรก">
+      <svg class="icon brand-icon"><use href="#i-file"/></svg>
+      <span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span>
+    </a>
+    <nav aria-label="เมนูหลัก">
+      <a href="courses.html"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
+      <a class="active" href="upload.html" aria-current="page"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
+      <a href="shared-courses.html"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
+      <a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
+    </nav>
+    <div class="profile">
+      <span class="avatar">65</span>
+      <span class="profile-copy">
+        <b>stu650965xxxx <i></i></b>
+        <small>CS Thammasat</small>
+      </span>
+      <span class="logout" aria-label="ออกจากระบบ">⇥</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="page">
+    <a class="back-link" href="courses.html" aria-label="กลับหน้ารายวิชา">
+      <svg class="icon"><use href="#i-back"/></svg>
+    </a>
+
+    <section class="content">
+      <div class="page-header">
+        <h1>เผยแพร่แนวข้อสอบวิชา CS</h1>
+        <p>กรอกข้อมูลแนวข้อสอบของคุณเพื่อเป็นประโยชน์แก่เพื่อนๆ นักศึกษามหาวิทยาลัยธรรมศาสตร์ (โปรดกรอก/เลือก ในหัวข้อที่มี <span class="required">*</span> ให้ครบถ้วน)</p>
+      </div>
+
+      <form class="upload-form" id="upload-form">
+        <div class="form-grid">
+          <!-- ฝั่งซ้าย: ข้อมูลรายวิชาและรายละเอียด -->
+          <div class="form-column">
+            <div class="form-group">
+              <label for="course-select">รายวิชาประจำภาควิชา CS <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="course-select" name="course" required>
+                  <option value="" disabled selected>เลือกรายวิชา</option>
+                  <option value="CS101">CS101 - Introduction to Computer Science</option>
+                  <option value="CS261">CS261 - Computer Organization and Architecture</option>
+                </select>
+                <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="exam-title">ชื่อแนวข้อสอบ <span class="required">*</span></label>
+              <input type="text" id="exam-title" name="title" placeholder="ตั้งชื่อแนวข้อสอบนี้" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="academic-year">ปีการศึกษา <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="academic-year" name="academicYear" required>
+                    <option value="" disabled selected>เลือกปีการศึกษาของภาควิชานั้น</option>
+                    <option value="2567">2567</option>
+                    <option value="2566">2566</option>
+                  </select>
+                  <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="author">ชื่อผู้แบ่งปัน <span class="required">*</span></label>
+                <input type="text" id="author" name="author" value="[Avatar] stu650965xxxx (แสดงอัตโนมัติ)" readonly>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="semester">ภาคเรียน <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="semester" name="semester" required>
+                    <option value="" disabled selected>เลือกภาคเรียน</option>
+                    <option value="1">ภาคเรียนที่ 1</option>
+                    <option value="2">ภาคเรียนที่ 2</option>
+                    <option value="3">ภาคฤดูร้อน</option>
+                  </select>
+                  <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="exam-period">ช่วงการสอบ <span class="required">*</span></label>
+                <div class="select-wrapper">
+                  <select id="exam-period" name="examPeriod" required>
+                    <option value="" disabled selected>เลือกช่วงการสอบ</option>
+                    <option value="midterm">กลางภาค (Midterm)</option>
+                    <option value="final">ปลายภาค (Final)</option>
+                  </select>
+                  <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="exam-type">รูปแบบข้อสอบ <span class="required">*</span></label>
+              <div class="select-wrapper">
+                <select id="exam-type" name="examType" required>
+                  <option value="" disabled selected>ใส่รูปแบบการสอบ</option>
+                  <option value="choice">ปรนัย (Choice)</option>
+                  <option value="writing">อัตนัย (เขียนตอบ)</option>
+                  <option value="mixed">ปรนัย + อัตนัย</option>
+                </select>
+                <svg class="icon select-icon"><use href="#i-chevron-down"/></svg>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="exam-topics">หัวข้อที่ออกสอบ</label>
+              <input type="text" id="exam-topics" name="topics" placeholder="หัวข้อที่ออกสอบ">
+            </div>
+          </div>
+
+          <!-- ฝั่งขวา: คำแนะนำและปุ่มกด -->
+          <div class="form-column form-column-right">
+            <div class="form-group full-height">
+              <label for="note">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label>
+              <textarea id="note" name="note" placeholder="คำแนะนำ"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <a href="courses.html" class="btn-cancel">ยกเลิก</a>
+              <button type="submit" class="btn-submit">เผยแพร่</button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="footer">
+    <div>
+      <strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><br>
+      <small>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small>
+    </div>
+    <div class="footer-links">
+      <a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a>
+    </div>
+  </footer>
+</body>
+</html>
