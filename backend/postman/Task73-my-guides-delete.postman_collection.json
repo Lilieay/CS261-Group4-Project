@@ -1,0 +1,88 @@
+{
+  "info": {
+    "_postman_id": "d99312f3-4479-4f0b-8e9a-0ed3bcb45073",
+    "name": "Task73 - Delete My Guide",
+    "description": "ลบแนวข้อสอบของผู้ใช้ที่เข้าสู่ระบบ ใช้ตัวแปรสำหรับข้อมูล Login และ token โดยไม่ฝังค่า credential หรือ token จริง",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "username", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "guideId", "value": "1" },
+    { "key": "missingGuideId", "value": "99999" }
+  ],
+  "item": [
+    {
+      "name": "Login (เก็บ token ในตัวแปรชั่วคราว)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/api/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('Login สำเร็จ', function () { pm.response.to.have.status(200); });",
+            "if (pm.response.code === 200) { pm.collectionVariables.set('accessToken', pm.response.json().access_token); }"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "ลบแนวข้อสอบของฉัน",
+      "request": {
+        "method": "DELETE",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+        "url": "{{baseUrl}}/api/my-guides/{{guideId}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('ลบสำเร็จและได้ DTO ยืนยัน', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guideId'))); });"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "ไม่ส่ง token ต้องถูกปฏิเสธ",
+      "request": {
+        "method": "DELETE",
+        "auth": { "type": "noauth" },
+        "url": "{{baseUrl}}/api/my-guides/{{guideId}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": ["pm.test('ต้องตอบ 401', function () { pm.response.to.have.status(401); });"]
+        }
+      }]
+    },
+    {
+      "name": "แนวข้อสอบที่ไม่มีต้องได้ 404",
+      "request": {
+        "method": "DELETE",
+        "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
+        "url": "{{baseUrl}}/api/my-guides/{{missingGuideId}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": ["pm.test('ต้องตอบ 404', function () { pm.response.to.have.status(404); });"]
+        }
+      }]
+    }
+  ]
+}
