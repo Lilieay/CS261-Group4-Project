@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "Task72 - Update My Guide",
+    "description": "Collection for updating the authenticated user's guide. Set accessToken, guideId, and courseId locally before sending requests. No real credentials or tokens are included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "guideId", "value": "1" },
+    { "key": "courseId", "value": "2" }
+  ],
+  "item": [
+    {
+      "name": "Update owned guide",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            { "key": "token", "value": "{{accessToken}}", "type": "string" }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"แนวข้อสอบที่แก้ไขแล้ว\",\n  \"academic_year\": 2568,\n  \"semester\": 2,\n  \"exam_period\": \"final\",\n  \"topics\": \"หัวข้อที่แก้ไขแล้ว\",\n  \"exam_format\": \"mixed\",\n  \"objective_count\": 12,\n  \"subjective_count\": 3,\n  \"additional_advice\": \"ทบทวนบทที่ 1-4\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/my-guides/{{guideId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "my-guides", "{{guideId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Owner update succeeds', function () { pm.response.to.have.status(200); });",
+              "pm.test('Response preserves guide ID', function () { pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('guideId'))); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject request without Login token",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"แนวข้อสอบ\",\n  \"academic_year\": 2568,\n  \"semester\": 1,\n  \"exam_period\": \"midterm\",\n  \"topics\": \"หัวข้อ\",\n  \"exam_format\": \"objective\",\n  \"objective_count\": 10,\n  \"subjective_count\": null,\n  \"additional_advice\": null\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/my-guides/{{guideId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "my-guides", "{{guideId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Missing token is rejected', function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject invalid update data",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            { "key": "token", "value": "{{accessToken}}", "type": "string" }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"course_id\": {{courseId}},\n  \"title\": \"   \",\n  \"academic_year\": 2568,\n  \"semester\": 1,\n  \"exam_period\": \"midterm\",\n  \"topics\": \"หัวข้อ\",\n  \"exam_format\": \"objective\",\n  \"objective_count\": 10,\n  \"subjective_count\": null,\n  \"additional_advice\": null\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/my-guides/{{guideId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "my-guides", "{{guideId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Invalid data is rejected', function () { pm.response.to.have.status(422); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
