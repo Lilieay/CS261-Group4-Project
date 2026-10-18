@@ -24,7 +24,7 @@ def client() -> Iterator[TestClient]:
     Base.metadata.create_all(engine)
     session = Session(engine)
 
-    student = User(username="student", displayname_th="นักศึกษาทดสอบ")
+    student = User(username="6800000000", displayname_th="นักศึกษาทดสอบ")
     other_user = User(username="other_student", displayname_th="ผู้ใช้อื่น")
     course = Course(
         course_code="CS261",
@@ -92,12 +92,12 @@ def client() -> Iterator[TestClient]:
         engine.dispose()
 
 
-def login(client: TestClient, username: str = "student") -> str:
+def login(client: TestClient, username: str = "6800000000") -> str:
     response = client.post(
         "/api/auth/login",
         json={
             "username": username,
-            "password": "password123" if username == "student" else "admin123",
+            "password": "0000000000000" if username == "6800000000" else "admin123",
         },
     )
     assert response.status_code == 200
