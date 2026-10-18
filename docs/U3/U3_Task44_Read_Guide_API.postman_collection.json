@@ -1,0 +1,96 @@
+{
+  "info": {
+    "_postman_id": "8a1f489c-7f48-4c32-9da6-3e90744f1ea1",
+    "name": "Task44 - Read Guides API",
+    "description": "Read guide list, details, and filter options. Uses variables for credentials and token; no real secrets are stored.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "access_token", "value": "" },
+    { "key": "course_id", "value": "1" },
+    { "key": "guide_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (set access_token)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/api/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) pm.collectionVariables.set('access_token', pm.response.json().access_token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Read Guides",
+      "item": [
+        {
+          "name": "List all guides for course",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/guides"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('returns guide list', function () { pm.response.to.have.status(200); });", "pm.test('response has list contract', function () { const body = pm.response.json(); pm.expect(body).to.have.keys('course_id', 'has_guides', 'items'); });"] } }]
+        },
+        {
+          "name": "Filter guides",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{base_url}}/courses/{{course_id}}/guides?academic_year={{academic_year}}&semester={{semester}}&exam_period={{exam_period}}", "host": ["{{base_url}}"], "path": ["courses", "{{course_id}}", "guides"], "query": [{ "key": "academic_year", "value": "{{academic_year}}" }, { "key": "semester", "value": "{{semester}}" }, { "key": "exam_period", "value": "{{exam_period}}" }] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('filter request succeeds', function () { pm.response.to.have.status(200); });"] } }]
+        },
+        {
+          "name": "Read guide details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/guides/{{guide_id}}"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('details request succeeds', function () { pm.response.to.have.status(200); });", "pm.test('response includes course and content', function () { const body = pm.response.json(); pm.expect(body).to.have.property('course'); pm.expect(body).to.have.property('topics'); });"] } }]
+        },
+        {
+          "name": "Read filter options",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/guides/filter-options"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('filter options request succeeds', function () { pm.response.to.have.status(200); });", "pm.test('response has all filter values', function () { const body = pm.response.json(); pm.expect(body).to.have.keys('course_id', 'academic_years', 'semesters', 'exam_periods'); });"] } }]
+        },
+        {
+          "name": "Reject unknown filter",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": "{{base_url}}/courses/{{course_id}}/guides?instructor=unknown"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('unknown filter is rejected', function () { pm.response.to.have.status(422); });", "pm.test('uses error contract', function () { pm.expect(pm.response.json().error.code).to.eql('INVALID_PARAMETERS'); });"] } }]
+        }
+      ]
+    }
+  ]
+}

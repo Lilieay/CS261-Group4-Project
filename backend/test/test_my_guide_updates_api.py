@@ -32,7 +32,7 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
     Base.metadata.create_all(connection)
     session = Session(connection, join_transaction_mode="create_savepoint")
 
-    student = User(username="student", displayname_th="นักศึกษาทดสอบ")
+    student = User(username="6800000000", displayname_th="นักศึกษาทดสอบ")
     other = User(username="admin", displayname_th="ผู้ใช้อื่น")
     old_course = Course(
         course_code="CS261",
@@ -83,6 +83,8 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
     def override_db_session():
         yield session
 
+    previous_db_override = app.dependency_overrides.get(get_db_session)
+    previous_auth_override = app.dependency_overrides.get(get_auth_service)
     app.dependency_overrides[get_db_session] = override_db_session
 
     @contextmanager
@@ -93,7 +95,7 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
         auth_session,
         verify=lambda username, password: (
             TUAccount(username, username, "student", True)
-            if password in {"password123", "admin123"}
+            if password == "0000000000000"
             else None
         ),
     )
@@ -102,15 +104,22 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
         with TestClient(app) as client:
             yield client, session, ids
     finally:
-        app.dependency_overrides.clear()
+        if previous_db_override is None:
+            app.dependency_overrides.pop(get_db_session, None)
+        else:
+            app.dependency_overrides[get_db_session] = previous_db_override
+        if previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = previous_auth_override
         session.close()
         transaction.rollback()
         connection.close()
         engine.dispose()
 
 
-def login(client: TestClient, username: str = "student") -> str:
-    password = "password123" if username == "student" else "admin123"
+def login(client: TestClient, username: str = "6800000000") -> str:
+    password = "0000000000000"
     response = client.post(
         "/api/auth/login",
         json={"username": username, "password": password},

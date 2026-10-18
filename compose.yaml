@@ -31,6 +31,7 @@ services:
       DB_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
       TU_API_MODE: "${TU_API_MODE:-mock}"
       TU_API_URL: "${TU_API_URL:-}"
+      TU_API_KEY: "${TU_API_KEY:-}"
       TU_API_TIMEOUT: "${TU_API_TIMEOUT:-5}"
     ports:
       - "127.0.0.1:8000:8000"
@@ -39,6 +40,8 @@ services:
         condition: service_healthy
   frontend:
     build: ./frontend
+    environment:
+      BACKEND_URL: "http://backend:8000"
     ports:
       - "127.0.0.1:5000:5000"
 volumes:

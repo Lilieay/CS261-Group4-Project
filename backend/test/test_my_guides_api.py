@@ -27,7 +27,7 @@ def client() -> Iterator[TestClient]:
     Base.metadata.create_all(engine)
     session = Session(engine)
 
-    student = User(username="student", displayname_th="นักศึกษาทดสอบ")
+    student = User(username="6800000000", displayname_th="นักศึกษาทดสอบ")
     other_user = User(username="other_student", displayname_th="ผู้ใช้อื่น")
     course = Course(
         course_code="CS261",
@@ -83,6 +83,8 @@ def client() -> Iterator[TestClient]:
     def override_db_session() -> Iterator[Session]:
         yield session
 
+    previous_db_override = app.dependency_overrides.get(get_db_session)
+    previous_auth_override = app.dependency_overrides.get(get_auth_service)
     app.dependency_overrides[get_db_session] = override_db_session
 
     @contextmanager
@@ -93,7 +95,7 @@ def client() -> Iterator[TestClient]:
         auth_session,
         verify=lambda username, password: (
             TUAccount(username, username, "student", True)
-            if password in {"password123", "admin123"}
+            if password == "0000000000000"
             else None
         ),
     )
@@ -102,17 +104,24 @@ def client() -> Iterator[TestClient]:
         with TestClient(app) as test_client:
             yield test_client
     finally:
-        app.dependency_overrides.clear()
+        if previous_db_override is None:
+            app.dependency_overrides.pop(get_db_session, None)
+        else:
+            app.dependency_overrides[get_db_session] = previous_db_override
+        if previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = previous_auth_override
         session.close()
         engine.dispose()
 
 
-def login(client: TestClient, username: str = "student") -> str:
+def login(client: TestClient, username: str = "6800000000") -> str:
     response = client.post(
         "/api/auth/login",
         json={
             "username": username,
-            "password": "password123" if username == "student" else "admin123",
+            "password": "0000000000000",
         },
     )
     assert response.status_code == 200

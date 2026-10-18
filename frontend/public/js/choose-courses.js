@@ -171,8 +171,7 @@
       if (!button || button.disabled) return;
       page = Number(button.dataset.page); render(); $('#resultCount').focus();
     });
-    window.addEventListener('storage', event => { if (event.key === data.storageKey || event.key === null) { loadRows(); render(); } });
-    window.addEventListener('focus', () => { loadRows(); render(); });
+    data.subscribe(() => { loadRows(); render(); });
   }
   start();
 })();
