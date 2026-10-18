@@ -6,6 +6,7 @@ from app.models.user import User
 
 
 class MyGuideDAO:
+    """Read guide records published by the authenticated user."""
     def __init__(self, session: Session):
         self.session = session
 
