@@ -1,10 +1,14 @@
 from fastapi import FastAPI
+from app.db import SessionLocal
 from app.routers.auth import router as auth_router
 from app.routers.my_guide_deletions import router as my_guide_deletions_router
 from app.routers.my_guide_updates import router as my_guide_updates_router
 from app.routers.my_guides import router as my_guides_router
+from app.services.auth import AuthService
+from app.services.tu_api import verify_tu_account
 
 app = FastAPI()
+app.state.auth_service = AuthService(SessionLocal, verify_tu_account)
 app.include_router(auth_router)
 app.include_router(my_guide_deletions_router)
 app.include_router(my_guide_updates_router)
