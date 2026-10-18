@@ -1202,3 +1202,7 @@ button:hover {
   .exam-card { padding: 16px; gap: 14px; }
   .exam-card .metadata { min-height: 0; gap: 8px; }
 }
+
+html {
+  scrollbar-gutter: stable;
+}
