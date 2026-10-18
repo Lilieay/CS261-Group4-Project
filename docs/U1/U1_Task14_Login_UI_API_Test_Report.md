@@ -1,4 +1,4 @@
-﻿# Task14: เชื่อมหน้า Login กับ API
+# Task14: เชื่อมหน้า Login กับ API
 
 ## ผลงานที่ส่งมอบ
 
@@ -16,7 +16,7 @@
 
 ## การตั้งค่า TU API จริง
 
-โหมดจริงใช้ `TU_API_MODE=real` และอ่านค่าลับจาก environment เท่านั้น ห้ามใส่ Token Key หรือรหัสผ่านจริงลงใน source code, Postman Collection หรือ Git:
+โหมดจริงใช้ `TU_API_MODE=real` และอ่านค่าจาก environment เท่านั้น ห้ามใส่ Application-Key หรือรหัสผ่านจริงลงใน source code, Postman Collection หรือ Git. Compose อ่านค่าจาก `.env` ที่ root ของ repository. เมื่อติดตั้ง Backend โดยตรง `backend/app/config.py` โหลด `backend/.env` ก่อนเริ่มแอป โดยค่า process environment มีลำดับความสำคัญสูงกว่า. การทดสอบ adapter โดยตรงอ่าน `os.environ`:
 
 ```text
 TU_API_MODE=real
@@ -25,7 +25,7 @@ TU_API_KEY=<Application-Key จาก TU API Developer>
 TU_API_TIMEOUT=5
 ```
 
-Backend จะส่ง `UserName` และ `PassWord` ใน JSON พร้อม Header `Application-Key` และรับ Response ที่มี `status=true`, `type=student` และ `displayname_th` หรือ `displayname_en` ตาม Contract ของ TU Authentication API หากไม่ผ่านเงื่อนไขจะปฏิเสธ Login แบบเดียวกับบัญชีไม่ถูกต้อง
+Backend จะส่ง `UserName` และ `PassWord` ใน JSON พร้อม Header `Application-Key` และอ่าน `status`, `type`, `displayname_th` หรือ `displayname_en` ตาม [เอกสาร TU Authentication API](https://restapi.tu.ac.th/home/documents/Authen.html). ระบบรับเฉพาะ `status=true`, `type=student` และชื่อที่ไม่ว่างอย่างน้อยหนึ่งภาษา โดยเลือกชื่อไทยก่อนชื่ออังกฤษ. เอกสาร TU ไม่มีฟิลด์ `active`; Adapter กำหนด `active=True` เพื่อให้ตรงกับโมเดลเดิมหลังตรวจว่าเป็นนักศึกษาที่ผ่านการยืนยัน. ค่านี้ไม่ได้ยืนยันสถานะการลงทะเบียน.
 
 ## สถานะ UI–API จากการตรวจโค้ด
 
@@ -44,7 +44,10 @@ mock เป็นการจำลอง TU verification สำหรับพ�
 
 ## การตรวจสอบ
 
+Code revision ที่ตรวจ: `21227a7571ac9b0538d02b7e546fdd810d86ba4f` หลังรวมสาขาล่าสุดที่มี Task56/57 แล้ว
+
 - ผลการตรวจโค้ด UI และ proxy: ตามตารางด้านบน
-- Windows / Python 3.14: รัน `backend/.venv/Scripts/python.exe -m pytest -p no:cacheprovider test -q` จากโฟลเดอร์ backend: **77 passed, 10 subtests passed** ครอบคลุม Login สำเร็จ, รหัสผ่านผิด, status, logout และ API เดิม
-- `node --check frontend/public/js/login.js` และ `git diff --check`: ผ่าน
-- UI–API ผ่าน browser, Docker และ System Test: ยังไม่รันใน PR นี้
+- Windows / Python 3.14.6: จากโฟลเดอร์ `backend` รัน `.venv/Scripts/python.exe -m pytest -p no:cacheprovider test/test_tu_api_real.py test/test_auth.py -q`: **11 passed, 24 subtests passed**.
+- Windows / Python 3.14.6: จากโฟลเดอร์ `backend` รัน `.venv/Scripts/python.exe -m pytest -p no:cacheprovider test -q`: **96 passed, 46 subtests passed**.
+- `node --check frontend/public/js/login.js` และ `git -c core.whitespace=cr-at-eol diff --check`: ผ่าน
+- UI–API ผ่าน browser และ System Test: ยังไม่รันใน PR นี้. Compose environment mapping ถูกตรวจด้วย placeholder config และ container env probes โดยไม่เรียก TU API.
