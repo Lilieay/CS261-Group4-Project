@@ -134,6 +134,50 @@ test('update proxy preserves validation/auth/server failures and bounds network 
   });
 });
 
+test('delete proxy pins the owned-guide path and forwards authorization and the backend result', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target, init;
+  global.fetch = async (url, options) => {
+    target = url; init = options;
+    return new Response('{"id":7,"message":"deleted"}', {
+      status: 200, headers: {'content-type': 'application/json'}
+    });
+  };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7?owner=other', 'DELETE', {
+      Authorization: 'Bearer test-token'
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.deepEqual(JSON.parse(response.body), {id: 7, message: 'deleted'});
+    assert.equal(target.href, 'http://backend:8000/api/my-guides/7');
+    assert.equal(init.method, 'DELETE');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(init.redirect, 'manual');
+    const invalid = await request(port, '/api/my-guides/0', 'DELETE');
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test('delete proxy preserves ownership/auth errors and reports upstream failures', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  for (const status of [401, 404, 500]) {
+    global.fetch = async () => new Response('{"detail":"failure"}', {status});
+    await withServer(async port => {
+      const response = await request(port, '/api/my-guides/7', 'DELETE');
+      assert.equal(response.status, status);
+      assert.deepEqual(JSON.parse(response.body), {detail: 'failure'});
+    });
+  }
+  global.fetch = async () => { throw new Error('offline'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7', 'DELETE');
+    assert.equal(response.status, 502);
+  });
+});
+
 test('course detail proxy forwards bearer authorization and preserves API errors', async t => {
   const originalFetch = global.fetch;
   t.after(() => { global.fetch = originalFetch; });

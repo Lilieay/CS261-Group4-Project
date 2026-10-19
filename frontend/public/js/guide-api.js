@@ -31,7 +31,10 @@
     if (method === 'PUT' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
       throw new GuideApiError('เส้นทางแก้ไขแนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    const target = method === 'PUT' ? path
+    if (method === 'DELETE' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+      throw new GuideApiError('เส้นทางลบแนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    const target = ['PUT', 'DELETE'].includes(method) ? path
       : method === 'POST' && path === config.publishPath
       ? '/api/guides'
       : method === 'GET' && (path === config.mePath || path === config.myGuidesPath)
@@ -75,8 +78,10 @@
     } catch (_) {
       throw new GuideApiError(method === 'POST'
         ? 'ยังยืนยันผลเผยแพร่ไม่ได้ กรุณาตรวจรายการของคุณก่อนส่งซ้ำ เพื่อหลีกเลี่ยงรายการซ้ำ'
+        : method === 'DELETE'
+        ? 'ยังยืนยันผลการลบไม่ได้ กรุณาตรวจรายการของคุณก่อนลองอีกครั้ง'
         : 'ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจการเชื่อมต่อและลองใหม่',
-      {uncertain: method === 'POST'});
+      {uncertain: method === 'POST' || method === 'DELETE'});
     } finally { clearTimeout(timer); }
 
     if (!response.ok) {
@@ -101,7 +106,7 @@
       };
       throw new GuideApiError(messages[response.status] || 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ กรุณาลองใหม่', {
         status: response.status, fields: fields.filter(item => item && typeof item.field === 'string' && typeof item.message === 'string'),
-        uncertain: method === 'POST' && response.status >= 500
+        uncertain: (method === 'POST' || method === 'DELETE') && response.status >= 500
       });
     }
     return {status: response.status, payload};
@@ -211,6 +216,15 @@
     return normalizeMyGuide(payload);
   }
 
+  async function remove(id) {
+    if (!/^[1-9]\d*$/.test(String(id))) throw new GuideApiError('ไม่พบแนวข้อสอบ', {status: 404});
+    const {payload} = await request(`/api/my-guides/${encodeURIComponent(id)}`, {method: 'DELETE'});
+    if (payload?.id !== Number(id) || typeof payload?.message !== 'string') {
+      throw new GuideApiError('ยืนยันผลการลบไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ', {uncertain: true});
+    }
+    return payload;
+  }
+
   async function list(courseId, filters = {}) {
     if (!/^[1-9]\d*$/.test(String(courseId))) throw new GuideApiError('รหัสรายวิชาไม่ถูกต้อง', {status: 422});
     const query = new URLSearchParams();
@@ -259,5 +273,5 @@
     };
   }
 
-  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, list, filterOptions, toPreviewRow});
+  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, remove, list, filterOptions, toPreviewRow});
 })();

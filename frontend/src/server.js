@@ -133,6 +133,31 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     } finally { clearTimeout(timer); }
   });
 
+  app.delete('/api/my-guides/:guideId', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const id = req.params.guideId;
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) > 2147483647) {
+      return res.status(422).json({detail: 'GUIDE_ID_INVALID'});
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL(`/api/my-guides/${id}`, base), {
+        method: 'DELETE', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ยืนยันผลการลบไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.use('/api/guides', express.json({limit: '16kb'}));
 
   app.post('/api/guides', async (req, res) => {

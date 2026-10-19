@@ -117,3 +117,5 @@ docker compose down
 - [ผลทดสอบ UI–API ของ Task60](docs/U4/U4_Task60_UI_API_Test_Report.md)
 - [ผลทดสอบ API–DAO ของ Task60](docs/U4/U4_Task60_API_DAO_Test_Report.md)
 - [ผล System Test ของ Task60](docs/U4/U4_Task60_System_Test_Report.md)
+
+- [Task82 deletion flow and verification](docs/U5/U5_Task82_Delete_My_Guides_Test_Report.md)

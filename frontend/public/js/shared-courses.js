@@ -6,6 +6,7 @@
   })[character]);
   let rows = [];
   let loading = false;
+  let deleting = false;
   let loadVersion = 0;
   let loadError = '';
 
@@ -15,7 +16,7 @@
 
   function card(row) {
     const e = escapeHtml;
-    return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3 class="exam-card-title" title="${e(row.title)}">${e(row.title)}</h3><p class="description">รายวิชา ${e(row.course_name)}<br>ผู้สอน: ${e(row.instructor_name || 'ไม่ระบุ')}<br>หัวข้อ: ${e(row.topics || 'ไม่ระบุ')}${row.notes.trim() ? `<br>${e(row.notes)}` : ''}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>${e(row.formats.join(' / '))}</b></div><div><span>อัตนัย:</span><b>${e(questionCount(row.essay_count))}</b></div><div><span>ปรนัย:</span><b>${e(questionCount(row.objective_count))}</b></div></div></div><aside class="card-side"><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button><button data-action="edit" data-id="${e(row.id)}">${icon('edit')}แก้ไขข้อมูล</button></div></aside></article>`;
+    return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3 class="exam-card-title" title="${e(row.title)}">${e(row.title)}</h3><p class="description">รายวิชา ${e(row.course_name)}<br>ผู้สอน: ${e(row.instructor_name || 'ไม่ระบุ')}<br>หัวข้อ: ${e(row.topics || 'ไม่ระบุ')}${row.notes.trim() ? `<br>${e(row.notes)}` : ''}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>${e(row.formats.join(' / '))}</b></div><div><span>อัตนัย:</span><b>${e(questionCount(row.essay_count))}</b></div><div><span>ปรนัย:</span><b>${e(questionCount(row.objective_count))}</b></div></div></div><aside class="card-side"><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button><button data-action="edit" data-id="${e(row.id)}">${icon('edit')}แก้ไขข้อมูล</button><button data-action="delete" data-id="${e(row.id)}" aria-label="ลบแนวข้อสอบ">${icon('trash')}ลบแนวข้อสอบ</button></div></aside></article>`;
   }
 
   const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -110,11 +111,43 @@
       });
       return;
     }
+    if (button.dataset.action === 'delete') {
+      if (deleting) return;
+      $('#delete-guide-title').textContent = row.title;
+      $('#delete-guide-course').textContent = `${row.course_code} ${row.course_name}`;
+      $('#delete-confirm').dataset.guideId = row.id;
+      $('#delete-confirm').showModal();
+      return;
+    }
     const params = new URLSearchParams({
       course: row.course_code, courseId: String(row.course_id), guide: row.id,
       source: 'api', returnTo: 'shared-courses.html'
     });
     window.location.assign(`read-courses.html?${params}`);
+  });
+  $('#delete-confirm').addEventListener('close', async () => {
+    if ($('#delete-confirm').returnValue !== 'delete') return;
+    const id = $('#delete-confirm').dataset.guideId;
+    if (deleting || !rows.some(row => row.id === id)) return;
+    deleting = true;
+    const button = $('#confirm-delete');
+    button.disabled = true;
+    try {
+      await window.GuideApi.remove(id);
+      $('#edit-status').textContent = 'ลบแนวข้อสอบแล้ว';
+      await loadMyGuides();
+    } catch (error) {
+      $('#edit-status').textContent = error.uncertain
+        ? 'ยืนยันผลการลบไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบก่อนลองอีกครั้ง'
+        : error.status === 404
+          ? 'ไม่พบรายการหรือไม่มีสิทธิ์ลบ รายการถูกโหลดใหม่แล้ว'
+          : error.message || 'ลบแนวข้อสอบไม่สำเร็จ';
+      await loadMyGuides();
+    } finally {
+      deleting = false;
+      button.disabled = false;
+      $('#delete-confirm').dataset.guideId = '';
+    }
   });
   $('#search-form').addEventListener('submit', event => { event.preventDefault(); render(); });
   $('#search').addEventListener('input', render);

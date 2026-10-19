@@ -123,6 +123,18 @@ test('update client uses PUT on the same-origin owned-guide proxy and validates 
   await assert.rejects(client.api.update('8', {course_id: 13}), /ยืนยันรายการที่แก้ไขไม่ได้/);
 });
 
+test('delete client uses the owned-guide proxy and validates the deleted record identity', async () => {
+  const client = loadGuideApi({fetchImpl: async () => new Response('{"id":7,"message":"deleted"}')});
+  const result = await client.api.remove('7');
+  assert.equal(result.id, 7);
+  assert.equal(client.calls[0][0], '/api/my-guides/7');
+  assert.equal(client.calls[0][1].method, 'DELETE');
+  assert.equal(client.calls[0][1].headers.Authorization, 'Bearer test-token');
+
+  const mismatch = loadGuideApi({fetchImpl: async () => new Response('{"id":8,"message":"deleted"}')});
+  await assert.rejects(mismatch.api.remove('7'), error => error.uncertain);
+});
+
 test('guide client sends publish through the same-origin proxy and keeps auth and course reads on their existing proxies', async () => {
   const client = loadGuideApi({mode: 'api', fetchImpl: async url => {
     if (url === '/api/auth/me') return new Response('{"id":8,"username":"student"}');
