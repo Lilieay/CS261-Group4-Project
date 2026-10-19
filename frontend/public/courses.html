@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/shared-courses.css">
   <link rel="stylesheet" href="css/courses.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <script src="js/profile.js" defer></script>
   <script src="js/course-data.js" defer></script>
   <script src="js/courses.js" defer></script>
 </head>
@@ -54,10 +56,12 @@
       <a href="saved-courses.html"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
     </nav>
     <div class="profile">
-      <span class="avatar">65</span>
-      <span class="profile-copy"><b>stu650965xxxx <i></i></b><small>CS Thammasat</small></span>
-      <span class="logout" aria-label="ออกจากระบบ">⇥</span>
-    </div>
+  <span class="avatar" data-user-avatar>?</span>
+  <span class="profile-copy">
+    <b data-user-name>กำลังโหลด…</b>
+    <small data-user-id></small>
+  </span>
+</div>
   </header>
 
   <main class="course-main">

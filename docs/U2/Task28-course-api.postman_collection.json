@@ -1,0 +1,112 @@
+{
+  "info": {
+    "_postman_id": "f2f65d0a-5dd2-4c0c-84e4-6c9c8f5e2a28",
+    "name": "Task28 - Course API",
+    "description": "Search and read CS courses. Fill username/password in a local environment; no real password or token is stored in this collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000" },
+    { "key": "username", "value": "6800000000" },
+    { "key": "password", "value": "" },
+    { "key": "access_token", "value": "" },
+    { "key": "course_id", "value": "1" },
+    { "key": "search", "value": "CS261" }
+  ],
+  "item": [
+    {
+      "name": "Login (set access_token)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{base_url}}/api/auth/login"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+            "if (pm.response.code === 200) pm.collectionVariables.set('access_token', pm.response.json().access_token);"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "List all CS courses",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+        "url": "{{base_url}}/courses"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('returns courses', function () { pm.response.to.have.status(200); });",
+            "pm.test('all results use CS codes', function () { pm.response.json().forEach(function (row) { pm.expect(row.course_code).to.match(/^CS\\d{3}$/); }); });"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "Search course",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+        "url": "{{base_url}}/courses?search={{search}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('search succeeds', function () { pm.response.to.have.status(200); });",
+            "pm.test('search response is an array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "Read course details",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+        "url": "{{base_url}}/courses/{{course_id}}"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('details succeeds', function () { pm.response.to.have.status(200); });",
+            "pm.test('details has DTO fields', function () { pm.expect(pm.response.json()).to.have.keys('id', 'course_code', 'course_name', 'instructor_name', 'description'); });"
+          ]
+        }
+      }]
+    },
+    {
+      "name": "Reject unauthenticated request",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/courses"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            "pm.test('login is required', function () { pm.response.to.have.status(401); });",
+            "pm.test('uses error contract', function () { pm.expect(pm.response.json().error.code).to.eql('AUTH_REQUIRED'); });"
+          ]
+        }
+      }]
+    }
+  ]
+}

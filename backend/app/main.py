@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db import SessionLocal
 from app.routers.auth import router as auth_router
+from app.routers.courses import router as courses_router
 from app.routers.guides import router as guides_router
 from app.routers.my_guide_deletions import router as my_guide_deletions_router
 from app.routers.my_guide_updates import router as my_guide_updates_router
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 app.state.auth_service = AuthService(SessionLocal, verify_tu_account)
 app.include_router(auth_router)
+app.include_router(courses_router)
 app.include_router(guides_router)
 app.include_router(my_guide_deletions_router)
 app.include_router(my_guide_updates_router)
