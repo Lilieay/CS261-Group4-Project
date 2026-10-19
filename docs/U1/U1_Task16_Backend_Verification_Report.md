@@ -22,6 +22,14 @@
 
 ## ผลตรวจ runtime ที่ได้แล้ว
 
+### ตรวจซ้ำหลังรวม Course API จาก PR #80 (2026-10-19)
+
+- Source revision ก่อนแก้ fixture: `b173855` พร้อมการเปลี่ยนแปลง fixture ใน commit ที่เพิ่มบันทึกนี้
+- `backend/test/test_course_api.py` ใช้ `AuthService` กับ SQLite ของชุดทดสอบผ่าน dependency `get_auth_service` แทนการ patch ตัวแปร `USERS`/`ACTIVE_SESSIONS` ที่เลิกใช้แล้ว โดยยังเรียก Login และตรวจ Bearer token จริง
+- จากโฟลเดอร์ `backend`, กำหนด `DB_CONNECTION_STRING` จำลองสำหรับ import แอป แล้วรัน `.venv\Scripts\python.exe -m pytest -p no:cacheprovider test -q` ด้วย `TU_API_MODE=mock`: **112 tests และ 54 subtests ผ่าน** บน Windows/Python 3.14.6
+- รันเฉพาะ `test/test_course_api.py` ด้วย `TU_API_MODE=invalid-test-mode`: **6 tests และ 8 subtests ผ่าน** ยืนยันว่า verifier จำลองไม่ขึ้นกับ TU environment
+- ผลรอบนี้เป็น SQLite/TestClient ไม่ได้รัน Docker, SQL Server, browser หรือ TU จริงซ้ำ ผล runtime ด้านล่างยังเป็นผลของรุ่นที่ระบุเดิม
+
 - `scripts/start-backend.ps1` เริ่ม SQL Server และ backend ได้ Backend root ตอบ 200
 - รัน `scripts/start-backend.ps1` รอบที่สองผ่าน ฐานข้อมูล ตาราง และ user mock เดิมยังอยู่; username mock มีหนึ่งแถวและ ID `1002` คงเดิม
 - `docker compose up -d --build frontend` เริ่ม frontend ได้

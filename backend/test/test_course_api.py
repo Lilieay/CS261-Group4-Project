@@ -1,6 +1,5 @@
 import os
 import unittest
-from unittest.mock import patch
 
 os.environ.setdefault(
     "DB_CONNECTION_STRING",
@@ -16,7 +15,8 @@ from app.db import Base
 from app.dependencies import get_db_session
 from app.main import app
 from app.models.course import Course
-from app.services import auth as auth_service
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 
 
@@ -34,22 +34,18 @@ class CourseApiTests(unittest.TestCase):
         cls.client = TestClient(app)
         cls.addClassCleanup(cls.client.close)
 
-        state_patch = patch.multiple(auth_service, USERS={}, ACTIVE_SESSIONS={})
-        state_patch.start()
-        cls.addClassCleanup(state_patch.stop)
-
         def verify_test_student(username, password):
             if username == "course-test-student" and password == "course-test-password":
                 return TUAccount(username, "Course API Test Student", "student", True)
             return None
 
-        verifier_patch = patch.object(
-            auth_service,
-            "verify_tu_account",
-            side_effect=verify_test_student,
+        cls.auth_service = AuthService(
+            cls.session_factory,
+            verify=verify_test_student,
         )
-        verifier_patch.start()
-        cls.addClassCleanup(verifier_patch.stop)
+        cls.previous_auth_override = app.dependency_overrides.get(get_auth_service)
+        app.dependency_overrides[get_auth_service] = lambda: cls.auth_service
+        cls.addClassCleanup(cls.restore_auth_override)
 
         cls.previous_session_override = app.dependency_overrides.get(get_db_session)
 
@@ -84,6 +80,13 @@ class CourseApiTests(unittest.TestCase):
         if login.status_code != 200:
             raise AssertionError(f"Test login failed: {login.status_code} {login.text}")
         cls.headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+    @classmethod
+    def restore_auth_override(cls):
+        if cls.previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = cls.previous_auth_override
 
     @classmethod
     def restore_session_override(cls):
