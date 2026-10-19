@@ -6,7 +6,7 @@
 |---|---|
 | ผู้ทดสอบ | รอระบุ |
 | PO | รอระบุ |
-| รุ่นโค้ด | `49670bb69e7562d1bc1c52423c6ec5a5698efb95` |
+| รุ่นโค้ด | `7bc35a759028d7b21d85dfa7504ce0995169ddd7` |
 | Database | SQL Server 2022 ใน Docker, database `CS261Group4Dev` |
 | API | `POST /guides` และ DAO `PublishGuideDAO.create` |
 
@@ -14,19 +14,19 @@
 
 | รหัส | ข้อมูล | ผลคาดหวัง | ผลจริง/สถานะ | หลักฐาน |
 |---|---|---|---|---|
-| APIDAO-60-01 | payload ครบ, CS261 มีอยู่, token ถูกต้อง | API ตรวจข้อมูล, DAO สร้าง Guide และ commit ได้ | รอ Docker SQL Server | API response/DB snapshot |
-| APIDAO-60-02 | ไม่มี token หรือ token ผิด | HTTP 401 และไม่มี row ใหม่ | รอ Docker SQL Server | status 401/row count |
-| APIDAO-60-03 | title/topics ว่าง, count ผิด, field ปลอม | HTTP 422 และ rollback/ไม่มี row ใหม่ | รอ Docker SQL Server | status 422/row count |
-| APIDAO-60-04 | course ไม่มีอยู่หรือนอกขอบเขต | HTTP 404 และไม่มี row ใหม่ | รอ Docker SQL Server | status 404/row count |
-| APIDAO-60-05 | DAO/Database error ระหว่างบันทึก | HTTP 500 และไม่มีข้อมูลบางส่วนค้าง | รอ Docker SQL Server | log ที่ลบ secret แล้ว |
+| APIDAO-60-01 | payload ครบ, CS261 มีอยู่, token ถูกต้อง | API ตรวจข้อมูล, DAO สร้าง Guide และ commit ได้ | ผ่าน: `201` และอ่านรายการกลับได้ `200` | Docker smoke output |
+| APIDAO-60-02 | ไม่มี token หรือ token ผิด | HTTP 401 และไม่มี row ใหม่ | ผ่าน: `401` | Docker smoke output |
+| APIDAO-60-03 | title/topics ว่าง, count ผิด, field ปลอม | HTTP 422 และ rollback/ไม่มี row ใหม่ | ผ่านใน automated component tests | `11 passed, 1 warning, 12 subtests` |
+| APIDAO-60-04 | course ไม่มีอยู่หรือนอกขอบเขต | HTTP 404 และไม่มี row ใหม่ | ผ่านใน automated component tests | `test_publish_guide_api.py` |
+| APIDAO-60-05 | DAO/Database error ระหว่างบันทึก | HTTP 500 และไม่มีข้อมูลบางส่วนค้าง | รอทดสอบจำลอง DB error | log ที่ลบ secret แล้ว |
 
 ## ผล Automated Test เดิม
 
 - `test_publish_guide_api.py`: `6 passed, 12 subtests passed`
 - `test_publish_guide_dao.py`: `5 passed` ตามรายงาน Task56
 - รันทดสอบซ้ำรวมในรอบนี้: `11 passed, 1 warning, 12 subtests passed`
-- ชุดเดิมใช้ SQLite หรือ schema ทดสอบ ไม่ใช่ฐาน SQL Server ใน Docker จึงต้องรันซ้ำตามคู่มือ Task60
+- Docker smoke test กับ SQL Server ที่รันอยู่ผ่าน Compose: publish `201`, read `200`, list `200`; ข้อมูลชั่วคราวถูกลบหลังทดสอบ
 
 ## สถานะ
 
-ยังไม่ยืนยันผล API–DAO บน Docker เพราะ Docker Engine ยังไม่ทำงานในรอบจัดทำรายงานนี้
+ยืนยันเส้นทาง API–DAO หลักบน Docker แล้ว เหลือกรณีจำลอง database error และ PO ตรวจรับ
