@@ -84,6 +84,80 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     } finally { clearTimeout(timer); }
   });
 
+  app.get('/api/my-guides', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL('/api/my-guides', base), {
+        method: 'GET', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ไม่สามารถโหลดรายการแนวข้อสอบได้ กรุณาลองใหม่อีกครั้ง'});
+    } finally { clearTimeout(timer); }
+  });
+
+  app.put('/api/my-guides/:guideId', express.json({limit: '16kb'}), async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const id = req.params.guideId;
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) > 2147483647) {
+      return res.status(422).json({detail: 'GUIDE_ID_INVALID'});
+    }
+    if (!req.is('application/json') || !req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+      return res.status(400).json({detail: 'ข้อมูลแก้ไขไม่ถูกต้อง'});
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json', 'Content-Type': 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL(`/api/my-guides/${id}`, base), {
+        method: 'PUT', headers, body: JSON.stringify(req.body), signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ยืนยันผลการแก้ไขไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ'});
+    } finally { clearTimeout(timer); }
+  });
+
+  app.delete('/api/my-guides/:guideId', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const id = req.params.guideId;
+    if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) > 2147483647) {
+      return res.status(422).json({detail: 'GUIDE_ID_INVALID'});
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL(`/api/my-guides/${id}`, base), {
+        method: 'DELETE', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ยืนยันผลการลบไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.use('/api/guides', express.json({limit: '16kb'}));
 
   app.post('/api/guides', async (req, res) => {
@@ -146,7 +220,7 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
 
   app.use(express.static(path.join(__dirname, '../public')));
   app.use((error, req, res, next) => {
-    if (req.path.startsWith('/api/auth') || req.path === '/api/guides') {
+    if (req.path.startsWith('/api/auth') || req.path === '/api/guides' || req.path.startsWith('/api/my-guides/')) {
       return res.status(error.status === 413 ? 413 : 400).json({detail: 'ข้อมูลคำขอไม่ถูกต้อง'});
     }
     next(error);

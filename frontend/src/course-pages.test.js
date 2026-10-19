@@ -182,6 +182,34 @@ test('read page resolves a database course and guide by URL without the preview 
   assert.doesNotMatch(get('#readingContent').innerHTML, /preview publisher/);
 });
 
+test('read page allows the my-guides return path and rejects an external return URL', async () => {
+  const data = {
+    escapeHtml: value => String(value), semesterLabel: value => String(value),
+    questionCounts: row => ({objective: row.objective_count, essay: row.essay_count})
+  };
+  for (const [returnTo, expected] of [
+    ['shared-courses.html', 'shared-courses.html'],
+    ['https://attacker.example/steal', 'choose-courses.html?course=CS902']
+  ]) {
+    const {get} = runPage('read-courses.js', {
+      url: `http://frontend/read-courses.html?source=api&courseId=902&course=CS902&guide=71&returnTo=${encodeURIComponent(returnTo)}`,
+      api: {getCourse: async () => ({id: 902, code: 'CS902', name: 'วิชา'})},
+      guideApi: {
+        read: async () => ({id: 71, course: {course_code: 'CS902'}}),
+        toPreviewRow: () => ({id: '71', title: 'แนวข้อสอบ', year: '2568', semester: '1',
+          period: 'กลางภาค', formats: ['ผสม'], topics: 'หัวข้อ', notes: '',
+          objective_count: 1, essay_count: 1, publisher_name: 'ผู้เผยแพร่'})
+      },
+      data
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(get('#readingBack').href, expected);
+    if (expected === 'shared-courses.html') {
+      assert.equal(get('#readingBack').attributes['aria-label'], 'กลับแนวข้อสอบของฉัน');
+    }
+  }
+});
+
 test('course search page renders a Thai API result even when it is absent from the catalog', async () => {
   const calls = [];
   const api = {searchCourses: async query => {

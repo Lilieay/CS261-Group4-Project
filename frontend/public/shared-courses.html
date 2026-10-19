@@ -9,12 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/shared-courses.css">
-  <link rel="stylesheet" href="css/edit-form.css">
   <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/edit-form.css">
   <script src="js/profile.js" defer></script>
-  <script src="js/course-data.js" defer></script>
-  <script src="js/shared-courses.js" defer></script>
+  <script src="js/login-config.js" defer></script>
+  <script src="js/course-api.js" defer></script>
+  <script src="js/upload-config.js" defer></script>
+  <script src="js/guide-api.js" defer></script>
   <script src="js/edit-form.js" defer></script>
+  <script src="js/shared-courses.js" defer></script>
 </head>
 
 <body>
@@ -123,8 +126,6 @@
           </select>
         </div>
         <div id="chips" class="chips" aria-label="ตัวกรองที่เลือก"></div>
-        <p class="demo-note">ข้อมูลตัวอย่างสำหรับทดลองหน้าจอ<br>ยังไม่ได้เชื่อมต่อบัญชีและฐานข้อมูลจริง</p>
-        <button class="reset-demo" id="reset-demo">คืนค่าข้อมูลตัวอย่าง</button>
       </aside>
       <section aria-labelledby="list-title">
         <h2 id="list-title">รายการแนวข้อสอบที่คุณเป็นเจ้าของ</h2>
@@ -135,7 +136,7 @@
       <h2>สรุปของฉัน</h2>
       <p>ส่วนสรุปจะเปิดให้ใช้งานใน Sprint 2</p>
     </section>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <p id="edit-status" role="status" aria-live="polite"></p>
   </main>
   <footer>
     <div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><br>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต
@@ -147,6 +148,15 @@
       <h2>รายละเอียดแนวข้อสอบ</h2><button type="button" data-close="reader" aria-label="ปิดรายละเอียด">×</button>
     </div>
     <div id="reader-content"></div><button type="button" data-close="reader" class="primary">ปิด</button>
+  </dialog>
+  <dialog id="delete-confirm" aria-labelledby="delete-title">
+    <h2 id="delete-title">ยืนยันการลบแนวข้อสอบ</h2>
+    <p>ต้องการลบรายการนี้หรือไม่?</p>
+    <p><strong id="delete-guide-title"></strong><br><span id="delete-guide-course"></span></p>
+    <form method="dialog">
+      <button type="submit" value="cancel">ยกเลิก</button>
+      <button id="confirm-delete" type="submit" value="delete">ยืนยันลบ</button>
+    </form>
   </dialog>
   <dialog id="editor" aria-labelledby="editor-title">
     <form id="edit-form" novalidate>
@@ -165,18 +175,13 @@
         </div>
         <div class="edit-field">
           <label for="edit-title">ชื่อแนวข้อสอบ <span>*</span></label>
-          <input id="edit-title" name="title" required maxlength="255" aria-describedby="edit-title-error">
+          <input id="edit-title" name="title" required maxlength="200" aria-describedby="edit-title-error">
           <p id="edit-title-error" class="field-error" hidden></p>
         </div>
         <div class="edit-row edit-row-three">
           <div class="edit-field">
             <label for="edit-year">ปีการศึกษา <span>*</span></label>
-            <select id="edit-year" name="year" required aria-describedby="edit-year-error">
-              <option>2566</option>
-              <option>2567</option>
-              <option>2568</option>
-              <option>2569</option>
-            </select>
+            <input id="edit-year" name="year" type="number" min="1" max="32767" step="1" required aria-describedby="edit-year-error">
             <p id="edit-year-error" class="field-error" hidden></p>
           </div>
           <div class="edit-field">
@@ -184,15 +189,15 @@
             <select id="edit-semester" name="semester" required aria-describedby="edit-semester-error">
               <option value="1">ภาคเรียนที่ 1</option>
               <option value="2">ภาคเรียนที่ 2</option>
-              <option value="ฤดูร้อน">ฤดูร้อน</option>
+              <option value="3">ฤดูร้อน</option>
             </select>
             <p id="edit-semester-error" class="field-error" hidden></p>
           </div>
           <div class="edit-field">
             <label for="edit-period">ช่วงการสอบ <span>*</span></label>
             <select id="edit-period" name="period" required aria-describedby="edit-period-error">
-              <option value="กลางภาค">สอบกลางภาค</option>
-              <option value="ปลายภาค">สอบปลายภาค</option>
+              <option value="midterm">สอบกลางภาค</option>
+              <option value="final">สอบปลายภาค</option>
             </select>
             <p id="edit-period-error" class="field-error" hidden></p>
           </div>
@@ -200,36 +205,35 @@
         <div class="edit-field">
           <label for="edit-formats">รูปแบบข้อสอบ</label>
           <select id="edit-formats" name="formats" required aria-describedby="edit-formats-error">
-            <option value="อัตนัย">ข้อเขียนและโจทย์เขียนโค้ด</option>
-            <option value="ปรนัย">ข้อสอบปรนัย</option>
-            <option value="ผสม">ข้อสอบผสม</option>
-            <option value="อื่น ๆ">อื่น ๆ</option>
+            <option value="subjective">ข้อเขียนและโจทย์เขียนโค้ด</option>
+            <option value="objective">ข้อสอบปรนัย</option>
+            <option value="mixed">ข้อสอบผสม</option>
           </select>
           <p id="edit-formats-error" class="field-error" hidden></p>
         </div>
         <div class="edit-row">
           <div class="edit-field">
             <label for="edit-essay-count">อัตนัย</label>
-            <input id="edit-essay-count" name="essay_count" type="number" min="0" step="1" placeholder="จำนวนข้อ"
-              aria-describedby="edit-essay-count-error edit-count-hint">
+            <input id="edit-essay-count" name="essay_count" type="number" min="1" step="1" placeholder="จำนวนข้อ"
+              aria-describedby="edit-essay-count-error">
             <p id="edit-essay-count-error" class="field-error" hidden></p>
           </div>
           <div class="edit-field">
             <label for="edit-objective-count">ปรนัย</label>
-            <input id="edit-objective-count" name="objective_count" type="number" min="0" step="1"
-              placeholder="จำนวนข้อ" aria-describedby="edit-objective-count-error edit-count-hint">
+            <input id="edit-objective-count" name="objective_count" type="number" min="1" step="1"
+              placeholder="จำนวนข้อ" aria-describedby="edit-objective-count-error">
             <p id="edit-objective-count-error" class="field-error" hidden></p>
           </div>
         </div>
-        <p id="edit-count-hint" class="edit-count-hint" hidden></p>
         <div class="edit-field">
           <label for="edit-topics">หัวข้อเนื้อหาที่ครอบคลุม</label>
-          <textarea id="edit-topics" name="topics" rows="2" required aria-describedby="edit-topics-error"></textarea>
+          <textarea id="edit-topics" name="topics" maxlength="2000" rows="2" required aria-describedby="edit-topics-error"></textarea>
           <p id="edit-topics-error" class="field-error" hidden></p>
         </div>
         <div class="edit-field">
           <label for="edit-notes">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label>
-          <textarea id="edit-notes" name="notes" rows="2"></textarea>
+          <textarea id="edit-notes" name="notes" maxlength="2000" rows="2" aria-describedby="edit-notes-error"></textarea>
+          <p id="edit-notes-error" class="field-error" hidden></p>
         </div>
       </div>
       <footer class="edit-footer">
@@ -239,14 +243,6 @@
           </svg>บันทึกการแก้ไข</button>
       </footer>
     </form>
-  </dialog>
-
-  <dialog id="delete-dialog">
-    <h2>ยืนยันการลบแนวข้อสอบ</h2>
-    <p id="delete-title"></p>
-    <p>รายการนี้จะถูกนำออกจากข้อมูลตัวอย่างในเบราว์เซอร์</p>
-    <div class="dialog-actions"><button type="button" data-close="delete-dialog" autofocus>ยกเลิก</button><button
-        type="button" id="confirm-delete" class="danger">ยืนยันลบรายการ</button></div>
   </dialog>
 </body>
 

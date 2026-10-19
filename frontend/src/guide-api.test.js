@@ -13,7 +13,7 @@ function loadGuideApi({token = 'test-token', mode = 'preview', apiBaseUrl = 'htt
   const redirects = [];
   const window = {
     GuidePublishConfig: {mode, apiBaseUrl, tokenStorageKey: 'access_token',
-      mePath: '/api/auth/me', coursesPath: '/courses', publishPath: '/guides', timeoutMs: 15000},
+      mePath: '/api/auth/me', myGuidesPath: '/api/my-guides', coursesPath: '/courses', publishPath: '/guides', timeoutMs: 15000},
     LoginConfig: {tokenStorageKey: 'access_token'},
     location: {origin: 'http://frontend', replace: url => redirects.push(url)}
   };
@@ -49,6 +49,17 @@ test('guide read client uses the same-origin proxy while publish remains in prev
   await assert.rejects(client.api.publish({}, 'CS261'), /ยังไม่ได้เปิดโหมด API/);
 });
 
+test('guide read client accepts zero legacy question counts', async () => {
+  const client = loadGuideApi({fetchImpl: async () => new Response(JSON.stringify({
+    id: 12, title: 'แนวข้อสอบ', academic_year: 2568, semester: 1, exam_period: 'midterm',
+    publisher_name: 'ผู้เผยแพร่', course: {id: 4, course_code: 'CS261', course_name: 'วิชา'},
+    topics: 'หัวข้อ', exam_format: 'mixed', objective_count: 0, subjective_count: null,
+    additional_advice: null
+  }))});
+  const row = await client.api.read(12, 'CS261');
+  assert.equal(row.objective_count, 0);
+});
+
 test('guide list client sends database filters and maps rows without preview data', async () => {
   const client = loadGuideApi({fetchImpl: async () => new Response(JSON.stringify({
     course_id: 27,
@@ -62,6 +73,66 @@ test('guide list client sends database filters and maps rows without preview dat
     period: 'กลางภาค', publisher_name: 'ผู้เผยแพร่'
   }]);
   assert.equal(client.calls[0][0], '/api/guides/courses/27/guides?academic_year=2568&semester=1&exam_period=midterm');
+});
+
+test('my guides client maps the flat API DTO without adding preview fields', async () => {
+  const client = loadGuideApi({fetchImpl: async () => new Response(JSON.stringify([{
+    id: 31, course_id: 902, course_code: 'CS902', course_name: 'วิชานอกตัวอย่าง',
+    instructor_name: null, title: 'แนวสอบจริง', academic_year: 2568, semester: 2,
+    exam_period: 'final', topics: 'กราฟ', exam_format: 'mixed',
+    objective_count: 0, subjective_count: null, additional_advice: null
+  }]))});
+
+  const rows = await client.api.mine();
+  assert.deepEqual(JSON.parse(JSON.stringify(rows)), [{
+    id: '31', course_id: 902, course_code: 'CS902', course_name: 'วิชานอกตัวอย่าง',
+    instructor_name: null, title: 'แนวสอบจริง', year: '2568', semester: '2',
+    period: 'ปลายภาค', formats: ['ผสม'], topics: 'กราฟ', notes: '',
+    objective_count: 0, essay_count: null
+  }]);
+  assert.equal(client.calls[0][0], '/api/my-guides');
+  assert.equal(client.calls[0][1].headers.Authorization, 'Bearer test-token');
+});
+
+test('my guides client rejects malformed DTOs and preserves the empty list', async () => {
+  const empty = loadGuideApi({fetchImpl: async () => new Response('[]')});
+  assert.deepEqual(JSON.parse(JSON.stringify(await empty.api.mine())), []);
+  const malformed = loadGuideApi({fetchImpl: async () => new Response('[{"id":1,"course_code":"CS999"}]')});
+  await assert.rejects(malformed.api.mine(), /ข้อมูลรายการแนวข้อสอบของฉันไม่ถูกต้อง/);
+});
+
+test('my guides client redirects when the token is missing or expired', async () => {
+  const missing = loadGuideApi({token: ''});
+  await assert.rejects(missing.api.mine(), error => error.status === 401);
+  assert.deepEqual(missing.redirects, ['login.html']);
+
+  const expired = loadGuideApi({fetchImpl: async () => new Response('{"detail":"expired"}', {status: 401})});
+  await assert.rejects(expired.api.mine(), error => error.status === 401);
+  assert.deepEqual(expired.redirects, ['login.html']);
+});
+
+test('update client uses PUT on the same-origin owned-guide proxy and validates the returned identity', async () => {
+  const dto = {id: 7, course_id: 13, course_code: 'CS263', course_name: 'New course',
+    title: 'Updated', academic_year: 2569, semester: 1, exam_period: 'final',
+    topics: 'Topics', exam_format: 'mixed', subjective_count: null, objective_count: 3};
+  const client = loadGuideApi({fetchImpl: async () => new Response(JSON.stringify(dto))});
+  const row = await client.api.update('7', {course_id: 13});
+  assert.equal(row.course_code, 'CS263');
+  assert.equal(client.calls[0][0], '/api/my-guides/7');
+  assert.equal(client.calls[0][1].method, 'PUT');
+  await assert.rejects(client.api.update('8', {course_id: 13}), /ยืนยันรายการที่แก้ไขไม่ได้/);
+});
+
+test('delete client uses the owned-guide proxy and validates the deleted record identity', async () => {
+  const client = loadGuideApi({fetchImpl: async () => new Response('{"id":7,"message":"deleted"}')});
+  const result = await client.api.remove('7');
+  assert.equal(result.id, 7);
+  assert.equal(client.calls[0][0], '/api/my-guides/7');
+  assert.equal(client.calls[0][1].method, 'DELETE');
+  assert.equal(client.calls[0][1].headers.Authorization, 'Bearer test-token');
+
+  const mismatch = loadGuideApi({fetchImpl: async () => new Response('{"id":8,"message":"deleted"}')});
+  await assert.rejects(mismatch.api.remove('7'), error => error.uncertain);
 });
 
 test('guide client sends publish through the same-origin proxy and keeps auth and course reads on their existing proxies', async () => {

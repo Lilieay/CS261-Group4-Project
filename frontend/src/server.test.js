@@ -48,6 +48,136 @@ test('course list proxy pins the backend path and forwards search and authorizat
   });
 });
 
+test('my guides proxy pins the backend path, forwards authorization, and preserves an empty result', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target;
+  let init;
+  global.fetch = async (url, options) => {
+    target = url;
+    init = options;
+    return new Response('[]', {status: 200, headers: {'content-type': 'application/json'}});
+  };
+
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides?username=other', 'GET', {Authorization: 'Bearer test-token'});
+    assert.equal(response.status, 200);
+    assert.equal(response.body, '[]');
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(target.href, 'http://backend:8000/api/my-guides');
+    assert.equal(init.method, 'GET');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(init.headers.Accept, 'application/json');
+    assert.equal(init.cache, 'no-store');
+    assert.equal(init.redirect, 'manual');
+  });
+});
+
+test('my guides proxy preserves backend errors and returns 502 when unavailable', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  global.fetch = async () => new Response('{"detail":"unauthorized"}', {
+    status: 401, headers: {'content-type': 'application/json'}
+  });
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides');
+    assert.equal(response.status, 401);
+    assert.deepEqual(JSON.parse(response.body), {detail: 'unauthorized'});
+  });
+
+  global.fetch = async () => { throw new Error('backend unavailable'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides');
+    assert.equal(response.status, 502);
+  });
+});
+
+test('update proxy pins the owned-guide path and forwards JSON, authorization and errors', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target, init;
+  global.fetch = async (url, options) => {
+    target = url; init = options;
+    return new Response('{"detail":"GUIDE_NOT_FOUND"}', {status: 404, headers: {'content-type': 'application/json'}});
+  };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7?owner=other', 'PUT', {
+      Authorization: 'Bearer test-token', 'Content-Type': 'application/json'
+    }, '{"course_id":4,"title":"updated"}');
+    assert.equal(response.status, 404);
+    assert.equal(JSON.parse(response.body).detail, 'GUIDE_NOT_FOUND');
+    assert.equal(target.href, 'http://backend:8000/api/my-guides/7');
+    assert.equal(init.method, 'PUT');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(JSON.parse(init.body).course_id, 4);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    const invalid = await request(port, '/api/my-guides/0', 'PUT', {'Content-Type': 'application/json'}, '{}');
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test('update proxy preserves validation/auth/server failures and bounds network failures', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  for (const status of [401, 422, 500]) {
+    global.fetch = async () => new Response('{"detail":"failure"}', {status});
+    await withServer(async port => {
+      const response = await request(port, '/api/my-guides/7', 'PUT', {'Content-Type': 'application/json'}, '{}');
+      assert.equal(response.status, status);
+      assert.equal(JSON.parse(response.body).detail, 'failure');
+    });
+  }
+  global.fetch = async () => { throw new Error('offline'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7', 'PUT', {'Content-Type': 'application/json'}, '{}');
+    assert.equal(response.status, 502);
+  });
+});
+
+test('delete proxy pins the owned-guide path and forwards authorization and the backend result', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target, init;
+  global.fetch = async (url, options) => {
+    target = url; init = options;
+    return new Response('{"id":7,"message":"deleted"}', {
+      status: 200, headers: {'content-type': 'application/json'}
+    });
+  };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7?owner=other', 'DELETE', {
+      Authorization: 'Bearer test-token'
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.deepEqual(JSON.parse(response.body), {id: 7, message: 'deleted'});
+    assert.equal(target.href, 'http://backend:8000/api/my-guides/7');
+    assert.equal(init.method, 'DELETE');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(init.redirect, 'manual');
+    const invalid = await request(port, '/api/my-guides/0', 'DELETE');
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test('delete proxy preserves ownership/auth errors and reports upstream failures', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  for (const status of [401, 404, 500]) {
+    global.fetch = async () => new Response('{"detail":"failure"}', {status});
+    await withServer(async port => {
+      const response = await request(port, '/api/my-guides/7', 'DELETE');
+      assert.equal(response.status, status);
+      assert.deepEqual(JSON.parse(response.body), {detail: 'failure'});
+    });
+  }
+  global.fetch = async () => { throw new Error('offline'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7', 'DELETE');
+    assert.equal(response.status, 502);
+  });
+});
+
 test('course detail proxy forwards bearer authorization and preserves API errors', async t => {
   const originalFetch = global.fetch;
   t.after(() => { global.fetch = originalFetch; });

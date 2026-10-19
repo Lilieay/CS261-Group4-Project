@@ -23,14 +23,21 @@
     const token = accessToken();
     if (!token) {
       window.location.replace('login.html');
-      throw new GuideApiError('กรุณาเข้าสู่ระบบก่อนอ่านแนวข้อสอบ', {status: 401});
+      throw new GuideApiError('กรุณาเข้าสู่ระบบก่อนใช้งานแนวข้อสอบ', {status: 401});
     }
     if (method === 'POST' && (!config || config.mode !== 'api' || path !== config.publishPath)) {
       throw new GuideApiError('เส้นทางเผยแพร่แนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    const target = method === 'POST' && path === config.publishPath
+    if (method === 'PUT' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+      throw new GuideApiError('เส้นทางแก้ไขแนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    if (method === 'DELETE' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+      throw new GuideApiError('เส้นทางลบแนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    const target = ['PUT', 'DELETE'].includes(method) ? path
+      : method === 'POST' && path === config.publishPath
       ? '/api/guides'
-      : method === 'GET' && path === config.mePath
+      : method === 'GET' && (path === config.mePath || path === config.myGuidesPath)
       ? path
       : method === 'GET' && path === config.coursesPath
         ? '/api/courses'
@@ -71,8 +78,10 @@
     } catch (_) {
       throw new GuideApiError(method === 'POST'
         ? 'ยังยืนยันผลเผยแพร่ไม่ได้ กรุณาตรวจรายการของคุณก่อนส่งซ้ำ เพื่อหลีกเลี่ยงรายการซ้ำ'
+        : method === 'DELETE'
+        ? 'ยังยืนยันผลการลบไม่ได้ กรุณาตรวจรายการของคุณก่อนลองอีกครั้ง'
         : 'ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจการเชื่อมต่อและลองใหม่',
-      {uncertain: method === 'POST'});
+      {uncertain: method === 'POST' || method === 'DELETE'});
     } finally { clearTimeout(timer); }
 
     if (!response.ok) {
@@ -95,9 +104,9 @@
         422: 'ข้อมูลไม่ผ่านการตรวจสอบ กรุณาตรวจช่องที่ระบุ',
         429: 'ส่งคำขอบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่'
       };
-      throw new GuideApiError(messages[response.status] || 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ ข้อมูลในฟอร์มยังอยู่', {
+      throw new GuideApiError(messages[response.status] || 'เซิร์ฟเวอร์ทำรายการไม่สำเร็จ กรุณาลองใหม่', {
         status: response.status, fields: fields.filter(item => item && typeof item.field === 'string' && typeof item.message === 'string'),
-        uncertain: method === 'POST' && response.status >= 500
+        uncertain: (method === 'POST' || method === 'DELETE') && response.status >= 500
       });
     }
     return {status: response.status, payload};
@@ -128,7 +137,7 @@
     });
   }
 
-  function validateDetail(row, expectedCode, expectedId) {
+  function validateDetail(row, expectedCode, expectedId, {allowZeroCounts = false} = {}) {
     if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
         || (expectedId != null && String(row.id) !== String(expectedId))
         || !row.course || row.course.course_code !== expectedCode
@@ -138,7 +147,8 @@
         || !['midterm', 'final'].includes(row.exam_period)
         || !['objective', 'subjective', 'mixed'].includes(row.exam_format)
         || typeof row.publisher_name !== 'string'
-        || ![row.subjective_count, row.objective_count].every(value => value === null || (Number.isSafeInteger(value) && value > 0))
+        || ![row.subjective_count, row.objective_count].every(value => value === null
+          || (Number.isSafeInteger(value) && (allowZeroCounts ? value >= 0 : value > 0)))
         || !(row.additional_advice == null || typeof row.additional_advice === 'string')) {
       throw new GuideApiError('ข้อมูลรายละเอียดที่เซิร์ฟเวอร์ส่งกลับไม่ถูกต้อง');
     }
@@ -159,7 +169,60 @@
   async function read(id, code) {
     if (!/^[1-9]\d*$/.test(String(id))) throw new GuideApiError('ไม่พบแนวข้อสอบ', {status: 404});
     const {payload} = await request(`/guides/${encodeURIComponent(id)}`);
-    return validateDetail(payload, code, id);
+    return validateDetail(payload, code, id, {allowZeroCounts: true});
+  }
+
+  async function mine() {
+    const {payload} = await request(config.myGuidesPath);
+    if (!Array.isArray(payload)) throw new GuideApiError('รูปแบบรายการแนวข้อสอบของฉันจากเซิร์ฟเวอร์ไม่ถูกต้อง');
+    return payload.map(normalizeMyGuide);
+  }
+
+  function normalizeMyGuide(row) {
+    if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
+        || !Number.isSafeInteger(row.course_id) || row.course_id <= 0
+        || typeof row.course_code !== 'string' || !/^CS\d{3}$/.test(row.course_code)
+        || typeof row.course_name !== 'string' || !row.course_name.trim()
+        || !(row.instructor_name == null || typeof row.instructor_name === 'string')
+        || typeof row.title !== 'string' || !row.title.trim()
+        || !Number.isInteger(row.academic_year)
+        || ![1, 2, 3].includes(row.semester)
+        || !['midterm', 'final'].includes(row.exam_period)
+        || typeof row.topics !== 'string'
+        || !['objective', 'subjective', 'mixed'].includes(row.exam_format)
+        || ![row.objective_count, row.subjective_count].every(value => value == null
+          || (Number.isSafeInteger(value) && value >= 0))
+        || !(row.additional_advice == null || typeof row.additional_advice === 'string')) {
+      throw new GuideApiError('ข้อมูลรายการแนวข้อสอบของฉันไม่ถูกต้อง');
+    }
+    return {
+      id: String(row.id), course_id: row.course_id,
+      course_code: row.course_code, course_name: row.course_name,
+      instructor_name: row.instructor_name, title: row.title,
+      year: String(row.academic_year), semester: String(row.semester),
+      period: row.exam_period === 'midterm' ? 'กลางภาค' : 'ปลายภาค',
+      formats: [{objective: 'ปรนัย', subjective: 'อัตนัย', mixed: 'ผสม'}[row.exam_format]],
+      topics: row.topics, notes: row.additional_advice || '',
+      objective_count: row.objective_count, essay_count: row.subjective_count
+    };
+  }
+
+  async function update(id, body) {
+    if (!/^[1-9]\d*$/.test(String(id))) throw new GuideApiError('ไม่พบแนวข้อสอบ', {status: 404});
+    const {payload} = await request(`/api/my-guides/${encodeURIComponent(id)}`, {method: 'PUT', body});
+    if (payload?.id !== Number(id) || payload?.course_id !== body.course_id) {
+      throw new GuideApiError('ยืนยันรายการที่แก้ไขไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ');
+    }
+    return normalizeMyGuide(payload);
+  }
+
+  async function remove(id) {
+    if (!/^[1-9]\d*$/.test(String(id))) throw new GuideApiError('ไม่พบแนวข้อสอบ', {status: 404});
+    const {payload} = await request(`/api/my-guides/${encodeURIComponent(id)}`, {method: 'DELETE'});
+    if (payload?.id !== Number(id) || typeof payload?.message !== 'string') {
+      throw new GuideApiError('ยืนยันผลการลบไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ', {uncertain: true});
+    }
+    return payload;
   }
 
   async function list(courseId, filters = {}) {
@@ -210,5 +273,5 @@
     };
   }
 
-  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, list, filterOptions, toPreviewRow});
+  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, remove, list, filterOptions, toPreviewRow});
 })();

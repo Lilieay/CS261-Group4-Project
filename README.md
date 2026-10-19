@@ -1,81 +1,121 @@
-# CS261 Group 4 — Task12: Login API และสถานะ Login
+# CS261 Group 4
 
-โปรเจกต์นี้เพิ่มระบบ Login API ด้วย FastAPI โดยมี DTO สำหรับรับข้อมูลและส่งข้อมูลกลับอย่างชัดเจน พร้อมสร้างสถานะการเข้าสู่ระบบจาก Bearer token
+เว็บคลังรายวิชาและแนวข้อสอบ ใช้ Frontend (Node.js/Express), Backend (FastAPI) และ SQL Server 2022 บน Docker
 
-## วิธีเปิด Backend
+## เปิดชุดทดสอบ Task60 ที่เตรียมไว้ในเครื่องนี้
 
-เปิด PowerShell ที่โฟลเดอร์ `backend` แล้วรันคำสั่ง:
+หาก containers ของ Task60 ยังทำงานอยู่ เปิด [หน้า Login ชุดทดสอบ](http://127.0.0.1:25001/login.html) ได้ทันที โดยใช้บัญชี mock ด้านล่าง
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
+ชุดนี้ใช้ Compose project `cs261-task60-test` และ volume `cs261-task60-test_sqlserver_data` แยกจากฐานข้อมูลหลัก พอร์ต Frontend คือ `25001`, Backend คือ `28001` และ SQL Server คือ `21434`
 
-เปิดเอกสาร API ได้ที่ http://127.0.0.1:8000/docs
+ดูวิธีเริ่มชุดนี้ใหม่ใน [Docker runbook ของ Task60](docs/U4/U4_Task60_Docker_Runbook.md) คำสั่งในหัวข้อถัดไปใช้ชุดปกติซึ่งเปิด Frontend ที่พอร์ต `5000`
 
-## DTO ที่ใช้
+## รันเว็บด้วย Docker ตั้งแต่เริ่มต้น
 
-- `LoginRequest`: รับ `username` และ `password` โดยห้ามเป็นค่าว่าง
-- `UserDTO`: ข้อมูลผู้ใช้ที่เปิดเผยได้ ได้แก่ `id`, `username`, `display_name` และ `role` โดยไม่ส่ง password กลับไป
-- `LoginResponse`: ข้อความผลลัพธ์, `access_token`, ประเภท token และ `UserDTO`
-- `LoginStatusResponse`: `logged_in` และข้อมูลผู้ใช้เมื่อมี session ที่ถูกต้อง
+### 1. เตรียมเครื่องและไฟล์ตั้งค่า
 
-## API ที่สร้าง
+เปิด Docker Desktop ให้ engine ทำงาน แล้วเปิด PowerShell ที่โฟลเดอร์รากของ repository ซึ่งมี `compose.yaml`
 
-| Method | Path | หน้าที่ | ต้องใช้ token |
-|---|---|---|---|
-| POST | `/api/auth/login` | ตรวจสอบชื่อผู้ใช้/รหัสผ่านและสร้าง session | ไม่ต้องใช้ |
-| GET | `/api/auth/status` | ตรวจสถานะ Login ปัจจุบัน | ไม่บังคับ |
-| GET | `/api/auth/me` | อ่านข้อมูลผู้ใช้ของ token ปัจจุบัน | ต้องใช้ |
-| POST | `/api/auth/logout` | ลบ session และทำให้ token ใช้งานไม่ได้ | ต้องใช้ |
+สร้าง `.env` จากตัวอย่างเฉพาะเมื่อยังไม่มีไฟล์:
 
-เมื่อ Login สำเร็จ ให้นำค่า `access_token` ไปส่งใน Header ดังนี้:
+~~~powershell
+if (-not (Test-Path -LiteralPath '.env')) {
+    Copy-Item -LiteralPath '.env.example' -Destination '.env'
+}
+~~~
 
-```text
-Authorization: Bearer <access_token>
-```
+เปิดไฟล์ `.env` แล้วกำหนดค่า:
 
-## บัญชีสำหรับทดสอบ
+~~~dotenv
+MSSQL_SA_PASSWORD=<รหัสผ่าน SQL Server ของเครื่องนี้>
+TU_API_MODE=mock
+~~~
 
-| username | password | role |
+รหัสผ่าน SQL Server ใหม่ต้องมีอย่างน้อย 8 ตัวอักษรและผ่านข้อกำหนดความซับซ้อนของ SQL Server เช่น ใช้ตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก ตัวเลข และสัญลักษณ์ร่วมกัน หากใช้ volume เดิม ให้ใช้รหัสผ่านเดิมที่สร้าง SQL Server นั้น เก็บ `.env` ไว้ในเครื่องและอย่า commit
+
+โหมด `mock` ใช้บัญชีทดสอบในเครื่อง จึงไม่ต้องตั้ง TU API key
+
+### 2. เริ่ม SQL Server และ Backend
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File scripts/start-backend.ps1
+~~~
+
+สคริปต์ build Backend, รอ SQL Server healthy, รัน `db/init.sql` เพื่อสร้าง database, สร้างตาราง ORM ที่ยังไม่มี และเปิด Backend เมื่อสำเร็จจะแสดง URL ของ Backend และ API docs
+
+### 3. Seed รายวิชาและแนวข้อสอบตัวอย่าง
+
+~~~powershell
+docker compose exec backend python -m scripts.seed_courses --dataset demo --action seed
+docker compose exec backend python -m scripts.seed_guides --dataset test --action seed
+~~~
+
+ชุด demo มีรายวิชา 24 วิชาจากไฟล์ courses.json ส่วนแนวข้อสอบใช้ชุด test ซึ่งมี CS261 จำนวน 3 รายการ และ CS102 จำนวน 1 รายการ รายการที่เผยแพร่เพิ่มจะเก็บอยู่ในฐานข้อมูลด้วย
+
+ตรวจชุด seed ได้ด้วย:
+
+~~~powershell
+docker compose exec backend python -m scripts.seed_courses --dataset demo --action check
+docker compose exec backend python -m scripts.seed_guides --dataset test --action check
+~~~
+
+### 4. เปิด Frontend
+
+~~~powershell
+docker compose up -d --build frontend
+docker compose ps
+~~~
+
+| บริการ | URL |
+|---|---|
+| หน้า Login | http://127.0.0.1:5000/login.html |
+| ค้นหารายวิชา | http://127.0.0.1:5000/courses.html |
+| เผยแพร่แนวข้อสอบ | http://127.0.0.1:5000/upload.html |
+| Backend health | http://127.0.0.1:8000/ |
+| API docs | http://127.0.0.1:8000/docs |
+
+เปิดหน้าเว็บผ่าน Frontend server ตาม URL นี้ เพื่อให้การ Login และเรียก API ผ่าน proxy ทำงานครบ
+
+## บัญชี mock สำหรับทดสอบ
+
+| รหัสนักศึกษา | รหัสผ่าน | ชื่อที่แสดง |
 |---|---|---|
-| `student` | `password123` | student |
-| `admin` | `admin123` | admin |
+| `6800000000` | `0000000000000` (เลขศูนย์ 13 ตัว) | Student User |
 
-## ตัวอย่างเรียก API
+บัญชีนี้ใช้เมื่อ `TU_API_MODE=mock` เท่านั้น ใช้ทดสอบระบบโดยไม่ยืนยันบัญชีมหาวิทยาลัยจริง
 
-```bash
-curl -X POST http://127.0.0.1:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"6800000000","password":"0000000000000"}'
-```
+## ลองใช้งานหน้าเว็บ
 
-ตรวจสถานะ Login:
+1. เปิดหน้า Login แล้วเข้าสู่ระบบด้วยบัญชี mock
+2. ค้นหา CS261 และเปิดคลังรายวิชา
+3. ลองกรองปีการศึกษา ภาคเรียน และช่วงสอบ แล้วเปิดอ่านแนวข้อสอบ
+4. เปิดเมนูอัปโหลดเอกสาร เลือกรายวิชา และกรอกข้อมูลที่มีเครื่องหมาย *
+5. กดเผยแพร่ ระบบจะบันทึกลง SQL Server และเปิดหน้าอ่านของรายการที่สร้าง
+6. กลับไปคลังรายวิชาเพื่อตรวจรายการใหม่ แล้ว reload หน้าอ่านเพื่อดูว่าข้อมูลยังอยู่
+7. ลองส่งฟอร์มที่กรอกไม่ครบเพื่อตรวจข้อความ validation
 
-```bash
-curl http://127.0.0.1:8000/api/auth/status \
-  -H "Authorization: Bearer <access_token>"
-```
+Login, ค้นหารายวิชา, รายการแนวข้อสอบ, หน้าอ่าน, การเผยแพร่, หน้า "แนวข้อสอบของฉัน" และการแก้ไข/ย้ายรายวิชาเชื่อม API จริงแล้ว ส่วนการลบรายการยังเป็นงาน Task82
 
-## ผลการทดสอบ API
+ผู้ใช้ที่ Login สำเร็จถูกเก็บใน SQL Server ส่วน token เก็บในหน่วยความจำของ Backend เมื่อ restart Backend ต้อง Login ใหม่
 
-รันการทดสอบด้วยคำสั่ง `pytest` จากโฟลเดอร์ `backend` ผลที่คาดหวังคือทุกกรณีผ่าน:
+## ดูสถานะและหยุดระบบปกติ
 
-| กรณีทดสอบ | ข้อมูลทดสอบ | ผลที่คาดหวัง |
-|---|---|---|
-| Login สำเร็จ | `6800000000 / 0000000000000` | HTTP 200, ได้ token และ `logged_in=true` |
-| รหัสผ่านผิด | `6800000000 / wrong` | HTTP 401 และไม่สร้าง session |
-| Logout | token ที่ได้จาก Login | HTTP 200 และ token เดิมใช้ดู `/me` ไม่ได้ (HTTP 401) |
+~~~powershell
+docker compose ps
+docker compose logs --tail=100 backend frontend
+docker compose down
+~~~
 
-## หมายเหตุด้านการเก็บข้อมูล
+`docker compose down` เก็บ volume และข้อมูลไว้ เมื่อต้องการเปิดใหม่ให้รันขั้นตอนเริ่ม Backend และ Frontend ด้านบน โดยใช้ `.env` เดิม อย่าใช้ `down -v` เพราะจะลบ volume ฐานข้อมูล
 
-โค้ดชุดนี้เก็บผู้ใช้และ session ไว้ในหน่วยความจำเพื่อให้เหมาะกับการสาธิตและการทดสอบ Task เมื่อหยุดหรือ restart server session จะหายทั้งหมด สำหรับระบบจริงควรเปลี่ยนเป็นฐานข้อมูล, เก็บ password เป็น hash และใช้ token/session store ที่มีอายุหมดอายุและรองรับหลาย instance
+หากพอร์ต `1433`, `8000` หรือ `5000` ถูกใช้งานอยู่ ให้ใช้ [ชุดทดสอบแยกของ Task60](docs/U4/U4_Task60_Docker_Runbook.md) ที่พอร์ต `21434`, `28001` และ `25001`
 
-## Task11: ยืนยันบัญชีกับ TU API
+## เอกสารเพิ่มเติม
 
-การ Login เรียก service ยืนยันบัญชีกับ TU API ก่อนสร้าง session โดยค่าเริ่มต้นใช้ Mock สำหรับทดสอบในเครื่อง และเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL`, `TU_API_KEY` และ `TU_API_TIMEOUT` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
+- [คู่มือ Backend และ Login](docs/U1/U1_Task16_Backend_Docker_Runbook.md)
+- [คู่มือทดสอบ Task60 ด้วย project และ volume แยก](docs/U4/U4_Task60_Docker_Runbook.md)
+- [ผลทดสอบ UI–API ของ Task60](docs/U4/U4_Task60_UI_API_Test_Report.md)
+- [ผลทดสอบ API–DAO ของ Task60](docs/U4/U4_Task60_API_DAO_Test_Report.md)
+- [ผล System Test ของ Task60](docs/U4/U4_Task60_System_Test_Report.md)
 
-ระบบยอมรับบัญชีนักศึกษาที่ผ่านการยืนยันและ fail-closed เมื่อ TU API ใช้งานไม่ได้หรือข้อมูลยืนยันไม่ครบ ค่า `active=True` เป็น mapping ของ Adapter เพราะ response ที่ TU เผยแพร่ไม่มีฟิลด์ active. รายงาน Task11 อยู่ที่ `docs/U1/U1_Task11_TU_API_Verification.md`
-
+- [Task82 deletion flow and verification](docs/U5/U5_Task82_Delete_My_Guides_Test_Report.md)
