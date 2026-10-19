@@ -111,6 +111,18 @@ test('my guides client redirects when the token is missing or expired', async ()
   assert.deepEqual(expired.redirects, ['login.html']);
 });
 
+test('update client uses PUT on the same-origin owned-guide proxy and validates the returned identity', async () => {
+  const dto = {id: 7, course_id: 13, course_code: 'CS263', course_name: 'New course',
+    title: 'Updated', academic_year: 2569, semester: 1, exam_period: 'final',
+    topics: 'Topics', exam_format: 'mixed', subjective_count: null, objective_count: 3};
+  const client = loadGuideApi({fetchImpl: async () => new Response(JSON.stringify(dto))});
+  const row = await client.api.update('7', {course_id: 13});
+  assert.equal(row.course_code, 'CS263');
+  assert.equal(client.calls[0][0], '/api/my-guides/7');
+  assert.equal(client.calls[0][1].method, 'PUT');
+  await assert.rejects(client.api.update('8', {course_id: 13}), /ยืนยันรายการที่แก้ไขไม่ได้/);
+});
+
 test('guide client sends publish through the same-origin proxy and keeps auth and course reads on their existing proxies', async () => {
   const client = loadGuideApi({mode: 'api', fetchImpl: async url => {
     if (url === '/api/auth/me') return new Response('{"id":8,"username":"student"}');

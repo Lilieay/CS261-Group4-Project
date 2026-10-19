@@ -92,6 +92,48 @@ test('my guides proxy preserves backend errors and returns 502 when unavailable'
   });
 });
 
+test('update proxy pins the owned-guide path and forwards JSON, authorization and errors', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target, init;
+  global.fetch = async (url, options) => {
+    target = url; init = options;
+    return new Response('{"detail":"GUIDE_NOT_FOUND"}', {status: 404, headers: {'content-type': 'application/json'}});
+  };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7?owner=other', 'PUT', {
+      Authorization: 'Bearer test-token', 'Content-Type': 'application/json'
+    }, '{"course_id":4,"title":"updated"}');
+    assert.equal(response.status, 404);
+    assert.equal(JSON.parse(response.body).detail, 'GUIDE_NOT_FOUND');
+    assert.equal(target.href, 'http://backend:8000/api/my-guides/7');
+    assert.equal(init.method, 'PUT');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(JSON.parse(init.body).course_id, 4);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    const invalid = await request(port, '/api/my-guides/0', 'PUT', {'Content-Type': 'application/json'}, '{}');
+    assert.equal(invalid.status, 422);
+  });
+});
+
+test('update proxy preserves validation/auth/server failures and bounds network failures', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  for (const status of [401, 422, 500]) {
+    global.fetch = async () => new Response('{"detail":"failure"}', {status});
+    await withServer(async port => {
+      const response = await request(port, '/api/my-guides/7', 'PUT', {'Content-Type': 'application/json'}, '{}');
+      assert.equal(response.status, status);
+      assert.equal(JSON.parse(response.body).detail, 'failure');
+    });
+  }
+  global.fetch = async () => { throw new Error('offline'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides/7', 'PUT', {'Content-Type': 'application/json'}, '{}');
+    assert.equal(response.status, 502);
+  });
+});
+
 test('course detail proxy forwards bearer authorization and preserves API errors', async t => {
   const originalFetch = global.fetch;
   t.after(() => { global.fetch = originalFetch; });

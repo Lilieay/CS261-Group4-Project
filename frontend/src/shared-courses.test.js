@@ -61,7 +61,7 @@ test('my guides page renders API rows, filters them, and opens the exact guide',
   get('#search').listeners.input();
   assert.match(get('#exam-list').innerHTML, /ไม่พบแนวข้อสอบที่ตรงกับการค้นหา/);
   get('#search').value = '';
-  get('#exam-list').listeners.click({target: {closest: selector => selector === '[data-action="read"]'
+  get('#exam-list').listeners.click({target: {closest: selector => selector === '[data-action]'
     ? {dataset: {action: 'read', id: '41'}} : null}});
 
   const params = new URLSearchParams(navigations[0].split('?')[1]);

@@ -28,7 +28,11 @@
     if (method === 'POST' && (!config || config.mode !== 'api' || path !== config.publishPath)) {
       throw new GuideApiError('เส้นทางเผยแพร่แนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    const target = method === 'POST' && path === config.publishPath
+    if (method === 'PUT' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+      throw new GuideApiError('เส้นทางแก้ไขแนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    const target = method === 'PUT' ? path
+      : method === 'POST' && path === config.publishPath
       ? '/api/guides'
       : method === 'GET' && (path === config.mePath || path === config.myGuidesPath)
       ? path
@@ -166,34 +170,45 @@
   async function mine() {
     const {payload} = await request(config.myGuidesPath);
     if (!Array.isArray(payload)) throw new GuideApiError('รูปแบบรายการแนวข้อสอบของฉันจากเซิร์ฟเวอร์ไม่ถูกต้อง');
-    return payload.map(row => {
-      if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
-          || !Number.isSafeInteger(row.course_id) || row.course_id <= 0
-          || typeof row.course_code !== 'string' || !/^CS\d{3}$/.test(row.course_code)
-          || typeof row.course_name !== 'string' || !row.course_name.trim()
-          || !(row.instructor_name == null || typeof row.instructor_name === 'string')
-          || typeof row.title !== 'string' || !row.title.trim()
-          || !Number.isInteger(row.academic_year)
-          || ![1, 2, 3].includes(row.semester)
-          || !['midterm', 'final'].includes(row.exam_period)
-          || typeof row.topics !== 'string'
-          || !['objective', 'subjective', 'mixed'].includes(row.exam_format)
-          || ![row.objective_count, row.subjective_count].every(value => value == null
-            || (Number.isSafeInteger(value) && value >= 0))
-          || !(row.additional_advice == null || typeof row.additional_advice === 'string')) {
-        throw new GuideApiError('ข้อมูลรายการแนวข้อสอบของฉันไม่ถูกต้อง');
-      }
-      return {
-        id: String(row.id), course_id: row.course_id,
-        course_code: row.course_code, course_name: row.course_name,
-        instructor_name: row.instructor_name, title: row.title,
-        year: String(row.academic_year), semester: String(row.semester),
-        period: row.exam_period === 'midterm' ? 'กลางภาค' : 'ปลายภาค',
-        formats: [{objective: 'ปรนัย', subjective: 'อัตนัย', mixed: 'ผสม'}[row.exam_format]],
-        topics: row.topics, notes: row.additional_advice || '',
-        objective_count: row.objective_count, essay_count: row.subjective_count
-      };
-    });
+    return payload.map(normalizeMyGuide);
+  }
+
+  function normalizeMyGuide(row) {
+    if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
+        || !Number.isSafeInteger(row.course_id) || row.course_id <= 0
+        || typeof row.course_code !== 'string' || !/^CS\d{3}$/.test(row.course_code)
+        || typeof row.course_name !== 'string' || !row.course_name.trim()
+        || !(row.instructor_name == null || typeof row.instructor_name === 'string')
+        || typeof row.title !== 'string' || !row.title.trim()
+        || !Number.isInteger(row.academic_year)
+        || ![1, 2, 3].includes(row.semester)
+        || !['midterm', 'final'].includes(row.exam_period)
+        || typeof row.topics !== 'string'
+        || !['objective', 'subjective', 'mixed'].includes(row.exam_format)
+        || ![row.objective_count, row.subjective_count].every(value => value == null
+          || (Number.isSafeInteger(value) && value >= 0))
+        || !(row.additional_advice == null || typeof row.additional_advice === 'string')) {
+      throw new GuideApiError('ข้อมูลรายการแนวข้อสอบของฉันไม่ถูกต้อง');
+    }
+    return {
+      id: String(row.id), course_id: row.course_id,
+      course_code: row.course_code, course_name: row.course_name,
+      instructor_name: row.instructor_name, title: row.title,
+      year: String(row.academic_year), semester: String(row.semester),
+      period: row.exam_period === 'midterm' ? 'กลางภาค' : 'ปลายภาค',
+      formats: [{objective: 'ปรนัย', subjective: 'อัตนัย', mixed: 'ผสม'}[row.exam_format]],
+      topics: row.topics, notes: row.additional_advice || '',
+      objective_count: row.objective_count, essay_count: row.subjective_count
+    };
+  }
+
+  async function update(id, body) {
+    if (!/^[1-9]\d*$/.test(String(id))) throw new GuideApiError('ไม่พบแนวข้อสอบ', {status: 404});
+    const {payload} = await request(`/api/my-guides/${encodeURIComponent(id)}`, {method: 'PUT', body});
+    if (payload?.id !== Number(id) || payload?.course_id !== body.course_id) {
+      throw new GuideApiError('ยืนยันรายการที่แก้ไขไม่ได้ กรุณาโหลดรายการใหม่เพื่อตรวจสอบ');
+    }
+    return normalizeMyGuide(payload);
   }
 
   async function list(courseId, filters = {}) {
@@ -244,5 +259,5 @@
     };
   }
 
-  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, list, filterOptions, toPreviewRow});
+  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, list, filterOptions, toPreviewRow});
 })();

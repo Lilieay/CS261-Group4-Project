@@ -10,11 +10,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/shared-courses.css">
   <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/edit-form.css">
   <script src="js/profile.js" defer></script>
   <script src="js/login-config.js" defer></script>
   <script src="js/course-api.js" defer></script>
   <script src="js/upload-config.js" defer></script>
   <script src="js/guide-api.js" defer></script>
+  <script src="js/edit-form.js" defer></script>
   <script src="js/shared-courses.js" defer></script>
 </head>
 
@@ -134,6 +136,7 @@
       <h2>สรุปของฉัน</h2>
       <p>ส่วนสรุปจะเปิดให้ใช้งานใน Sprint 2</p>
     </section>
+    <p id="edit-status" role="status" aria-live="polite"></p>
   </main>
   <footer>
     <div><strong>ภาควิชาวิทยาการคอมพิวเตอร์ คณะวิทยาศาสตร์และเทคโนโลยี</strong><br>มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต
@@ -145,6 +148,92 @@
       <h2>รายละเอียดแนวข้อสอบ</h2><button type="button" data-close="reader" aria-label="ปิดรายละเอียด">×</button>
     </div>
     <div id="reader-content"></div><button type="button" data-close="reader" class="primary">ปิด</button>
+  </dialog>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="edit-form" novalidate>
+      <header class="edit-header">
+        <span class="edit-heading-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M13 3H5v18h7M13 3v6h5l-5-6ZM14 17l5-5 3 3-5 5-4 1zM18 13l3 3" />
+          </svg></span>
+        <h2 id="editor-title">แก้ไขข้อมูลแนวข้อสอบ</h2>
+      </header>
+      <div class="edit-body">
+        <div id="edit-error" class="edit-error-summary" role="alert" tabindex="-1" hidden></div>
+        <div class="edit-field">
+          <label for="edit-course">รายวิชาประจำภาควิชา <span>*</span></label>
+          <select id="edit-course" name="course_code" required aria-describedby="edit-course-error"></select>
+          <p id="edit-course-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-field">
+          <label for="edit-title">ชื่อแนวข้อสอบ <span>*</span></label>
+          <input id="edit-title" name="title" required maxlength="200" aria-describedby="edit-title-error">
+          <p id="edit-title-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-row edit-row-three">
+          <div class="edit-field">
+            <label for="edit-year">ปีการศึกษา <span>*</span></label>
+            <input id="edit-year" name="year" type="number" min="1" max="32767" step="1" required aria-describedby="edit-year-error">
+            <p id="edit-year-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-semester">ภาคเรียน <span>*</span></label>
+            <select id="edit-semester" name="semester" required aria-describedby="edit-semester-error">
+              <option value="1">ภาคเรียนที่ 1</option>
+              <option value="2">ภาคเรียนที่ 2</option>
+              <option value="3">ฤดูร้อน</option>
+            </select>
+            <p id="edit-semester-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-period">ช่วงการสอบ <span>*</span></label>
+            <select id="edit-period" name="period" required aria-describedby="edit-period-error">
+              <option value="midterm">สอบกลางภาค</option>
+              <option value="final">สอบปลายภาค</option>
+            </select>
+            <p id="edit-period-error" class="field-error" hidden></p>
+          </div>
+        </div>
+        <div class="edit-field">
+          <label for="edit-formats">รูปแบบข้อสอบ</label>
+          <select id="edit-formats" name="formats" required aria-describedby="edit-formats-error">
+            <option value="subjective">ข้อเขียนและโจทย์เขียนโค้ด</option>
+            <option value="objective">ข้อสอบปรนัย</option>
+            <option value="mixed">ข้อสอบผสม</option>
+          </select>
+          <p id="edit-formats-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-row">
+          <div class="edit-field">
+            <label for="edit-essay-count">อัตนัย</label>
+            <input id="edit-essay-count" name="essay_count" type="number" min="1" step="1" placeholder="จำนวนข้อ"
+              aria-describedby="edit-essay-count-error">
+            <p id="edit-essay-count-error" class="field-error" hidden></p>
+          </div>
+          <div class="edit-field">
+            <label for="edit-objective-count">ปรนัย</label>
+            <input id="edit-objective-count" name="objective_count" type="number" min="1" step="1"
+              placeholder="จำนวนข้อ" aria-describedby="edit-objective-count-error">
+            <p id="edit-objective-count-error" class="field-error" hidden></p>
+          </div>
+        </div>
+        <div class="edit-field">
+          <label for="edit-topics">หัวข้อเนื้อหาที่ครอบคลุม</label>
+          <textarea id="edit-topics" name="topics" maxlength="2000" rows="2" required aria-describedby="edit-topics-error"></textarea>
+          <p id="edit-topics-error" class="field-error" hidden></p>
+        </div>
+        <div class="edit-field">
+          <label for="edit-notes">คำแนะนำ / ข้อสังเกตเพิ่มเติม</label>
+          <textarea id="edit-notes" name="notes" maxlength="2000" rows="2" aria-describedby="edit-notes-error"></textarea>
+          <p id="edit-notes-error" class="field-error" hidden></p>
+        </div>
+      </div>
+      <footer class="edit-footer">
+        <button type="button" data-close="editor" class="edit-cancel">ยกเลิก</button>
+        <button type="submit" class="edit-save"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 3h13l3 3v15H4zM8 3v6h8V3M8 21v-8h8v8M13 5h1" />
+          </svg>บันทึกการแก้ไข</button>
+      </footer>
+    </form>
   </dialog>
 </body>
 

@@ -15,7 +15,7 @@
 
   function card(row) {
     const e = escapeHtml;
-    return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3 class="exam-card-title" title="${e(row.title)}">${e(row.title)}</h3><p class="description">รายวิชา ${e(row.course_name)}<br>ผู้สอน: ${e(row.instructor_name || 'ไม่ระบุ')}<br>หัวข้อ: ${e(row.topics || 'ไม่ระบุ')}${row.notes.trim() ? `<br>${e(row.notes)}` : ''}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>${e(row.formats.join(' / '))}</b></div><div><span>อัตนัย:</span><b>${e(questionCount(row.essay_count))}</b></div><div><span>ปรนัย:</span><b>${e(questionCount(row.objective_count))}</b></div></div></div><aside class="card-side"><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button></div></aside></article>`;
+    return `<article class="exam-card"><div><div class="badges"><span class="badge code">${e(row.course_code)}</span><span class="badge">ปีการศึกษา ${e(row.year)}</span><span class="badge semester">ภาคเรียนที่ ${e(row.semester)}</span><span class="badge period">● ${e(row.period)}</span></div><h3 class="exam-card-title" title="${e(row.title)}">${e(row.title)}</h3><p class="description">รายวิชา ${e(row.course_name)}<br>ผู้สอน: ${e(row.instructor_name || 'ไม่ระบุ')}<br>หัวข้อ: ${e(row.topics || 'ไม่ระบุ')}${row.notes.trim() ? `<br>${e(row.notes)}` : ''}</p><div class="metadata"><div><span>รูปแบบข้อสอบ:</span><b>${e(row.formats.join(' / '))}</b></div><div><span>อัตนัย:</span><b>${e(questionCount(row.essay_count))}</b></div><div><span>ปรนัย:</span><b>${e(questionCount(row.objective_count))}</b></div></div></div><aside class="card-side"><div class="card-actions"><button class="open" data-action="read" data-id="${e(row.id)}">${icon('book')}เปิดอ่านแนวข้อสอบ</button><button data-action="edit" data-id="${e(row.id)}">${icon('edit')}แก้ไขข้อมูล</button></div></aside></article>`;
   }
 
   const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
@@ -96,10 +96,20 @@
       render();
       return;
     }
-    const button = event.target.closest('[data-action="read"]');
+    const button = event.target.closest('[data-action]');
     if (!button) return;
     const row = rows.find(item => item.id === button.dataset.id);
     if (!row) return;
+    if (button.dataset.action === 'edit') {
+      window.GuideEditor.open(row, async () => {
+        $('#search').value = '';
+        $('#course-filter').value = '';
+        $('#year-filter').value = '';
+        $('#edit-status').textContent = 'บันทึกการแก้ไขแล้ว';
+        await loadMyGuides();
+      });
+      return;
+    }
     const params = new URLSearchParams({
       course: row.course_code, courseId: String(row.course_id), guide: row.id,
       source: 'api', returnTo: 'shared-courses.html'
