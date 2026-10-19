@@ -38,6 +38,10 @@
 
 ## Postman และข้อมูลที่ใช้
 
+### ตรวจความเข้ากันได้กับ Task16 / PR #87 (2026-10-19)
+
+หลังรวม `integration/sprint1` เข้า Task16 ที่ revision `b173855` ปรับ fixture ของ Course API ให้สร้าง `AuthService` กับ SQLite ของชุดทดสอบ และส่งผ่าน `get_auth_service` แทนการ patch auth globals แบบเดิม ผลของ revision นี้พร้อม fixture ที่แก้: Course API **6 tests และ 8 subtests ผ่าน** แม้ตั้ง `TU_API_MODE=invalid-test-mode`; backend suite รวม **112 tests และ 54 subtests ผ่าน** ด้วย `TU_API_MODE=mock` และ `DB_CONNECTION_STRING` จำลองสำหรับ import แอป คำสั่งคือ `python -m pytest -p no:cacheprovider test -q` จากโฟลเดอร์ `backend` บน Windows/Python 3.14.6 ไม่ได้ตรวจ SQL Server, browser หรือ TU จริงในรอบนี้
+
 ใช้ `Task28-course-api.postman_collection.json` โดยต้องกรอก password ใน Environment ของผู้ทดสอบเองก่อนรัน Login Collection ไม่เก็บ password จริงหรือ token จริงไว้ในไฟล์ Collection
 
 ค่าตัวอย่างที่ใช้ทดสอบ:

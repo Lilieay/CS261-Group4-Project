@@ -12,8 +12,9 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.services.auth import User as AuthenticatedUser
-from app.services.auth import create_session, delete_session
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
+from app.services.tu_api import TUAccount
 
 
 class PublishGuideApiTests(unittest.TestCase):
@@ -31,6 +32,7 @@ class PublishGuideApiTests(unittest.TestCase):
         cls.previous_session_override = app.dependency_overrides.get(
             get_db_session
         )
+        cls.previous_auth_override = app.dependency_overrides.get(get_auth_service)
 
         def override_session():
             with cls.session_factory() as session:
@@ -55,7 +57,6 @@ class PublishGuideApiTests(unittest.TestCase):
             cls.non_cs_course_id = session.scalar(
                 select(Course.id).where(Course.course_code == "MA111")
             )
-        cls.tokens = []
 
     @classmethod
     def _enable_sqlite_foreign_keys(cls, connection, _record):
@@ -69,8 +70,10 @@ class PublishGuideApiTests(unittest.TestCase):
             app.dependency_overrides.pop(get_db_session, None)
         else:
             app.dependency_overrides[get_db_session] = cls.previous_session_override
-        for token in cls.tokens:
-            delete_session(token)
+        if cls.previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = cls.previous_auth_override
         cls.engine.dispose()
 
     def setUp(self):
@@ -78,13 +81,25 @@ class PublishGuideApiTests(unittest.TestCase):
             session.execute(Guide.__table__.delete())
             session.execute(User.__table__.delete())
             session.commit()
+        self.auth_service = AuthService(
+            self.session_factory,
+            verify=lambda username, password: (
+                TUAccount(username, "Task57 Student", "student", True)
+                if password == "0000000000000"
+                else None
+            ),
+        )
+        app.dependency_overrides[get_auth_service] = lambda: self.auth_service
 
     def headers_for(self, username="task57_student"):
-        token = create_session(
-            AuthenticatedUser(900, username, "Task57 Student", "student")
+        response = self.client.post(
+            "/api/auth/login",
+            json={"username": username, "password": "0000000000000"},
         )
-        self.tokens.append(token)
-        return {"Authorization": f"Bearer {token}"}
+        self.assertEqual(response.status_code, 200, response.text)
+        self.authenticated_user_id = response.json()["user"]["id"]
+        self.assertGreater(self.authenticated_user_id, 0)
+        return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
     def payload(self, **overrides):
         values = {
@@ -119,8 +134,8 @@ class PublishGuideApiTests(unittest.TestCase):
             guide = session.get(Guide, body["id"])
             publisher = session.get(User, guide.publisher_id)
             self.assertEqual(publisher.username, "task57_student")
-            self.assertEqual(guide.publisher_id, publisher.id)
-            self.assertNotEqual(guide.publisher_id, 900)
+            self.assertEqual(guide.publisher_id, self.authenticated_user_id)
+            self.assertEqual(publisher.id, self.authenticated_user_id)
 
     def test_publish_allows_nullable_optional_values_and_normalizes_advice(self):
         response = self.client.post(
@@ -180,6 +195,10 @@ class PublishGuideApiTests(unittest.TestCase):
 
         with self.session_factory() as session:
             self.assertEqual(session.scalar(select(func.count(Guide.id))), 0)
+            self.assertEqual(session.scalar(select(func.count(User.id))), 1)
+            self.assertIsNotNone(
+                session.scalar(select(User).where(User.username == "task57_invalid"))
+            )
 
     def test_publish_rejects_missing_and_out_of_scope_courses(self):
         headers = self.headers_for("task57_course_scope")
@@ -197,11 +216,11 @@ class PublishGuideApiTests(unittest.TestCase):
 
         with self.session_factory() as session:
             self.assertEqual(session.scalar(select(func.count(Guide.id))), 0)
-            self.assertIsNone(
-                session.scalar(
-                    select(User).where(User.username == "task57_course_scope")
-                )
+            persisted_user = session.scalar(
+                select(User).where(User.username == "task57_course_scope")
             )
+            self.assertIsNotNone(persisted_user)
+            self.assertEqual(session.scalar(select(func.count(User.id))), 1)
 
     def test_database_failure_returns_500_and_rolls_back_guide(self):
         with patch(

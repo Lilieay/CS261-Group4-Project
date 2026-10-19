@@ -11,6 +11,9 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
+from app.services.tu_api import TUAccount
 
 
 class ReadGuideApiTests(unittest.TestCase):
@@ -33,6 +36,16 @@ class ReadGuideApiTests(unittest.TestCase):
                 yield session
 
         app.dependency_overrides[get_db_session] = override_session
+        cls.previous_auth_override = app.dependency_overrides.get(get_auth_service)
+        cls.auth_service = AuthService(
+            cls.session_factory,
+            verify=lambda username, password: (
+                TUAccount(username, "Student User", "student", True)
+                if password == "0000000000000"
+                else None
+            ),
+        )
+        app.dependency_overrides[get_auth_service] = lambda: cls.auth_service
         with cls.session_factory() as session:
             course = Course(
                 course_code="CS261",
@@ -98,6 +111,10 @@ class ReadGuideApiTests(unittest.TestCase):
             app.dependency_overrides.pop(get_db_session, None)
         else:
             app.dependency_overrides[get_db_session] = cls.previous_session_override
+        if cls.previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = cls.previous_auth_override
         cls.engine.dispose()
 
     def test_list_requires_login_and_returns_only_requested_course(self):

@@ -11,6 +11,7 @@ services:
       - "127.0.0.1:1433:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test:
         - CMD-SHELL

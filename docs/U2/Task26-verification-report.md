@@ -1,54 +1,52 @@
-# Task26 verification results
+# Task26: รายงานผลตรวจข้อมูลรายวิชาและระบบ Seed
 
-Date: 18 October 2026. Branch: `feat/task26-course-seed`, based directly on `integration/sprint1` at `228a6f8`.
+วันที่ตรวจ: 18 ตุลาคม 2026 สาขา `feat/task26-course-seed` สร้างจาก `integration/sprint1` ที่ commit `228a6f8` โดยตรง
 
-Verified implementation revision: `ebf07d1`. Data: `924ce8b`; seed service: `9d7f139`; Docker packaging: `ecccaa5`; tests: `ebf07d1`.
+รุ่นโค้ดที่ตรวจ: `ebf07d1` โดยข้อมูลอยู่ที่ `924ce8b`, บริการ Seed ที่ `9d7f139`, การจัดแพ็กเกจ Docker ที่ `ecccaa5` และชุดทดสอบที่ `ebf07d1`
 
-## Environment and data
+## สภาพแวดล้อมและข้อมูล
 
-Windows PowerShell, local Python 3.14 environment, Docker Desktop 29.8.2, and SQL Server 2022 Developer in Docker Compose. Credentials stay in ignored environment files.
+ใช้ Windows PowerShell, Python 3.14 ในเครื่อง, Docker Desktop 29.8.2 และ SQL Server 2022 Developer ผ่าน Docker Compose เก็บข้อมูลรับรองไว้ในไฟล์ environment ที่ Git ไม่ติดตาม
 
-The registrar source was read through the user's open Chrome session at [TU course search](https://vnweb68.reg.tu.ac.th/registrar/classinfo). Both result pages contained 67 section/curriculum rows. Filtering to curriculum 2566 and applying the documented instructor and course exclusions produced 24 distinct courses. No account identifiers or session data were saved.
+อ่านข้อมูลสำนักทะเบียนผ่าน Chrome ที่ผู้ใช้เปิดไว้ที่ [ระบบค้นหารายวิชา TU](https://vnweb68.reg.tu.ac.th/registrar/classinfo) ผลค้นหาสองหน้ามีข้อมูลกลุ่มเรียนและหลักสูตรรวม 67 แถว เมื่อกรองหลักสูตร 2566 และใช้เงื่อนไขคัดผู้สอนและรายวิชาตามเอกสารแล้ว เหลือรายวิชาไม่ซ้ำ 24 วิชา ไม่มีการบันทึกตัวระบุบัญชีหรือข้อมูล session
 
-Before CLI verification: courses = 0, guides = 0, users = 1. After verification: courses = 24, guides = 0, users = 1, demo ownership records = 24.
+ก่อนตรวจ CLI มี courses = 0, guides = 0 และ users = 1 หลังตรวจมี courses = 24, guides = 0, users = 1 และรายการติดตามเจ้าของชุด demo = 24
 
-## Observed results
+## ผลตรวจจริง
 
-| ID | Input and expected behavior | Observed result | Status |
+| รหัส | ข้อมูลและผลที่คาดหวัง | ผลจริง | สถานะ |
 |---|---|---|---|
-| T26-DATA | Real registrar names; one or two distinct instructors; exclude project/co-op courses | 24 entries; CS301, CS303, CS403, CS404 absent; CS261 has its real Thai description | PASS |
-| T26-UNIT | Course seed and existing Task41 seed behavior under SQLite | 20 tests and 4 subtests passed | PASS |
-| T26-SQL | Same suites with isolated SQL Server schema mode enabled | 20 tests and 4 subtests passed; no temporary schemas remained | PASS |
-| T26-CLI-01 | Seed test dataset, check it, then seed again | First run inserted 4; check matched 4; repeat reused 4 with no new rows | PASS |
-| T26-CLI-02 | Restore test dataset twice | First run removed 4; second run removed 0 | PASS |
-| T26-CLI-03 | Seed and check demo dataset in separate processes | Inserted 24 and matched all 24 | PASS |
-| T26-DAO | Fresh process calls `CourseDAO.search('cs261')` and `get_by_id` | Exactly one CS261 returned; Thai instructor and description matched the dataset | PASS |
-| T26-SAFE | Preserve unrelated data and caller transaction boundaries | Existing user count stayed 1; changed, unowned, referenced, shared, and caller-rollback cases passed | PASS |
-| T26-IMPORT | Configure ORM mappers in a fresh interpreter | Regression test and real Docker process passed after registering the User relationship target | PASS |
+| T26-DATA | ใช้ชื่อจากสำนักทะเบียน มีผู้สอนหนึ่งหรือสองคน และไม่รวมวิชาโครงงานหรือสหกิจ | มี 24 รายการ ไม่มี CS301, CS303, CS403, CS404 และ CS261 มีคำอธิบายภาษาไทยจริง | ผ่าน |
+| T26-UNIT | ตรวจระบบ Seed รายวิชาและพฤติกรรม Seed เดิมของ Task41 บน SQLite | ผ่าน 20 tests และ 4 subtests | ผ่าน |
+| T26-SQL | รันชุดทดสอบเดิมโดยใช้ schema แยกบน SQL Server | ผ่าน 20 tests และ 4 subtests ไม่เหลือ schema ชั่วคราว | ผ่าน |
+| T26-CLI-01 | Seed ชุด test แล้ว check จากนั้น seed ซ้ำ | ครั้งแรกเพิ่ม 4 รายการ check ตรงกัน 4 รายการ และรันซ้ำใช้ 4 รายการเดิมโดยไม่เพิ่มแถว | ผ่าน |
+| T26-CLI-02 | Restore ชุด test สองครั้ง | ครั้งแรกลบ 4 รายการ ครั้งที่สองลบ 0 รายการ | ผ่าน |
+| T26-CLI-03 | Seed และ check ชุด demo ด้วย process แยกกัน | เพิ่ม 24 รายการ และตรวจตรงกันครบทั้ง 24 รายการ | ผ่าน |
+| T26-DAO | เปิด process ใหม่แล้วเรียก `CourseDAO.search('cs261')` และ `get_by_id` | คืน CS261 เพียงหนึ่งรายการ ชื่อผู้สอนและคำอธิบายภาษาไทยตรงกับชุดข้อมูล | ผ่าน |
+| T26-SAFE | รักษาข้อมูลที่ไม่เกี่ยวข้องและขอบเขต transaction ของผู้เรียก | จำนวนผู้ใช้เดิมคงที่ 1 ราย ผ่านกรณีข้อมูลถูกแก้ ไม่มีเจ้าของ มีรายการอ้างถึง ใช้ร่วมกัน และผู้เรียก rollback | ผ่าน |
+| T26-IMPORT | ตั้งค่า ORM mapper ใน Python interpreter ใหม่ | Regression test และ process จริงใน Docker ผ่านหลังลงทะเบียนโมเดล User ที่ relationship อ้างถึง | ผ่าน |
 
-## Reproduce
+## วิธีรันทดสอบซ้ำ
 
-From `backend`, the SQLite run was:
+รัน SQLite จากโฟลเดอร์ `backend`:
 
 ```powershell
 python -m pytest -p no:cacheprovider test/test_course_seed_service.py test/test_guide_seed_service.py -q
 ```
 
-From the repository root, the SQL Server run was:
+รัน SQL Server จากโฟลเดอร์รากของ repository:
 
 ```powershell
 $task26Tests = (Resolve-Path backend/test).Path
 docker compose run --rm --no-deps -e TASK26_TEST_SQLSERVER=1 -e TASK41_TEST_SQLSERVER=1 -v "${task26Tests}:/task26-tests:ro" backend python -m pytest -p no:cacheprovider /task26-tests/test_course_seed_service.py /task26-tests/test_guide_seed_service.py -q
 ```
 
-Each suite uses its own temporary SQL Server schemas and rolls them back. Data parsing, import, and missing-ledger checks do not all access SQL Server; the missing-ledger case explicitly creates SQLite. The real CLI runs in T26-CLI-01 through T26-CLI-03 separately verify durable data in the development database.
+แต่ละชุดทดสอบสร้าง schema ชั่วคราวของตนเองบน SQL Server แล้ว rollback เมื่อจบ ไม่ใช่ทุกกรณีที่เข้าถึง SQL Server โดยกรณีแปลงข้อมูลและ import บางกรณีไม่ใช้ฐานข้อมูล และกรณีไม่มีตารางติดตามเจ้าของข้อมูลสร้าง SQLite โดยตรง ส่วน T26-CLI-01 ถึง T26-CLI-03 ใช้ CLI จริงตรวจแยกว่าข้อมูลถูกบันทึกถาวรในฐานข้อมูลพัฒนา
 
-The first real CLI run exposed a missing `User` mapper registration that in-process tests had hidden by importing User themselves. A fresh-interpreter regression now covers the failing boundary. Its working directory comes from the installed service module so the test also works when mounted into Docker separately.
+การรัน CLI จริงครั้งแรกพบว่ายังไม่ได้ลงทะเบียน mapper ของ `User` ซึ่งชุดทดสอบภายใน process เดียวไม่พบเพราะ import User เอง ได้เพิ่ม regression test ที่เปิด Python interpreter ใหม่เพื่อตรวจกรณีนี้ โดยกำหนดโฟลเดอร์ทำงานจากโมดูลบริการที่ติดตั้งไว้ ทำให้รันทดสอบได้แม้ mount ชุดทดสอบเข้า Docker แยกต่างหาก
 
-## Delivery limits
+## ขอบเขตและข้อจำกัดของผลตรวจ
 
-Task26 does not require Task28 or the unmerged Task16 branch. It seeds database data only; the current frontend preview is not connected to these rows. No Course API, frontend integration, or registrar synchronization is claimed. Course instructors are a snapshot for the selected semester. Course descriptions other than CS261 were not collected.
+Task26 เพิ่มข้อมูลลงฐานข้อมูลเท่านั้น ไม่ต้องใช้ Task28 หรือสาขา Task16 ที่ยังไม่ merge ในขณะตรวจ หน้าเว็บ preview ณ รุ่นที่ตรวจยังไม่ได้เชื่อมข้อมูลเหล่านี้ ผลตรวจจึงไม่ครอบคลุม Course API การเชื่อมหน้าเว็บ หรือการซิงก์สำนักทะเบียน รายชื่อผู้สอนเป็นข้อมูล ณ ภาคเรียนที่เลือก และไม่ได้เก็บคำอธิบายของรายวิชาอื่นนอกจาก CS261
 
-Seed and restore support one process at a time. The tool checks Guide references and relies on database constraints to roll back other restrictive foreign-key failures. The operational ownership table is an addition; product table definitions are unchanged.
-
-No merge or push has been performed. Push requires the user's explicit authorization. The temporary implementation plan is excluded from commits and removed before delivery.
+Seed และ restore รองรับการทำงานทีละ process เครื่องมือตรวจรายการอ้างอิงจาก Guide และอาศัยข้อกำหนดของฐานข้อมูลให้ rollback เมื่อมี foreign key อื่นที่ห้ามลบ เพิ่มเฉพาะตารางติดตามเจ้าของข้อมูล Seed โดยไม่เปลี่ยนนิยามตารางข้อมูลหลักของระบบ

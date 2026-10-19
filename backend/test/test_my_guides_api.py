@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from contextlib import contextmanager
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +12,9 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.services.auth import ACTIVE_SESSIONS, User as AuthUser, create_session
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
+from app.services.tu_api import TUAccount
 
 
 @pytest.fixture
@@ -80,14 +83,35 @@ def client() -> Iterator[TestClient]:
     def override_db_session() -> Iterator[Session]:
         yield session
 
+    previous_db_override = app.dependency_overrides.get(get_db_session)
+    previous_auth_override = app.dependency_overrides.get(get_auth_service)
     app.dependency_overrides[get_db_session] = override_db_session
-    ACTIVE_SESSIONS.clear()
+
+    @contextmanager
+    def auth_session():
+        yield session
+
+    auth_service = AuthService(
+        auth_session,
+        verify=lambda username, password: (
+            TUAccount(username, username, "student", True)
+            if password == "0000000000000"
+            else None
+        ),
+    )
+    app.dependency_overrides[get_auth_service] = lambda: auth_service
     try:
         with TestClient(app) as test_client:
             yield test_client
     finally:
-        app.dependency_overrides.clear()
-        ACTIVE_SESSIONS.clear()
+        if previous_db_override is None:
+            app.dependency_overrides.pop(get_db_session, None)
+        else:
+            app.dependency_overrides[get_db_session] = previous_db_override
+        if previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = previous_auth_override
         session.close()
         engine.dispose()
 
@@ -97,7 +121,7 @@ def login(client: TestClient, username: str = "6800000000") -> str:
         "/api/auth/login",
         json={
             "username": username,
-            "password": "0000000000000" if username == "6800000000" else "admin123",
+            "password": "0000000000000",
         },
     )
     assert response.status_code == 200
@@ -156,7 +180,7 @@ def test_rejects_invalid_login_token(client):
 
 
 def test_returns_empty_list_when_authenticated_user_has_no_guides(client):
-    token = create_session(AuthUser(99, "admin", "ผู้ใช้ทดสอบ", "student"))
+    token = login(client, "admin")
 
     response = client.get(
         "/api/my-guides", headers={"Authorization": f"Bearer {token}"}

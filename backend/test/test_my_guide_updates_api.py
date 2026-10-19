@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
@@ -14,7 +15,9 @@ from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.services.auth import ACTIVE_SESSIONS, User as AuthUser, create_session
+from app.routers.auth import get_auth_service
+from app.services.auth import AuthService
+from app.services.tu_api import TUAccount
 
 
 @pytest.fixture
@@ -80,14 +83,35 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
     def override_db_session():
         yield session
 
+    previous_db_override = app.dependency_overrides.get(get_db_session)
+    previous_auth_override = app.dependency_overrides.get(get_auth_service)
     app.dependency_overrides[get_db_session] = override_db_session
-    ACTIVE_SESSIONS.clear()
+
+    @contextmanager
+    def auth_session():
+        yield session
+
+    auth_service = AuthService(
+        auth_session,
+        verify=lambda username, password: (
+            TUAccount(username, username, "student", True)
+            if password == "0000000000000"
+            else None
+        ),
+    )
+    app.dependency_overrides[get_auth_service] = lambda: auth_service
     try:
         with TestClient(app) as client:
             yield client, session, ids
     finally:
-        app.dependency_overrides.clear()
-        ACTIVE_SESSIONS.clear()
+        if previous_db_override is None:
+            app.dependency_overrides.pop(get_db_session, None)
+        else:
+            app.dependency_overrides[get_db_session] = previous_db_override
+        if previous_auth_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = previous_auth_override
         session.close()
         transaction.rollback()
         connection.close()
@@ -95,7 +119,7 @@ def api() -> Iterator[tuple[TestClient, Session, dict[str, int]]]:
 
 
 def login(client: TestClient, username: str = "6800000000") -> str:
-    password = "0000000000000" if username == "6800000000" else "admin123"
+    password = "0000000000000"
     response = client.post(
         "/api/auth/login",
         json={"username": username, "password": password},
@@ -189,7 +213,7 @@ def test_update_rejects_invalid_token(api):
 def test_non_owner_cannot_update_another_users_guide(api):
     client, session, ids = api
     before = guide_snapshot(session, ids["owned_guide"])
-    token = create_session(AuthUser(99, "admin", "ผู้ใช้อื่น", "student"))
+    token = login(client, "admin")
 
     response = client.put(
         f"/api/my-guides/{ids['owned_guide']}",
