@@ -1,8 +1,7 @@
-// Use preview with the existing localStorage pages. Change to api only when
-// the publishing endpoint, course endpoint, and Login integration are ready.
+// Upload uses the authenticated API and same-origin frontend proxies.
 window.GuidePublishConfig = Object.freeze({
-  mode: 'preview', // 'preview' | 'api'; API errors never fall back to preview.
-  apiBaseUrl: 'http://127.0.0.1:8000',
+  mode: 'api', // 'preview' | 'api'; API errors never fall back to preview.
+  apiBaseUrl: window.location.origin,
   coursesPath: '/courses',
   publishPath: '/guides',
   mePath: '/api/auth/me',

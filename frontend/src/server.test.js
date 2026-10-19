@@ -13,7 +13,7 @@ async function withServer(run) {
   }
 }
 
-function request(port, path, method = 'GET', headers = {}) {
+function request(port, path, method = 'GET', headers = {}, body = '') {
   return new Promise((resolve, reject) => {
     const req = http.request({host: '127.0.0.1', port, path, method, headers}, res => {
       let body = '';
@@ -22,7 +22,7 @@ function request(port, path, method = 'GET', headers = {}) {
       res.on('end', () => resolve({status: res.statusCode, headers: res.headers, body}));
     });
     req.on('error', reject);
-    req.end();
+    req.end(body);
   });
 }
 
@@ -148,6 +148,49 @@ test('guide proxy forwards guide paths, filters, bearer authorization and disabl
     assert.equal(target.href, 'http://backend:8000/courses/27/guides?academic_year=2568&semester=1');
     assert.equal(init.headers.Authorization, 'Bearer safe-test-token');
     assert.equal(init.method, 'GET');
+  });
+});
+
+test('publish proxy pins POST to the guide endpoint and forwards JSON and authorization', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target;
+  let init;
+  global.fetch = async (url, options) => {
+    target = url;
+    init = options;
+    return new Response('{"id":32}', {
+      status: 201, headers: {'content-type': 'application/json'}
+    });
+  };
+  const payload = JSON.stringify({course_id: 4, title: 'แนวข้อสอบ'});
+
+  await withServer(async port => {
+    const response = await request(port, '/api/guides', 'POST', {
+      Authorization: 'Bearer safe-test-token', 'Content-Type': 'application/json'
+    }, payload);
+    assert.equal(response.status, 201);
+    assert.equal(response.body, '{"id":32}');
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(target.href, 'http://backend:8000/guides');
+    assert.equal(init.method, 'POST');
+    assert.deepEqual(JSON.parse(init.body), JSON.parse(payload));
+    assert.equal(init.headers.Authorization, 'Bearer safe-test-token');
+  });
+});
+
+test('publish proxy rejects non-JSON bodies before calling the backend', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let calls = 0;
+  global.fetch = async () => { calls += 1; return new Response('{}'); };
+
+  await withServer(async port => {
+    const response = await request(port, '/api/guides', 'POST', {
+      'Content-Type': 'text/plain'
+    }, 'not-json');
+    assert.equal(response.status, 400);
+    assert.equal(calls, 0);
   });
 });
 
