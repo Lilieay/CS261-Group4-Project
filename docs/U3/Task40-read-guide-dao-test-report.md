@@ -1,26 +1,26 @@
-# Task40: Read Guide DAO test report
+# Task40: รายงานทดสอบ DAO อ่านแนวข้อสอบ
 
-## Test setup
+## การเตรียมทดสอบ
 
-The same seven automated DAO tests passed on SQL Server and on an in-memory SQLite database. SQL Server tests use the application's configured connection with its existing encryption and authentication settings.
+ชุดทดสอบ DAO อัตโนมัติทั้งเจ็ดกรณีผ่านบน SQL Server และ SQLite แบบ in-memory การทดสอบ SQL Server ใช้การเชื่อมต่อที่แอปตั้งค่าไว้ รวมถึงค่าการเข้ารหัสและการยืนยันตัวตนเดิม
 
-Fixture data has two courses and one publisher. CS261 has two guides (2568/semester 1/midterm and 2567/semester 2/final); CS102 has one guide matching the first CS261 guide's filter values. The first guide contains a Thai title and multiline Thai topics, with nullable counts and advice. The filter-values test adds another CS261 guide with duplicate filter values.
+ข้อมูลตั้งต้นมีรายวิชาสองวิชาและผู้เผยแพร่หนึ่งคน CS261 มีแนวข้อสอบสองรายการ คือปี 2568 ภาคเรียน 1 กลางภาค และปี 2567 ภาคเรียน 2 ปลายภาค ส่วน CS102 มีหนึ่งรายการที่ใช้ค่าตัวกรองตรงกับรายการแรกของ CS261 รายการแรกมีชื่อภาษาไทยและหัวข้อภาษาไทยหลายบรรทัด โดยจำนวนข้อและคำแนะนำรับค่า null ได้ กรณีตรวจชุดค่าตัวกรองเพิ่มแนวข้อสอบ CS261 อีกหนึ่งรายการที่มีค่าตัวกรองซ้ำ
 
-Each SQL Server test creates a unique `task40_test_<uuid>` schema and its tables inside an outer transaction. The Session uses `join_transaction_mode="rollback_only"`, so fixture commits do not commit that outer transaction. Cleanup closes the Session, rolls back the outer transaction, and checks `sys.schemas` to confirm the test schema no longer exists. Cleanup also runs when a test fails. Existing application tables and rows are not changed. SQLite databases are discarded after each test.
+แต่ละกรณีบน SQL Server สร้าง schema `task40_test_<uuid>` และตารางภายใน transaction ชั้นนอก โดย Session ใช้ `join_transaction_mode="rollback_only"` ทำให้การ commit ข้อมูลตั้งต้นไม่ commit transaction ชั้นนอก เมื่อจบจะปิด Session, rollback transaction ชั้นนอก และตรวจ `sys.schemas` ว่าไม่มี schema ทดสอบเหลืออยู่ ขั้นตอนคืนสภาพทำงานแม้ test ไม่ผ่าน โดยไม่แก้ตารางหรือข้อมูลเดิมของแอป ส่วนฐานข้อมูล SQLite ถูกทิ้งหลังจบแต่ละกรณี
 
-## Results
+## ผลทดสอบ
 
-| ID | Case / input | Expected result | Actual result on SQL Server | Status |
+| รหัส | กรณีและข้อมูลทดสอบ | ผลที่คาดหวัง | ผลจริงบน SQL Server | สถานะ |
 |---|---|---|---|---|
-| T40-DAO01 | CS261, 2568, semester 1, midterm | One guide matching all filters; Course and Publisher already loaded | One matching CS261 guide; relationships readable after detaching the results from the Session | Pass |
-| T40-DAO02 | CS261 with no filters, then each of the three filters separately | Both CS261 guides without filters; only the first guide for each single filter | Exact guide IDs returned in each case | Pass |
-| T40-DAO03 | CS261, year 2500 | Empty list | Empty list | Pass |
-| T40-DAO04 | CS261, year 2568, with matching data in CS102 | Only CS261 data | Only CS261 guide returned | Pass |
-| T40-DAO05 | Existing guide ID, then missing ID -1 | Guide with relationships, Thai text, newlines and NULL values preserved; missing ID returns `None` | All checked values matched; missing ID returned `None` | Pass |
-| T40-DAO06 | Filter values for CS261 and CS102, including a duplicate within CS261 | Distinct sorted values scoped to each course | CS261: years [2567, 2568], semesters [1, 2], periods [final, midterm]; CS102: [2568], [1], [midterm] | Pass |
-| T40-DAO07 | Course without guides | Three empty filter lists | Three empty lists | Pass |
+| T40-DAO01 | CS261 ปี 2568 ภาคเรียน 1 กลางภาค | แนวข้อสอบหนึ่งรายการตรงทุกตัวกรอง พร้อมโหลด Course และ Publisher แล้ว | ได้ CS261 หนึ่งรายการ และอ่าน relationship ได้หลังแยกผลลัพธ์ออกจาก Session | ผ่าน |
+| T40-DAO02 | CS261 แบบไม่กรอง แล้วใช้ตัวกรองทั้งสามแยกทีละตัว | แบบไม่กรองได้ทั้งสองรายการ แต่ละตัวกรองเดี่ยวได้เฉพาะรายการแรก | แต่ละกรณีคืน ID ของแนวข้อสอบตรงตามที่คาด | ผ่าน |
+| T40-DAO03 | CS261 ปี 2500 | รายการว่าง | รายการว่าง | ผ่าน |
+| T40-DAO04 | CS261 ปี 2568 โดยมีข้อมูล CS102 ที่ตรงเงื่อนไขด้วย | ได้เฉพาะข้อมูล CS261 | คืนเฉพาะแนวข้อสอบ CS261 | ผ่าน |
+| T40-DAO05 | ID แนวข้อสอบที่มีอยู่ และ ID -1 ที่ไม่มีอยู่ | รักษา relationship ข้อความไทย การขึ้นบรรทัดใหม่ และค่า NULL ส่วน ID ที่ไม่มีคืน `None` | ค่าที่ตรวจตรงทั้งหมด และ ID ที่ไม่มีคืน `None` | ผ่าน |
+| T40-DAO06 | ชุดค่าตัวกรองของ CS261 และ CS102 โดยมีค่าซ้ำใน CS261 | ค่าที่ไม่ซ้ำ เรียงลำดับ และแยกตามรายวิชา | CS261: ปี [2567, 2568], ภาคเรียน [1, 2], ช่วงสอบ [final, midterm]; CS102: [2568], [1], [midterm] | ผ่าน |
+| T40-DAO07 | รายวิชาที่ไม่มีแนวข้อสอบ | รายการตัวกรองว่างทั้งสามชุด | รายการว่างทั้งสามชุด | ผ่าน |
 
-Run from `backend` for SQLite:
+รัน SQLite จากโฟลเดอร์ `backend`:
 
 ```powershell
 $env:PYTHONPATH='.'
@@ -28,7 +28,7 @@ Remove-Item Env:TASK40_TEST_SQLSERVER -ErrorAction SilentlyContinue
 .venv\Scripts\python.exe -m unittest discover -s test -p test_read_guide_dao.py -v
 ```
 
-Run from `backend` for SQL Server in a process that can access the configured Windows credentials:
+รัน SQL Server จากโฟลเดอร์ `backend` ด้วย process ที่เข้าถึงข้อมูลรับรอง Windows ตามที่ตั้งค่าไว้ได้:
 
 ```powershell
 $env:PYTHONPATH='.'
@@ -36,26 +36,13 @@ $env:TASK40_TEST_SQLSERVER='1'
 .venv\Scripts\python.exe -m unittest discover -s test -p test_read_guide_dao.py -v
 ```
 
-Captured runner results:
+ผลลัพธ์ที่บันทึกจากตัวรันทดสอบ:
 
 ```text
 SQLite:     Ran 7 tests in 0.184s — OK
 SQL Server: Ran 7 tests in 1.246s — OK
 ```
 
-The SQL Server run included successful schema-rollback checks after all seven cases.
+การรัน SQL Server ตรวจยืนยันว่า rollback schema สำเร็จหลังจบทั้งเจ็ดกรณี
 
-The SQL Server DDL was also compiled with SQLAlchemy's MSSQL dialect. It produced `SMALLINT` for `academic_year`, `TINYINT` for `semester`, the specified `NVARCHAR` lengths, identity primary key, and both foreign keys.
-
-## Connection diagnosis
-
-The initial failure occurred in the agent's sandbox. ODBC Driver 18 reported SQLSTATE `08001`, encryption unsupported, and SSL provider error `-2146893042` (no credentials available). The SQL Server service was running.
-
-| Experiment | Change | Result / conclusion |
-|---|---|---|
-| Reproduce | Execute `SELECT 1` with the configured SQLAlchemy connection inside the sandbox | Same ODBC/SSL failure; the failure occurs before DAO queries |
-| Execution-context comparison | Repeat the identical command outside the sandbox | `SELECT 1` passed; the restricted execution context caused the failure |
-| DAO integration | Run the seven tests outside the sandbox against SQL Server | All passed, including schema creation, fixture inserts, reads and cleanup |
-| SQLite check | Run the same suite inside the sandbox against SQLite | All seven passed |
-
-No connection-string, encryption, certificate-trust, authentication or SQL Server service setting needed to change. For this agent session, SQL Server commands require execution outside the sandbox.
+ได้ตรวจการสร้าง DDL ด้วย MSSQL dialect ของ SQLAlchemy ด้วย ผลคือ `academic_year` ใช้ `SMALLINT`, `semester` ใช้ `TINYINT`, คอลัมน์ `NVARCHAR` มีความยาวตามที่กำหนด และมี primary key แบบ identity กับ foreign key ทั้งสองรายการ
