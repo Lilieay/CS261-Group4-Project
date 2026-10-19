@@ -2,7 +2,7 @@
 
 รายงานนี้ตรวจว่า Login และ Bearer token ป้องกันหน้า/API ของ Sprint 1 ได้จริง ผล Automated Test ไม่ถือเป็นผล Browser UAT หรือผลตรวจรับจาก PO
 
-## 1. ข้อมูลการทดสอบ
+## ข้อมูลการทดสอบ
 
 | รายการ | รายละเอียด |
 |---|---|
@@ -13,7 +13,7 @@
 | บัญชีทดสอบ | นักศึกษา mock; ไม่บันทึก password/token จริง |
 | TU API | Automated Test ใช้ mock; TU API จริงรอทดสอบ |
 
-## 2. ขอบเขตที่ตรวจ
+## ขอบเขตที่ตรวจ
 
 | ส่วน | หน้า/API | กติกา Login |
 |---|---|---|
@@ -23,7 +23,7 @@
 | My Guides | `shared-courses.html`, `GET/PUT/DELETE /api/my-guides*` | ต้อง Login และแก้/ลบได้เฉพาะเจ้าของ |
 | Preview pages | `index.html`, `saved-courses.html` | การเปิด HTML ไม่ถือว่าได้รับสิทธิ์ API; Backend ต้องตรวจเอง |
 
-## 3. กรณีทดสอบและผล
+##  กรณีทดสอบและผล
 
 | รหัส | ข้อมูลที่ใช้ | ผลคาดหวัง | ผลจริง/สถานะ | หลักฐาน |
 |---|---|---|---|---|
@@ -38,7 +38,7 @@
 | T17-09 | Frontend มี token/ไม่มี token/ได้ 401 | ส่ง Bearer token หรือ redirect ไป Login ตามกรณี | ผ่าน 13 tests | `server.test.js`, `course-api.test.js`, `course-pages.test.js` |
 | T17-10 | เปิดหน้าโดยตรงโดยไม่มี Login | หน้า HTML อาจเปิดได้ แต่ API ต้องปฏิเสธเอง | ผ่านตาม route protection; Browser UAT รอทดสอบ | รายการ route ในหัวข้อ 2 |
 
-## 4. ผล Automated Test
+##  ผล Automated Test
 
 Backend รันจาก `backend` ด้วย SQLite ชั่วคราวและ mock TU:
 
@@ -54,7 +54,7 @@ Frontend รันด้วย Node test runner:
 
 คำเตือนเป็น deprecation warning ของ Starlette ไม่ใช่ test failure
 
-## 5. ทดสอบ TU API จริง
+##  ทดสอบ TU API จริง
 
 ให้ผู้ทดสอบตั้งค่าใน `backend/.env` หรือ Environment ที่ไม่ถูก commit:
 
@@ -79,7 +79,7 @@ TU_TEST_PASSWORD=<รหัสผ่านบัญชีทดสอบ>
 
 ห้ามใส่ password, token, Application-Key หรือ response ที่มีข้อมูลส่วนบุคคลในรายงาน/ภาพหลักฐาน/GitHub
 
-## 6. สถานะ UAT และการตรวจรับ
+##  สถานะ UAT และการตรวจรับ
 
 | รายการ | สถานะ |
 |---|---|
@@ -89,4 +89,4 @@ TU_TEST_PASSWORD=<รหัสผ่านบัญชีทดสอบ>
 | PO ตรวจรับ | รอตรวจ |
 | ผลสรุป | ยังไม่สรุปว่า Task17 ผ่านสมบูรณ์ |
 
-เมื่อทดสอบจริงแล้ว ให้เติมผลจริง, ผ่าน/ไม่ผ่าน, หลักฐาน และให้ PO ลงผล `รับรอง` หรือ `ไม่รับรอง` รายงานนี้จึงจะครบถ้วนสำหรับปิดงาน
+เมื่อทดสอบจริงแล้ว ให้เติมผลจริง, ผ่าน/ไม่ผ่าน, หลักฐาน และให้ PO ลงผล `รับรอง` หรือ `ไม่รับรอง` รายงานนี้จึงจะครบถ้วนสำหรับtask17
