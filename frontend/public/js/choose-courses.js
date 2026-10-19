@@ -9,16 +9,12 @@
   const PAGE_SIZE = 6;
   let rows = [];
   let loadError = '';
+  let rowsLoading = false;
+  let rowLoadVersion = 0;
   let courseError = '';
   let courseErrorStatus = 0;
   let activeType = params.get('type') === 'summaries' ? 'summaries' : 'guides';
   let page = 1;
-
-  function filterGuides(items, filters) {
-    return items.filter(row => (filters.period === 'all' || row.period === filters.period)
-      && (filters.year === 'all' || row.year === filters.year)
-      && (filters.semester === 'all' || row.semester === filters.semester));
-  }
 
   function sortGuides(items, order) {
     return [...items].sort((a, b) => {
@@ -36,16 +32,55 @@
     select.value = values.includes(previous) ? previous : 'all';
   }
 
-  function loadRows() {
+  async function loadRows() {
+    if (!course) { rows = []; render(); return; }
+    const version = ++rowLoadVersion;
+    rowsLoading = true;
+    loadError = '';
+    render();
     try {
-      rows = course ? data.loadExams().filter(row => row.course_code === course.code) : [];
-      loadError = '';
-    } catch (error) { rows = []; loadError = error.message; }
-  
-    const unique = key => [...new Set(rows.map(row => row[key]).filter(Boolean))];
-    selectOptions('#periodFilter', unique('period').sort(), 'ช่วงสอบ');
-    selectOptions('#yearFilter', unique('year').sort((a, b) => Number(b) - Number(a)), 'ปีการศึกษา');
-    selectOptions('#semesterFilter', unique('semester').sort(), 'ภาคเรียน', data.semesterLabel);
+      const options = await window.GuideApi.filterOptions(course.id);
+      if (version !== rowLoadVersion) return;
+      selectOptions('#periodFilter', options.exam_periods.map(value => value === 'midterm' ? 'กลางภาค' : 'ปลายภาค'), 'ช่วงสอบ');
+      selectOptions('#yearFilter', options.academic_years.map(String).sort((a, b) => Number(b) - Number(a)), 'ปีการศึกษา');
+      selectOptions('#semesterFilter', options.semesters.map(String).sort(), 'ภาคเรียน', data.semesterLabel);
+      rows = [];
+    } catch (error) {
+      if (version !== rowLoadVersion) return;
+      rows = [];
+      loadError = error.message || 'โหลดรายการแนวข้อสอบไม่สำเร็จ';
+    } finally {
+      if (version === rowLoadVersion) {
+        rowsLoading = false;
+        render();
+      }
+    }
+  }
+
+  async function loadFilteredRows() {
+    if (!course) { rows = []; rowsLoading = false; render(); return; }
+    const version = ++rowLoadVersion;
+    rowsLoading = true;
+    loadError = '';
+    render();
+    const filters = filterState();
+    try {
+      rows = await window.GuideApi.list(course.id, {
+        academic_year: filters.year === 'all' ? null : filters.year,
+        semester: filters.semester === 'all' ? null : filters.semester,
+        exam_period: filters.period === 'all' ? null : filters.period === 'กลางภาค' ? 'midterm' : 'final'
+      });
+      if (version !== rowLoadVersion) return;
+    } catch (error) {
+      if (version !== rowLoadVersion) return;
+      rows = [];
+      loadError = error.message || 'โหลดรายการแนวข้อสอบไม่สำเร็จ';
+    } finally {
+      if (version === rowLoadVersion) {
+        rowsLoading = false;
+        render();
+      }
+    }
   }
 
   function filterState() {
@@ -81,9 +116,8 @@
 
   function documentCard(row) {
     const back = `choose-courses.html${new URL(window.location.href).search}`;
-    const query = new URLSearchParams({ course: course.code, guide: row.id, returnTo: back });
-    const rating = row.rating == null ? 'ยังไม่มีรีวิว' : `คะแนนรีวิว ${row.rating} (${row.reviews ?? 0} รีวิว)`;
-    return `<article class="document-card"><div class="document-main"><div class="badges"><span class="course-badge">${e(course.code)}</span><span class="type-badge">แนวข้อสอบ</span><span>ปี ${e(row.year)}</span><span>ภาคเรียน${e(data.semesterLabel(row.semester))}</span><span>${e(row.period)}</span></div><h2>${e(row.title)}</h2><div class="document-bottom"><span>แบ่งปันโดย ${e(data.publisherName(row))}</span><span class="rating">★ <span>${e(rating)}</span></span></div></div><a class="view-button" href="read-courses.html?${e(query.toString())}">ดูเอกสาร <span aria-hidden="true">→</span></a></article>`;
+    const query = new URLSearchParams({ course: course.code, courseId: String(course.id), guide: row.id, source: 'api', returnTo: back });
+    return `<article class="document-card"><div class="document-main"><div class="badges"><span class="course-badge">${e(course.code)}</span><span class="type-badge">แนวข้อสอบ</span><span>ปี ${e(row.year)}</span><span>ภาคเรียน${e(data.semesterLabel(row.semester))}</span><span>${e(row.period)}</span></div><h2>${e(row.title)}</h2><div class="document-bottom"><span>แบ่งปันโดย ${e(row.publisher_name || 'ไม่ระบุชื่อ')}</span></div></div><a class="view-button" href="read-courses.html?${e(query.toString())}">ดูเอกสาร <span aria-hidden="true">→</span></a></article>`;
   }
 
   function renderPagination(total) {
@@ -114,33 +148,34 @@
       tab.tabIndex = active ? 0 : -1;
     });
     $('#documentPanel').setAttribute('aria-labelledby', activeType === 'guides' ? 'guides-tab' : 'summaries-tab');
-    const matching = activeType === 'guides' ? sortGuides(filterGuides(rows, filterState()), $('#sortFilter').value) : [];
+    const matching = !rowsLoading && activeType === 'guides' ? sortGuides(rows, $('#sortFilter').value) : [];
     page = Math.max(1, Math.min(page, Math.ceil(matching.length / PAGE_SIZE) || 1));
     updateUrl();
-    $('#resultCount').textContent = `พบ ${matching.length} เอกสาร`;
+    $('#resultCount').textContent = rowsLoading ? 'กำลังโหลดรายการแนวข้อสอบ…' : `พบ ${matching.length} เอกสาร`;
     $('#documentList').innerHTML = matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(documentCard).join('');
     $('#documentList').hidden = matching.length === 0;
     let title = '', detail = '', clear = false;
     if (courseLoading) { title = 'กำลังโหลดข้อมูลรายวิชา…'; detail = ''; }
     else if (courseError && ![404, 422].includes(courseErrorStatus)) { title = 'โหลดข้อมูลไม่สำเร็จ'; detail = courseError; }
     else if (!course) { title = courseError ? 'ไม่พบวิชาในระบบ' : (params.has('course') || params.has('courseId') ? 'ไม่พบวิชาในระบบ' : 'กรุณาเลือกรายวิชา'); detail = courseError || 'กลับไปเลือกวิชาจากหน้าค้นหารายวิชา'; }
+    else if (rowsLoading) { title = 'กำลังโหลดแนวข้อสอบ…'; detail = ''; }
     else if (loadError) { title = 'โหลดข้อมูลไม่สำเร็จ'; detail = loadError; }
     else if (activeType === 'summaries') { title = 'สรุปบทเรียน'; detail = 'ส่วนสรุปจะเปิดให้ใช้งานใน Sprint 2'; }
-    else if (!rows.length) { title = 'ยังไม่มีแนวข้อสอบสำหรับวิชานี้'; detail = 'ยังไม่มีเนื้อหาในรายวิชานี้'; }
+    else if (!rows.length && Object.values(filterState()).every(value => value === 'all')) { title = 'ยังไม่มีแนวข้อสอบสำหรับวิชานี้'; detail = 'ยังไม่มีเนื้อหาในรายวิชานี้'; }
     else if (!matching.length) { title = 'ไม่พบแนวข้อสอบที่ตรงกับที่กรอง'; detail = 'ลองเปลี่ยนเงื่อนไข หรือล้างตัวกรองเพื่อดูเอกสารทั้งหมด'; clear = true; }
     $('#emptyState').hidden = !title;
     $('#emptyTitle').textContent = title;
     $('#emptyDescription').textContent = detail;
     $('#emptyClear').hidden = !clear;
     $('#backToSearch').hidden = Boolean(course);
-    $('#retryCourse').hidden = !courseError || [401, 404, 422].includes(courseErrorStatus);
+    $('#retryCourse').hidden = !(loadError || courseError) || (courseError && [401, 404, 422].includes(courseErrorStatus));
     renderChips();
     renderPagination(matching.length);
   }
 
   function clearFilters() {
     for (const id of ['#periodFilter', '#yearFilter', '#semesterFilter']) $(id).value = 'all';
-    page = 1; render();
+    page = 1; loadFilteredRows();
   }
 
   async function resolveCourse() {
@@ -181,7 +216,7 @@
     $('#courseHeading').textContent = course ? `ชีตสรุปและแนวข้อสอบ ${course.code}` : 'เลือกรายวิชา';
     $('#courseName').textContent = course ? `${course.code} ${course.name}` : '';
     document.title = course ? `${course.code} | เลือกแนวข้อสอบ` : 'เลือกรายวิชา';
-    loadRows();
+    await loadRows();
     render();
   }
 
@@ -195,11 +230,15 @@
     }
     if (['latest', 'oldest', 'title'].includes(params.get('sort'))) $('#sortFilter').value = params.get('sort');
     const savedPage = Number(params.get('page')); page = Number.isSafeInteger(savedPage) && savedPage > 0 ? savedPage : 1;
-    render();
-    for (const id of ['#periodFilter', '#yearFilter', '#semesterFilter', '#sortFilter']) $(id).addEventListener('change', () => { page = 1; render(); });
+    await loadFilteredRows();
+    for (const id of ['#periodFilter', '#yearFilter', '#semesterFilter']) $(id).addEventListener('change', () => { page = 1; loadFilteredRows(); });
+    $('#sortFilter').addEventListener('change', () => { page = 1; render(); });
     $('#clearFilters').addEventListener('click', clearFilters);
     $('#emptyClear').addEventListener('click', clearFilters);
-    $('#retryCourse').addEventListener('click', loadSelectedCourse);
+    $('#retryCourse').addEventListener('click', async () => {
+      await loadSelectedCourse();
+      await loadFilteredRows();
+    });
     $('#activeFilters').addEventListener('click', event => {
       const button = event.target.closest('[data-clear-filter]'); if (!button) return;
       const id = {period:'#periodFilter', year:'#yearFilter', semester:'#semesterFilter'}[button.dataset.clearFilter];
@@ -220,7 +259,6 @@
       if (!button || button.disabled) return;
       page = Number(button.dataset.page); render(); $('#resultCount').focus();
     });
-    data.subscribe(() => { loadRows(); render(); });
   }
   start();
 })();
