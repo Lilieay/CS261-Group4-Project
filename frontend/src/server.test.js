@@ -48,6 +48,50 @@ test('course list proxy pins the backend path and forwards search and authorizat
   });
 });
 
+test('my guides proxy pins the backend path, forwards authorization, and preserves an empty result', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target;
+  let init;
+  global.fetch = async (url, options) => {
+    target = url;
+    init = options;
+    return new Response('[]', {status: 200, headers: {'content-type': 'application/json'}});
+  };
+
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides?username=other', 'GET', {Authorization: 'Bearer test-token'});
+    assert.equal(response.status, 200);
+    assert.equal(response.body, '[]');
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(target.href, 'http://backend:8000/api/my-guides');
+    assert.equal(init.method, 'GET');
+    assert.equal(init.headers.Authorization, 'Bearer test-token');
+    assert.equal(init.headers.Accept, 'application/json');
+    assert.equal(init.cache, 'no-store');
+    assert.equal(init.redirect, 'manual');
+  });
+});
+
+test('my guides proxy preserves backend errors and returns 502 when unavailable', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  global.fetch = async () => new Response('{"detail":"unauthorized"}', {
+    status: 401, headers: {'content-type': 'application/json'}
+  });
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides');
+    assert.equal(response.status, 401);
+    assert.deepEqual(JSON.parse(response.body), {detail: 'unauthorized'});
+  });
+
+  global.fetch = async () => { throw new Error('backend unavailable'); };
+  await withServer(async port => {
+    const response = await request(port, '/api/my-guides');
+    assert.equal(response.status, 502);
+  });
+});
+
 test('course detail proxy forwards bearer authorization and preserves API errors', async t => {
   const originalFetch = global.fetch;
   t.after(() => { global.fetch = originalFetch; });

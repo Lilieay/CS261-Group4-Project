@@ -5,6 +5,7 @@ window.GuidePublishConfig = Object.freeze({
   coursesPath: '/courses',
   publishPath: '/guides',
   mePath: '/api/auth/me',
+  myGuidesPath: '/api/my-guides',
   tokenStorageKey: 'access_token', // Login must store its access_token here.
   academicYears: [2569, 2568, 2567, 2566],
   timeoutMs: 15000

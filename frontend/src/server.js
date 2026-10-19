@@ -84,6 +84,27 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     } finally { clearTimeout(timer); }
   });
 
+  app.get('/api/my-guides', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL('/api/my-guides', base), {
+        method: 'GET', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ไม่สามารถโหลดรายการแนวข้อสอบได้ กรุณาลองใหม่อีกครั้ง'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.use('/api/guides', express.json({limit: '16kb'}));
 
   app.post('/api/guides', async (req, res) => {

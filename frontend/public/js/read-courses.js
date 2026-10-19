@@ -22,6 +22,8 @@
       if (url.origin !== expected.origin) return fallback;
       const saved = new URL('saved-courses.html', window.location.href);
       if (url.pathname === saved.pathname && !url.search) return 'saved-courses.html';
+      const shared = new URL('shared-courses.html', window.location.href);
+      if (url.pathname === shared.pathname && !url.search) return `shared-courses.html${url.hash}`;
       if (url.pathname !== expected.pathname || url.searchParams.get('course') !== code) return fallback;
       return `choose-courses.html${url.search}${url.hash}`;
     } catch (_) { return fallback; }
@@ -29,6 +31,10 @@
 
   function render() {
     back.href = safeReturnUrl(params.get('returnTo'), course?.code);
+    const backLabel = new URL(back.href, window.location.href).pathname
+      === new URL('shared-courses.html', window.location.href).pathname
+      ? 'กลับแนวข้อสอบของฉัน' : 'กลับหน้ารายวิชา';
+    back.setAttribute('aria-label', backLabel);
     let row = null;
     let error = '';
     try {
@@ -38,7 +44,7 @@
     catch (failure) { error = failure.message; }
     if (!row) {
       document.title = 'ไม่พบแนวข้อสอบ';
-      content.innerHTML = `<section class="reading-empty" role="status"><h1>${error ? 'โหลดข้อมูลไม่สำเร็จ' : 'ไม่พบแนวข้อสอบ'}</h1><p>${e(error || 'รายการไม่มีอยู่หรือถูกลบแล้ว')}</p>${authRequired ? '<p><a href="login.html">เข้าสู่ระบบใหม่</a></p>' : ''}${apiMode && error && !authRequired ? '<button class="reading-retry-button" type="button">ลองอีกครั้ง</button>' : ''}<a class="reading-back-button" href="${e(back.href)}">กลับหน้ารายวิชา</a></section>`;
+      content.innerHTML = `<section class="reading-empty" role="status"><h1>${error ? 'โหลดข้อมูลไม่สำเร็จ' : 'ไม่พบแนวข้อสอบ'}</h1><p>${e(error || 'รายการไม่มีอยู่หรือถูกลบแล้ว')}</p>${authRequired ? '<p><a href="login.html">เข้าสู่ระบบใหม่</a></p>' : ''}${apiMode && error && !authRequired ? '<button class="reading-retry-button" type="button">ลองอีกครั้ง</button>' : ''}<a class="reading-back-button" href="${e(back.href)}">${backLabel}</a></section>`;
       return;
     }
     document.title = `${row.title} | อ่านแนวข้อสอบ`;
