@@ -25,8 +25,8 @@ class CourseDAO:
         statement = select(Course).where(Course.course_code.ilike("CS%"))
 
         if keyword:
-            by_code = func.lower(Course.course_code).startswith(keyword)
-            by_name = func.lower(Course.course_name).contains(keyword)
+            by_code = func.lower(Course.course_code).startswith(keyword, autoescape=True)
+            by_name = func.lower(Course.course_name).contains(keyword, autoescape=True)
             statement = statement.where(or_(by_code, by_name))
 
         return list(self.session.scalars(statement.order_by(Course.course_code)).all())

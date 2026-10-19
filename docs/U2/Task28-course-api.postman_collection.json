@@ -7,7 +7,7 @@
   },
   "variable": [
     { "key": "base_url", "value": "http://127.0.0.1:8000" },
-    { "key": "username", "value": "student" },
+    { "key": "username", "value": "6800000000" },
     { "key": "password", "value": "" },
     { "key": "access_token", "value": "" },
     { "key": "course_id", "value": "1" },
