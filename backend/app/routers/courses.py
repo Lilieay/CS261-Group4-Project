@@ -4,8 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
 from app.dao.course_dao import CourseDAO
-from app.dependencies import get_db_session
-from app.routers.auth import current_user
+from app.dependencies import current_user, get_db_session
 from app.routers.course_errors import CourseApiRoute
 from app.schemas.courses import CourseDTO
 from app.services.courses import CourseService

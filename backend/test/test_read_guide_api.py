@@ -6,12 +6,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
-from app.dependencies import get_db_session
+from app.dependencies import get_auth_service, get_db_session
 from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.routers.auth import get_auth_service
 from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 

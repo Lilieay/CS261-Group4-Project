@@ -9,13 +9,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.db import Base, get_db_session
 from app.dao.update_owned_guide_dao import UpdateOwnedGuideDAO
+from app.db import Base
+from app.dependencies import get_auth_service, get_db_session
 from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.routers.auth import get_auth_service
 from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 
@@ -299,3 +299,61 @@ def test_database_error_returns_500_and_preserves_guide(api):
     assert response.status_code == 500
     assert response.json()["detail"] == "GUIDE_UPDATE_FAILED"
     assert guide_snapshot(session, ids["owned_guide"]) == before
+
+
+def test_update_rolls_back_changes_when_commit_fails(api):
+    client, session, ids = api
+    before = guide_snapshot(session, ids["owned_guide"])
+    token = login(client)
+
+    with patch.object(session, "commit", side_effect=SQLAlchemyError("commit failed")):
+        response = client.put(
+            f"/api/my-guides/{ids['owned_guide']}",
+            headers={"Authorization": f"Bearer {token}"},
+            json=valid_payload(ids["new_course"]),
+        )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "GUIDE_UPDATE_FAILED"
+    assert guide_snapshot(session, ids["owned_guide"]) == before
+
+
+def test_authenticated_publish_read_update_delete_lifecycle(api):
+    client, session, ids = api
+    token = login(client)
+    headers = {"Authorization": f"Bearer {token}"}
+    original_list = client.get("/api/my-guides", headers=headers).json()
+    other_guide = guide_snapshot(session, ids["other_guide"])
+
+    created = client.post(
+        "/guides", headers=headers, json=valid_payload(ids["new_course"])
+    )
+    assert created.status_code == 201
+    guide_id = created.json()["id"]
+    path = f"/api/my-guides/{guide_id}"
+
+    listed = client.get("/api/my-guides", headers=headers)
+    assert listed.status_code == 200
+    assert {row["id"] for row in listed.json()} == {
+        ids["owned_guide"], guide_id
+    }
+
+    old_course_id = session.get(Guide, ids["owned_guide"]).course_id
+    payload = valid_payload(old_course_id)
+    payload["title"] = "Updated lifecycle guide"
+    updated = client.put(path, headers=headers, json=payload)
+    assert updated.status_code == 200
+    listed = client.get("/api/my-guides", headers=headers)
+    assert next(row for row in listed.json() if row["id"] == guide_id) == updated.json()
+
+    detail = client.get(f"/guides/{guide_id}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["title"] == payload["title"]
+    assert detail.json()["course"]["id"] == old_course_id
+
+    deleted = client.delete(path, headers=headers)
+    assert deleted.status_code == 200
+    assert deleted.json()["id"] == guide_id
+    assert client.get(f"/guides/{guide_id}", headers=headers).status_code == 404
+    assert client.get("/api/my-guides", headers=headers).json() == original_list
+    assert guide_snapshot(session, ids["other_guide"]) == other_guide

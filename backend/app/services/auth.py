@@ -13,7 +13,7 @@ from app.services.tu_api import TUAccount, TUVerificationError, verify_tu_accoun
 
 
 @dataclass(frozen=True)
-class User:
+class AuthenticatedUser:
     id: int
     username: str
     display_name: str
@@ -23,7 +23,7 @@ class User:
 @dataclass(frozen=True)
 class LoginSession:
     token: str
-    user: User
+    user: AuthenticatedUser
 
 
 class LoginRejected(Exception):
@@ -42,7 +42,7 @@ class AuthService:
     ):
         self._session_factory = session_factory
         self._verify = verify
-        self._sessions: dict[str, User] = {}
+        self._sessions: dict[str, AuthenticatedUser] = {}
 
     def login(self, username: str, password: str) -> LoginSession:
         normalized_username = username.strip()
@@ -73,7 +73,7 @@ class AuthService:
                     or account.display_name.strip()
                     or stored_user.username
                 )
-                user = User(
+                user = AuthenticatedUser(
                     id=stored_user.id,
                     username=stored_user.username,
                     display_name=display_name,
@@ -86,7 +86,7 @@ class AuthService:
         self._sessions[token] = user
         return LoginSession(token=token, user=user)
 
-    def get_user(self, token: str) -> User | None:
+    def get_user(self, token: str) -> AuthenticatedUser | None:
         return self._sessions.get(token)
 
     def logout(self, token: str) -> None:

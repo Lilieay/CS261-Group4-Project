@@ -7,8 +7,7 @@ from app.dao.course_dao import CourseDAO
 from app.dao.publish_guide_dao import PublishGuideDAO
 from app.dao.read_guide_dao import ReadGuideDAO
 from app.dao.user_dao import UserDAO
-from app.dependencies import get_db_session
-from app.routers.auth import current_user
+from app.dependencies import current_user, get_db_session
 from app.routers.guide_errors import GuideApiRoute
 from app.schemas.guides import (
     GuideDetailResponseDTO,
@@ -16,7 +15,7 @@ from app.schemas.guides import (
     GuideListResponseDTO,
     GuidePublishRequestDTO,
 )
-from app.services.auth import User as AuthenticatedUser
+from app.services.auth import AuthenticatedUser
 from app.services.publish_guide import PublishGuideService
 from app.services.read_guide import ReadGuideService
 

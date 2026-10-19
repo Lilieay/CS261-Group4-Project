@@ -11,7 +11,7 @@ from app.schemas.guides import (
     GuideDetailResponseDTO,
     GuidePublishRequestDTO,
 )
-from app.services.auth import User as AuthenticatedUser
+from app.services.auth import AuthenticatedUser
 
 
 class GuidePublishNotFound(Exception):
