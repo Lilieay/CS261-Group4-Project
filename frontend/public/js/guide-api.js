@@ -25,7 +25,12 @@
       window.location.replace('login.html');
       throw new GuideApiError('กรุณาเข้าสู่ระบบก่อนอ่านแนวข้อสอบ', {status: 401});
     }
-    const target = method === 'GET' && path === config.mePath
+    if (method === 'POST' && (!config || config.mode !== 'api' || path !== config.publishPath)) {
+      throw new GuideApiError('เส้นทางเผยแพร่แนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    const target = method === 'POST' && path === config.publishPath
+      ? '/api/guides'
+      : method === 'GET' && path === config.mePath
       ? path
       : method === 'GET' && path === config.coursesPath
         ? '/api/courses'

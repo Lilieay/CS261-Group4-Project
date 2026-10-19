@@ -64,7 +64,7 @@ test('guide list client sends database filters and maps rows without preview dat
   assert.equal(client.calls[0][0], '/api/guides/courses/27/guides?academic_year=2568&semester=1&exam_period=midterm');
 });
 
-test('guide client keeps auth and course reads on their existing proxies and keeps publish on the configured API', async () => {
+test('guide client sends publish through the same-origin proxy and keeps auth and course reads on their existing proxies', async () => {
   const client = loadGuideApi({mode: 'api', fetchImpl: async url => {
     if (url === '/api/auth/me') return new Response('{"id":8,"username":"student"}');
     if (url === '/api/courses') return new Response('[{"id":4,"course_code":"CS261","course_name":"วิชา"}]');
@@ -80,7 +80,10 @@ test('guide client keeps auth and course reads on their existing proxies and kee
   await client.api.publish({course_id: 4}, 'CS261');
   assert.equal(client.calls[0][0], '/api/auth/me');
   assert.equal(client.calls[1][0], '/api/courses');
-  assert.equal(client.calls[2][0], 'http://127.0.0.1:8000/guides');
+  assert.equal(client.calls[2][0], '/api/guides');
+  assert.equal(client.calls[2][1].method, 'POST');
+  assert.deepEqual(JSON.parse(client.calls[2][1].body), {course_id: 4});
+  assert.equal(client.calls[2][1].headers.Authorization, 'Bearer test-token');
 });
 
 test('guide client redirects when login is missing and clears an expired token', async () => {
