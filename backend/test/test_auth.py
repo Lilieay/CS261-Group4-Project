@@ -97,6 +97,40 @@ def test_logout_invalidates_token(client: TestClient):
     assert client.get("/api/auth/me", headers=headers).status_code == 401
 
 
+def test_session_expires_at_its_deadline_and_new_login_works(session_factory):
+    now = [100.0]
+    service = AuthService(
+        session_factory,
+        verify=lambda username, _password: TUAccount(username, "Test user", "student", True),
+        session_ttl_seconds=60,
+        clock=lambda: now[0],
+    )
+    previous_override = app.dependency_overrides.get(get_auth_service)
+    app.dependency_overrides[get_auth_service] = lambda: service
+    try:
+        with TestClient(app) as client:
+            payload = {"username": "expiry-user", "password": "test-password"}
+            token = client.post("/api/auth/login", json=payload).json()["access_token"]
+            headers = {"Authorization": f"Bearer {token}"}
+            now[0] = 159.999
+            assert client.get("/api/auth/me", headers=headers).status_code == 200
+            now[0] = 160.0
+            assert client.get("/api/auth/me", headers=headers).status_code == 401
+            assert client.get("/api/auth/status", headers=headers).json()["logged_in"] is False
+            assert client.get("/courses", headers=headers).status_code == 401
+            assert client.get("/api/my-guides", headers=headers).status_code == 401
+            fresh = client.post("/api/auth/login", json=payload)
+            assert fresh.status_code == 200
+            fresh_headers = {"Authorization": f"Bearer {fresh.json()['access_token']}"}
+            assert client.get("/api/auth/me", headers=fresh_headers).status_code == 200
+            assert client.get("/api/auth/me", headers=headers).status_code == 401
+    finally:
+        if previous_override is None:
+            app.dependency_overrides.pop(get_auth_service, None)
+        else:
+            app.dependency_overrides[get_auth_service] = previous_override
+
+
 def test_repeated_login_reuses_database_user(client: TestClient):
     payload = {"username": "6800000000", "password": "0000000000000"}
     first = client.post("/api/auth/login", json=payload).json()

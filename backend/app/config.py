@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(ENV_FILE)
 
+AUTH_SESSION_TTL_SECONDS = int(os.getenv("AUTH_SESSION_TTL_SECONDS", "3600"))
+if AUTH_SESSION_TTL_SECONDS <= 0:
+    raise RuntimeError("AUTH_SESSION_TTL_SECONDS must be a positive integer.")
+
 DB_CONNECTION_STRING = os.getenv("DB_CONNECTION_STRING")
 
 if not DB_CONNECTION_STRING:

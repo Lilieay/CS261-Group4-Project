@@ -357,3 +357,38 @@ def test_authenticated_publish_read_update_delete_lifecycle(api):
     assert client.get(f"/guides/{guide_id}", headers=headers).status_code == 404
     assert client.get("/api/my-guides", headers=headers).json() == original_list
     assert guide_snapshot(session, ids["other_guide"]) == other_guide
+
+
+@pytest.mark.parametrize("year", [2566, 2567, 2568, 2569])
+def test_update_accepts_supported_academic_years(api, year):
+    client, _, ids = api
+    token = login(client)
+    payload = valid_payload(ids["new_course"])
+    payload["academic_year"] = year
+
+    response = client.put(
+        f"/api/my-guides/{ids['owned_guide']}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["academic_year"] == year
+
+
+@pytest.mark.parametrize("year", [2565, 2570])
+def test_update_rejects_years_outside_supported_range(api, year):
+    client, session, ids = api
+    token = login(client)
+    before = guide_snapshot(session, ids["owned_guide"])
+    payload = valid_payload(ids["new_course"])
+    payload["academic_year"] = year
+
+    response = client.put(
+        f"/api/my-guides/{ids['owned_guide']}",
+        headers={"Authorization": f"Bearer {token}"},
+        json=payload,
+    )
+
+    assert response.status_code == 422
+    assert guide_snapshot(session, ids["owned_guide"]) == before

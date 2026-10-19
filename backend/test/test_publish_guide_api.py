@@ -237,6 +237,22 @@ class PublishGuideApiTests(unittest.TestCase):
         with self.session_factory() as session:
             self.assertEqual(session.scalar(select(func.count(Guide.id))), 0)
 
+    def test_publish_accepts_only_supported_academic_years(self):
+        headers = self.headers_for("supported-year-user")
+        for year in (2565, 2570):
+            with self.subTest(year=year):
+                response = self.client.post(
+                    "/guides", json=self.payload(academic_year=year), headers=headers
+                )
+                self.assertEqual(response.status_code, 422, response.text)
+        for year in (2566, 2567, 2568, 2569):
+            with self.subTest(year=year):
+                response = self.client.post(
+                    "/guides", json=self.payload(academic_year=year), headers=headers
+                )
+                self.assertEqual(response.status_code, 201, response.text)
+                self.assertEqual(response.json()["academic_year"], year)
+
 
 if __name__ == "__main__":
     unittest.main()

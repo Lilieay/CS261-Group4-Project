@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from app.models.user import User
 
@@ -39,60 +39,32 @@ class UserDAO:
         displayname_th = (displayname_th or "").strip() or None
         displayname_en = (displayname_en or "").strip() or None
 
-        is_creating = False
-        try:
-            user = self.get_by_username(username)
-            is_creating = user is None
-
-            if user is None:
-                user = User(
-                    username=username,
-                    displayname_th=displayname_th,
-                    displayname_en=displayname_en,
-                )
-
-                self.session.add(user)
-
-            else:
-                if displayname_th is not None:
-                    user.displayname_th = displayname_th
-
-                if displayname_en is not None:
-                    user.displayname_en = displayname_en
-
-            self.session.commit()
-
-        except IntegrityError as error:
-            self.session.rollback()
-
-            if not is_creating or not self._is_duplicate_username(error):
-                raise
-
+        user = self.get_by_username(username)
+        if user is None:
             try:
+                with self.session.begin_nested():
+                    user = User(
+                        username=username,
+                        displayname_th=displayname_th,
+                        displayname_en=displayname_en,
+                    )
+                    self.session.add(user)
+                    self.session.flush()
+            except IntegrityError as error:
+                if not self._is_duplicate_username(error):
+                    raise
                 user = self.get_by_username(username)
-
                 if user is None:
                     raise
 
-                if displayname_th is not None:
-                    user.displayname_th = displayname_th
-                
-                if displayname_en is not None:
-                    user.displayname_en = displayname_en
+        if displayname_th is not None:
+            user.displayname_th = displayname_th
+        if displayname_en is not None:
+            user.displayname_en = displayname_en
 
-                self.session.commit()
-
-            except SQLAlchemyError:
-                self.session.rollback()
-                raise
-
-        except SQLAlchemyError:
-            self.session.rollback()
-            raise
-
-        self.session.refresh(user)
+        self.session.flush()
         return user
-    
+
     def _is_duplicate_username(self, error: IntegrityError) -> bool:
         message = str(error.orig)
         
