@@ -84,6 +84,40 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     } finally { clearTimeout(timer); }
   });
 
+  app.get('/api/guides/*path', async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const upstreamPath = Array.isArray(req.params.path) ? req.params.path.join('/') : req.params.path;
+    const listPath = /^courses\/[1-9]\d*\/guides$/.test(upstreamPath);
+    const allowedPath = listPath
+      || /^courses\/[1-9]\d*\/guides\/filter-options$/.test(upstreamPath)
+      || /^guides\/[1-9]\d*$/.test(upstreamPath);
+    const queryKeys = [...new URL(req.originalUrl, 'http://frontend').searchParams.keys()];
+    if (!allowedPath || (!listPath && queryKeys.length)) {
+      return res.status(404).json({detail: 'ไม่พบเส้นทางแนวข้อสอบ'});
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const target = new URL(`/${upstreamPath}`, base);
+      for (const [key, value] of new URL(req.originalUrl, 'http://frontend').searchParams) {
+        target.searchParams.append(key, value);
+      }
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(target, {
+        method: 'GET', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ไม่สามารถเชื่อมต่อบริการแนวข้อสอบได้ กรุณาลองใหม่อีกครั้ง'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.use(express.static(path.join(__dirname, '../public')));
   app.use((error, req, res, next) => {
     if (req.path.startsWith('/api/auth')) {

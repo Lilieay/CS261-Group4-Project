@@ -13,7 +13,7 @@
   function courseCard(course) {
     const params = new URLSearchParams({courseId: String(course.id), course: course.code});
     const description = course.description || 'ยังไม่มีคำอธิบายรายวิชาจากระบบ';
-    return `<article class="course-card"><div class="card-top"><span class="course-code-badge">${escapeHtml(course.code)}</span><span class="semester-text">รายวิชา</span></div><h2 class="course-name">${escapeHtml(course.name)}</h2><p class="course-desc">${escapeHtml(description)}</p><div class="card-footer"><span class="course-stats">ข้อมูลแนวข้อสอบเป็นตัวอย่าง</span><a class="btn-open-course" href="choose-courses.html?${params}" aria-label="เปิดคลัง ${escapeHtml(course.code)}">เปิดคลัง <span aria-hidden="true">→</span></a></div></article>`;
+    return `<article class="course-card"><div class="card-top"><span class="course-code-badge">${escapeHtml(course.code)}</span><span class="semester-text">รายวิชา</span></div><h2 class="course-name">${escapeHtml(course.name)}</h2><p class="course-desc">${escapeHtml(description)}</p><div class="card-footer"><a class="btn-open-course" href="choose-courses.html?${params}" aria-label="เปิดคลัง ${escapeHtml(course.code)}">เปิดคลัง <span aria-hidden="true">→</span></a></div></article>`;
   }
 
   function render() {

@@ -19,7 +19,7 @@ class Element {
   focus() {}
 }
 
-function runPage(file, {url, api, data = {}}) {
+function runPage(file, {url, api, guideApi = {}, data = {}}) {
   const elements = new Map();
   const get = selector => {
     if (!elements.has(selector)) elements.set(selector, new Element());
@@ -33,7 +33,8 @@ function runPage(file, {url, api, data = {}}) {
     createElement: () => new Element(), createTextNode: text => ({textContent: text})
   };
   const window = {
-    location: {href: url}, history: {replaceState() {}}, CourseApi: api, CourseData: data
+    location: {href: url}, history: {replaceState() {}}, addEventListener() {},
+    CourseApi: api, GuideApi: guideApi, CourseData: data
   };
   const source = fs.readFileSync(path.join(__dirname, '../public/js', file), 'utf8');
   vm.runInNewContext(source, {window, document, URL, URLSearchParams, AbortController, setTimeout, clearTimeout});
@@ -92,6 +93,93 @@ test('course detail page renders an API course outside the legacy catalog with a
   assert.match(get('#courseHeading').textContent, /CS902/);
   assert.match(get('#courseName').textContent, /วิศวกรรมซอฟต์แวร์ขั้นสูง/);
   assert.equal(get('#documentList').innerHTML, '');
+});
+
+test('course list loads API guides and sends the database course ID to filter-options and list', async () => {
+  const calls = [];
+  const guideApi = {
+    filterOptions: async id => { calls.push(['options', id]); return {academic_years: [2568], semesters: [1], exam_periods: ['midterm']}; },
+    list: async (id, filters) => {
+      calls.push(['list', id, filters]);
+      return [{id: '31', title: 'แนวข้อสอบจริง', year: '2568', semester: '1', period: 'กลางภาค', publisher_name: 'ผู้เผยแพร่'}];
+    }
+  };
+  const data = {
+    escapeHtml: value => String(value), semesterLabel: value => `ที่ ${value}`,
+    publisherName: () => 'preview publisher', subscribe() {}
+  };
+  const {get} = runPage('choose-courses.js', {
+    url: 'http://frontend/choose-courses.html?courseId=27&course=CS902',
+    api: {getCourse: async id => ({id: Number(id), code: 'CS902', name: 'วิชาจริง'}), searchCourses: async () => []},
+    guideApi, data
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.deepEqual(calls.map(call => call.slice(0, 2)), [['options', 27], ['list', 27]]);
+  assert.match(get('#documentList').innerHTML, /แนวข้อสอบจริง/);
+  assert.match(get('#documentList').innerHTML, /ผู้เผยแพร่/);
+  assert.doesNotMatch(get('#documentList').innerHTML, /preview publisher/);
+  assert.match(get('#documentList').innerHTML, /source=api/);
+});
+
+test('course list requests selected filters and shows the filtered empty state', async () => {
+  const filters = [];
+  const guideApi = {
+    filterOptions: async () => ({academic_years: [2568], semesters: [1], exam_periods: ['midterm']}),
+    list: async (_id, selected) => { filters.push(selected); return []; }
+  };
+  const data = {escapeHtml: value => String(value), semesterLabel: value => String(value)};
+  const {get} = runPage('choose-courses.js', {
+    url: 'http://frontend/choose-courses.html?courseId=27&course=CS902',
+    api: {getCourse: async id => ({id: Number(id), code: 'CS902', name: 'วิชา'}), searchCourses: async () => []},
+    guideApi, data
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+  get('#yearFilter').value = '2568';
+  get('#yearFilter').listeners.change();
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.equal(filters.at(-1).academic_year, '2568');
+  assert.equal(get('#emptyTitle').textContent, 'ไม่พบแนวข้อสอบที่ตรงกับที่กรอง');
+  assert.equal(get('#emptyClear').hidden, false);
+});
+
+test('read page resolves a database course and guide by URL without the preview catalog', async () => {
+  const calls = [];
+  const data = {
+    escapeHtml: value => String(value), semesterLabel: value => `ที่ ${value}`,
+    publisherName: () => 'preview publisher', questionCounts: row => ({
+      objective: row.objective_count, essay: row.essay_count
+    }), findCourse: () => { throw new Error('preview catalog must not be used'); }
+  };
+  const {get} = runPage('read-courses.js', {
+    url: 'http://frontend/read-courses.html?source=api&courseId=902&course=CS902&guide=71',
+    api: {getCourse: async id => ({id: Number(id), code: 'CS902', name: 'วิชาจริง'})},
+    guideApi: {
+      read: async (id, code) => {
+        calls.push([id, code]);
+        return {id: 71, course: {course_code: 'CS902'}};
+      },
+      toPreviewRow: () => ({
+        id: '71', title: 'แนวข้อสอบจาก API', year: '2568', semester: '1',
+        period: 'กลางภาค', formats: ['ผสม'], topics: 'หัวข้อจริง', notes: '',
+        objective_count: 10, essay_count: 2, publisher_name: 'ผู้เผยแพร่จริง',
+        instructor_names: 'อาจารย์จริง'
+      })
+    },
+    data
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+
+  assert.deepEqual(calls, [['71', 'CS902']]);
+  assert.match(get('#readingContent').innerHTML, /แนวข้อสอบจาก API/);
+  assert.match(get('#readingContent').innerHTML, /อาจารย์จริง/);
+  assert.match(get('#readingContent').innerHTML, /ผู้เผยแพร่จริง/);
+  assert.doesNotMatch(get('#readingContent').innerHTML, /preview publisher/);
 });
 
 test('course search page renders a Thai API result even when it is absent from the catalog', async () => {

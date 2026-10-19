@@ -125,3 +125,55 @@ test('course proxy returns a bounded gateway error when the backend is unavailab
     assert.match(JSON.parse(response.body).detail, /บริการรายวิชา/);
   });
 });
+
+test('guide proxy forwards guide paths, filters, bearer authorization and disables caching', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let target;
+  let init;
+  global.fetch = async (url, options) => {
+    target = url;
+    init = options;
+    return new Response('{"course_id":27,"items":[]}', {
+      status: 200, headers: {'content-type': 'application/json'}
+    });
+  };
+
+  await withServer(async port => {
+    const response = await request(port,
+      '/api/guides/courses/27/guides?academic_year=2568&semester=1',
+      'GET', {Authorization: 'Bearer safe-test-token'});
+    assert.equal(response.status, 200);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.equal(target.href, 'http://backend:8000/courses/27/guides?academic_year=2568&semester=1');
+    assert.equal(init.headers.Authorization, 'Bearer safe-test-token');
+    assert.equal(init.method, 'GET');
+  });
+});
+
+test('guide proxy preserves backend authentication and missing-record responses', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  global.fetch = async () => new Response('{"error":{"code":"AUTH_REQUIRED"}}', {
+    status: 401, headers: {'content-type': 'application/json'}
+  });
+
+  await withServer(async port => {
+    const response = await request(port, '/api/guides/guides/123');
+    assert.equal(response.status, 401);
+    assert.deepEqual(JSON.parse(response.body), {error: {code: 'AUTH_REQUIRED'}});
+  });
+});
+
+test('guide proxy rejects backend paths outside the read API allowlist', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let calls = 0;
+  global.fetch = async () => { calls += 1; return new Response('{}'); };
+
+  await withServer(async port => {
+    const response = await request(port, '/api/guides/my-guides');
+    assert.equal(response.status, 404);
+    assert.equal(calls, 0);
+  });
+});
