@@ -49,6 +49,41 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     });
   }
 
+  app.get(['/api/courses', '/api/courses/:courseId'], async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const courseId = req.params.courseId;
+    if (courseId !== undefined
+      && (!/^[1-9]\d*$/.test(courseId) || !Number.isSafeInteger(Number(courseId)) || Number(courseId) > 2147483647)) {
+      return res.status(422).json({error: {
+        code: 'INVALID_PARAMETERS', message: 'Invalid course ID', fields: []
+      }});
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const target = courseId === undefined
+        ? new URL('/courses', base)
+        : new URL(`/courses/${courseId}`, base);
+      if (courseId === undefined) {
+        const incoming = new URL(req.originalUrl, 'http://frontend').searchParams;
+        for (const value of incoming.getAll('search')) target.searchParams.append('search', value);
+      }
+      const response = await fetch(target, {
+        method: 'GET', headers, signal: controller.signal,
+        cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ไม่สามารถเชื่อมต่อบริการรายวิชาได้ กรุณาลองใหม่อีกครั้ง'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.use(express.static(path.join(__dirname, '../public')));
   app.use((error, req, res, next) => {
     if (req.path.startsWith('/api/auth')) {

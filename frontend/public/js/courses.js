@@ -1,81 +1,87 @@
 (() => {
   'use strict';
-  const COURSE_CATALOG = window.CourseData.catalog;
-  const FEATURED_CODES = ['CS101', 'CS102', 'CS221', 'CS213', 'CS261', 'CS331'];
-  const DESCRIPTIONS = {
-    CS100: 'พื้นฐานการพัฒนาเว็บไซต์ โครงสร้าง HTML การจัดรูปแบบด้วย CSS และ JavaScript',
-    CS101: 'โครงสร้างไม่ต่อเนื่อง ตรรกศาสตร์ เซต ความสัมพันธ์ และพื้นฐานคณิตศาสตร์สำหรับคอมพิวเตอร์',
-    CS102: 'พื้นฐานการแก้ปัญหา การออกแบบขั้นตอนวิธี และการเขียนโปรแกรมคอมพิวเตอร์',
-    CS103: 'แนวคิดการเขียนโปรแกรม ตัวแปร เงื่อนไข การทำซ้ำ และการออกแบบฟังก์ชัน',
-    CS104: 'พื้นฐานการเขียนโปรแกรมด้วย Python โครงสร้างข้อมูล และการแก้ปัญหา',
-    CS213: 'โครงสร้างข้อมูล ลิสต์ สแตก คิว ต้นไม้ กราฟ และขั้นตอนวิธีสำหรับจัดการข้อมูล',
-    CS221: 'ระบบคอมพิวเตอร์และองค์ประกอบ สถาปัตยกรรม ชุดคำสั่ง และการประมวลผล',
-    CS240: 'หลักการวิทยาการข้อมูล การเตรียมข้อมูล การวิเคราะห์ และการนำเสนอผล',
-    CS261: 'กระบวนการพัฒนาซอฟต์แวร์ การวิเคราะห์ความต้องการ การออกแบบ และการทำงานเป็นทีม',
-    CS263: 'การเก็บรวบรวม วิเคราะห์ และจัดทำข้อกำหนดความต้องการซอฟต์แวร์',
-    CS331: 'การประมวลผลผ่านเครือข่าย แนวคิดระบบเครือข่ายและการพัฒนาแอปพลิเคชัน'
-  };
   const $ = selector => document.querySelector(selector);
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[char]));
-  let showAll = false;
-  let sharedRows = [];
-  let storageError = '';
+  let courses = [];
+  let requestNumber = 0;
+  let controller = null;
+  let debounceTimer = null;
 
-  function findCourses(courses, keyword) {
-    const term = keyword.trim().toLocaleLowerCase();
-    if (term.length > 255) return [];
-    return courses.filter(course => !term || course.code.toLocaleLowerCase().startsWith(term) || course.name.toLocaleLowerCase().includes(term));
-  }
-
-  function readSharedExams() { return window.CourseData.loadExams(); }
-
-  function refreshSharedRows() {
-    try { sharedRows = readSharedExams(); storageError = ''; }
-    catch (error) { sharedRows = []; storageError = error.message || 'ไม่สามารถอ่านข้อมูลตัวอย่างในเบราว์เซอร์ได้'; }
-  }
-
-  function courseExams(code) { return sharedRows.filter(row => row.course_code === code); }
-  function courseDescription(course) { return DESCRIPTIONS[course.code] || `สรุปบทเรียนและแนวข้อสอบรายวิชา ${course.name}`; }
-  function courseStats(code) {
-    const rows = courseExams(code);
-    const semesters = [...new Set(rows.map(row => String(row.semester ?? '')).filter(Boolean))];
-    return { exams: rows.length, semester: semesters.length === 1 ? `Semester ${semesters[0]}` : 'หลักสูตร 2566' };
-  }
-
-  function displayCourseName(name) {
-    return name.toLocaleLowerCase().replace(/\b[a-z]/g, letter => letter.toLocaleUpperCase())
-      .replace(/\b(sql|cs|uml|html|css|er)\b/gi, word => word.toLocaleUpperCase());
-  }
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
 
   function courseCard(course) {
-    const stats = courseStats(course.code);
-    return `<article class="course-card"><div class="card-top"><span class="course-code-badge">${escapeHtml(course.code)}</span><span class="semester-text">${escapeHtml(stats.semester)}</span></div><h2 class="course-name">${escapeHtml(displayCourseName(course.name))}</h2><p class="course-desc">${escapeHtml(courseDescription(course))}</p><div class="card-footer"><span class="course-stats">0 สรุป · ${storageError ? '—' : stats.exams} แนวข้อสอบ</span><a class="btn-open-course" data-open-course="${escapeHtml(course.code)}" href="choose-courses.html?course=${encodeURIComponent(course.code)}" aria-label="เปิดคลัง ${escapeHtml(course.code)}">เปิดคลัง <span aria-hidden="true">→</span></a></div></article>`;
+    const params = new URLSearchParams({courseId: String(course.id), course: course.code});
+    const description = course.description || 'ยังไม่มีคำอธิบายรายวิชาจากระบบ';
+    return `<article class="course-card"><div class="card-top"><span class="course-code-badge">${escapeHtml(course.code)}</span><span class="semester-text">รายวิชา</span></div><h2 class="course-name">${escapeHtml(course.name)}</h2><p class="course-desc">${escapeHtml(description)}</p><div class="card-footer"><span class="course-stats">ข้อมูลแนวข้อสอบเป็นตัวอย่าง</span><a class="btn-open-course" href="choose-courses.html?${params}" aria-label="เปิดคลัง ${escapeHtml(course.code)}">เปิดคลัง <span aria-hidden="true">→</span></a></div></article>`;
   }
 
-  function renderCourses(announce = false) {
-    const keyword = $('#course-search').value;
-    const term = keyword.trim();
-    const matches = findCourses(COURSE_CATALOG, keyword);
-    const recentCodes = [...sharedRows].sort((a, b) => (Date.parse(b.created_at || b.updated_at) || 0) - (Date.parse(a.created_at || a.updated_at) || 0)).map(row => row.course_code);
-    const featured = [...new Set([...recentCodes, ...FEATURED_CODES])].map(code => COURSE_CATALOG.find(course => course.code === code)).filter(Boolean).slice(0, 6);
-    const visible = !showAll && !term ? featured : matches;
-    $('#course-grid').innerHTML = visible.length ? visible.map(courseCard).join('') : '<div class="course-empty"><h2>ไม่พบวิชาในระบบ</h2><p>ลองค้นหาด้วยรหัสวิชาหรือชื่อวิชาอื่น</p><button type="button" id="clear-search">แสดงรายวิชาทั้งหมด</button></div>';
-    $('#view-all').hidden = Boolean(term) || showAll;
-    $('#view-all').innerHTML = `ดูรายวิชาทั้งหมดในหลักสูตร (${COURSE_CATALOG.length} วิชา) <span aria-hidden="true">→</span>`;
+  function render() {
+    const grid = $('#course-grid');
+    grid.setAttribute('aria-busy', 'false');
+    grid.innerHTML = courses.length
+      ? courses.map(courseCard).join('')
+      : '<div class="course-empty"><h2>ไม่พบรายวิชาที่ตรงกับคำค้น</h2><p>ลองค้นหาด้วยรหัสวิชาหรือชื่อวิชาอื่น</p></div>';
+    $('#view-all').hidden = true;
+  }
+
+  function showError(error, search) {
     const status = $('#course-status');
-    status.classList.toggle('error', Boolean(storageError));
-    status.textContent = storageError || (announce ? `พบ ${visible.length} รายวิชา` : '');
+    status.classList.add('error');
+    status.replaceChildren(document.createTextNode(`${error.message} `));
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.textContent = 'ลองอีกครั้ง';
+    retry.addEventListener('click', () => loadCourses(search));
+    status.append(retry);
+  }
+
+  async function loadCourses(search = $('#course-search').value) {
+    const normalizedSearch = search.trim();
+    const currentRequest = ++requestNumber;
+    if (controller) controller.abort();
+    controller = new AbortController();
+    const status = $('#course-status');
+    status.classList.remove('error');
+    status.textContent = 'กำลังโหลดรายวิชา…';
+    $('#course-grid').setAttribute('aria-busy', 'true');
+    $('#course-grid').replaceChildren();
+    try {
+      const result = await window.CourseApi.searchCourses(normalizedSearch, {signal: controller.signal});
+      if (currentRequest !== requestNumber) return;
+      courses = result;
+      render();
+      status.textContent = `พบ ${courses.length} รายวิชา`;
+    } catch (error) {
+      if (currentRequest !== requestNumber || error.name === 'AbortError') return;
+      if (error.status === 401) return;
+      courses = [];
+      $('#course-grid').setAttribute('aria-busy', 'false');
+      $('#course-grid').replaceChildren();
+      showError(error, normalizedSearch);
+    }
+  }
+
+  function scheduleSearch() {
+    clearTimeout(debounceTimer);
+    requestNumber += 1;
+    if (controller) controller.abort();
+    debounceTimer = setTimeout(() => loadCourses(), 250);
   }
 
   function start() {
-    refreshSharedRows(); renderCourses();
-    $('#course-search-form').addEventListener('submit', event => { event.preventDefault(); showAll = true; renderCourses(true); });
-    $('#course-search').addEventListener('input', () => { showAll = true; renderCourses(true); });
-    $('#view-all').addEventListener('click', () => { showAll = true; renderCourses(true); });
-    $('#course-grid').addEventListener('click', event => {
-      if (event.target.closest('#clear-search')) { $('#course-search').value = ''; showAll = true; renderCourses(true); $('#course-search').focus(); }
+    $('#course-search-form').addEventListener('submit', event => {
+      event.preventDefault();
+      clearTimeout(debounceTimer);
+      loadCourses();
     });
-    window.CourseData.subscribe(() => { refreshSharedRows(); renderCourses(); });
+    $('#course-search').addEventListener('input', scheduleSearch);
+    $('#view-all').addEventListener('click', () => {
+      $('#course-search').value = '';
+      loadCourses('');
+    });
+    loadCourses('');
   }
+
   start();
 })();

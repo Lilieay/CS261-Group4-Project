@@ -4,10 +4,13 @@
   const $ = selector => document.querySelector(selector);
   const e = data.escapeHtml;
   const params = new URL(window.location.href).searchParams;
-  const course = data.findCourse(params.get('course'));
+  let course = null;
+  let courseLoading = true;
   const PAGE_SIZE = 6;
   let rows = [];
   let loadError = '';
+  let courseError = '';
+  let courseErrorStatus = 0;
   let activeType = params.get('type') === 'summaries' ? 'summaries' : 'guides';
   let page = 1;
 
@@ -53,6 +56,7 @@
     if (!course) return;
     const url = new URL(window.location.href);
     url.searchParams.set('course', course.code);
+    url.searchParams.set('courseId', String(course.id));
     const filters = filterState();
     for (const key of ['period', 'year', 'semester']) {
       if (filters[key] === 'all') url.searchParams.delete(key);
@@ -117,7 +121,9 @@
     $('#documentList').innerHTML = matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(documentCard).join('');
     $('#documentList').hidden = matching.length === 0;
     let title = '', detail = '', clear = false;
-    if (!course) { title = params.get('course') ? 'ไม่พบวิชาในระบบ' : 'กรุณาเลือกรายวิชา'; detail = 'กลับไปเลือกวิชาจากหน้าค้นหารายวิชา'; }
+    if (courseLoading) { title = 'กำลังโหลดข้อมูลรายวิชา…'; detail = ''; }
+    else if (courseError && ![404, 422].includes(courseErrorStatus)) { title = 'โหลดข้อมูลไม่สำเร็จ'; detail = courseError; }
+    else if (!course) { title = courseError ? 'ไม่พบวิชาในระบบ' : (params.has('course') || params.has('courseId') ? 'ไม่พบวิชาในระบบ' : 'กรุณาเลือกรายวิชา'); detail = courseError || 'กลับไปเลือกวิชาจากหน้าค้นหารายวิชา'; }
     else if (loadError) { title = 'โหลดข้อมูลไม่สำเร็จ'; detail = loadError; }
     else if (activeType === 'summaries') { title = 'สรุปบทเรียน'; detail = 'ส่วนสรุปจะเปิดให้ใช้งานใน Sprint 2'; }
     else if (!rows.length) { title = 'ยังไม่มีแนวข้อสอบสำหรับวิชานี้'; detail = 'ยังไม่มีเนื้อหาในรายวิชานี้'; }
@@ -127,6 +133,7 @@
     $('#emptyDescription').textContent = detail;
     $('#emptyClear').hidden = !clear;
     $('#backToSearch').hidden = Boolean(course);
+    $('#retryCourse').hidden = !courseError || [401, 404, 422].includes(courseErrorStatus);
     renderChips();
     renderPagination(matching.length);
   }
@@ -136,11 +143,52 @@
     page = 1; render();
   }
 
-  function start() {
+  async function resolveCourse() {
+    const courseId = params.get('courseId');
+    if (courseId !== null) {
+      const detail = await window.CourseApi.getCourse(courseId);
+      const expectedCode = params.get('course');
+      if (expectedCode && expectedCode.toUpperCase() !== detail.code.toUpperCase()) {
+        throw new window.CourseApi.CourseApiError('รหัสรายวิชาไม่ตรงกับรายการที่เลือก', 404);
+      }
+      return detail;
+    }
+    const legacyCode = params.get('course');
+    if (!legacyCode) return null;
+    const matches = await window.CourseApi.searchCourses(legacyCode);
+    const match = matches.find(item => item.code.toUpperCase() === legacyCode.trim().toUpperCase());
+    if (!match) throw new window.CourseApi.CourseApiError('ไม่พบรายวิชานี้ในระบบ', 404);
+    return window.CourseApi.getCourse(match.id);
+  }
+
+  async function loadSelectedCourse() {
+    course = null;
+    courseLoading = true;
+    courseError = '';
+    courseErrorStatus = 0;
+    $('#courseHeading').textContent = 'กำลังโหลดข้อมูลรายวิชา…';
+    $('#courseName').textContent = '';
+    render();
+    try {
+      course = await resolveCourse();
+    } catch (error) {
+      if (error.status !== 401) {
+        courseError = error.message || 'โหลดข้อมูลรายวิชาไม่สำเร็จ';
+        courseErrorStatus = error.status;
+      }
+    }
+    courseLoading = false;
     $('#courseHeading').textContent = course ? `ชีตสรุปและแนวข้อสอบ ${course.code}` : 'เลือกรายวิชา';
     $('#courseName').textContent = course ? `${course.code} ${course.name}` : '';
     document.title = course ? `${course.code} | เลือกแนวข้อสอบ` : 'เลือกรายวิชา';
     loadRows();
+    render();
+  }
+
+  async function start() {
+    $('#filters').hidden = true;
+    $('#resultToolbar').hidden = true;
+    await loadSelectedCourse();
     for (const [key, id] of [['period', '#periodFilter'], ['year', '#yearFilter'], ['semester', '#semesterFilter']]) {
       const saved = params.get(key);
       if ([...$(id).options].some(option => option.value === saved)) $(id).value = saved;
@@ -151,6 +199,7 @@
     for (const id of ['#periodFilter', '#yearFilter', '#semesterFilter', '#sortFilter']) $(id).addEventListener('change', () => { page = 1; render(); });
     $('#clearFilters').addEventListener('click', clearFilters);
     $('#emptyClear').addEventListener('click', clearFilters);
+    $('#retryCourse').addEventListener('click', loadSelectedCourse);
     $('#activeFilters').addEventListener('click', event => {
       const button = event.target.closest('[data-clear-filter]'); if (!button) return;
       const id = {period:'#periodFilter', year:'#yearFilter', semester:'#semesterFilter'}[button.dataset.clearFilter];
