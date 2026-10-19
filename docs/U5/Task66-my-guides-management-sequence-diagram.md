@@ -68,7 +68,7 @@ sequenceDiagram
         API->>API: ตรวจ payload ตามกติกา U5
         alt payload ไม่ถูกต้อง
             API-->>UI: 422 VALIDATION_ERROR
-            UI-->>User: แสดงข้อผิดพลาด; ข้อมูลเดิมไม่เปลี่ยน
+            UI-->>User: แสดงข้อผิดพลาด, ข้อมูลเดิมไม่เปลี่ยน
         else payload ถูกต้อง
             API->>UDAO: get_by_username(username)
             UDAO->>DB: SELECT users WHERE username = username
@@ -99,7 +99,7 @@ sequenceDiagram
     opt ฐานข้อมูลหรือ commit ผิดพลาด
         API->>DB: ROLLBACK transaction
         API-->>UI: 500 INTERNAL_ERROR
-        UI-->>User: แจ้งไม่สำเร็จ; คงข้อมูลเดิม
+        UI-->>User: แจ้งไม่สำเร็จ, คงข้อมูลเดิม
     end
 ```
 
@@ -119,7 +119,7 @@ sequenceDiagram
     UI-->>User: แสดงกล่องยืนยัน
     alt ยกเลิก
         User->>UI: ยกเลิกการลบ
-        UI-->>User: ปิดกล่อง; ไม่ส่ง API request; รายการยังอยู่
+        UI-->>User: ปิดกล่อง, ไม่ส่ง API request, รายการยังอยู่
     else ยืนยันการลบ
         User->>UI: ยืนยัน
         UI->>API: DELETE /api/my-guides/{guide_id} + Bearer token
@@ -159,7 +159,7 @@ sequenceDiagram
     opt ฐานข้อมูลหรือ commit ผิดพลาด
         API->>DB: ROLLBACK transaction
         API-->>UI: 500 INTERNAL_ERROR
-        UI-->>User: แจ้งไม่สำเร็จ; รายการไม่แสดงเป็นว่าลบแล้ว
+        UI-->>User: แจ้งไม่สำเร็จ, รายการไม่แสดงเป็นว่าลบแล้ว
     end
 ```
 

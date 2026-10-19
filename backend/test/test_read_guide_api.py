@@ -88,7 +88,7 @@ class ReadGuideApiTests(unittest.TestCase):
             )
         login = cls.client.post(
             "/api/auth/login",
-            json={"username": "student", "password": "password123"},
+            json={"username": "6800000000", "password": "0000000000000"},
         )
         cls.headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 

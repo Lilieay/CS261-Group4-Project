@@ -5,10 +5,13 @@ available only for local tests/demo and is never treated as a real TU result.
 """
 
 import json
+import http.client
+import math
 import os
 import secrets
+import ssl
+import truststore
 from dataclasses import dataclass
-from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
@@ -27,8 +30,8 @@ class TUVerificationError(Exception):
 def _mock_verify(username: str, password: str) -> TUAccount | None:
     # Demo-only credentials. They are not persisted in User/profile data.
     demo_accounts = {
-        os.getenv("TU_MOCK_USERNAME", "student"): (
-            os.getenv("TU_MOCK_PASSWORD", "password123"),
+        os.getenv("TU_MOCK_USERNAME", "6800000000"): (
+            os.getenv("TU_MOCK_PASSWORD", "0000000000000"),
             "Student User",
             "student",
             True,
@@ -43,36 +46,60 @@ def _mock_verify(username: str, password: str) -> TUAccount | None:
 
 def _real_verify(username: str, password: str) -> TUAccount | None:
     endpoint = os.getenv("TU_API_URL", "").strip()
-    if not endpoint:
-        raise TUVerificationError("TU_API_URL is not configured")
+    application_key = os.getenv("TU_API_KEY", "").strip()
+    if not endpoint or not application_key:
+        raise TUVerificationError(
+            "TU_API_URL and TU_API_KEY must be configured for real TU API"
+        )
 
-    payload = json.dumps({"username": username, "password": password}).encode("utf-8")
-    request = Request(
-        endpoint,
-        data=payload,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
-        method="POST",
-    )
     try:
-        with urlopen(request, timeout=float(os.getenv("TU_API_TIMEOUT", "5"))) as response:
+        timeout = float(os.getenv("TU_API_TIMEOUT", "5"))
+    except ValueError as error:
+        raise TUVerificationError("TU_API_TIMEOUT must be a positive number") from error
+    if not math.isfinite(timeout) or timeout <= 0:
+        raise TUVerificationError("TU_API_TIMEOUT must be a positive number")
+
+    try:
+        payload = json.dumps({"UserName": username, "PassWord": password}).encode("utf-8")
+        request = Request(
+            endpoint,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "Application-Key": application_key,
+            },
+            method="POST",
+        )
+        # Verify TU's certificate using the operating system's trusted CAs.
+        context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        with urlopen(request, timeout=timeout, context=context) as response:
             if response.status != 200:
                 raise TUVerificationError("TU API rejected the request")
             body = json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError) as error:
+    except (http.client.HTTPException, OSError, ValueError) as error:
         raise TUVerificationError("TU API is unavailable or returned invalid data") from error
 
     if not isinstance(body, dict):
         raise TUVerificationError("TU API returned an invalid response shape")
 
-    # The integration contract requires explicit proof of identity and status.
-    if body.get("authenticated") is not True or body.get("active") is not True:
+    # TU's Authentication API returns status/type/display names. Treat only
+    # an explicit successful student response as an eligible account.
+    if body.get("status") is not True:
         return None
-    account_type = str(body.get("account_type", "")).strip().lower()
-    verified_username = str(body.get("username", "")).strip()
-    display_name = str(body.get("display_name", "")).strip()
-    if account_type != "student" or not verified_username or not display_name:
+    raw_type = body.get("type")
+    if not isinstance(raw_type, str) or raw_type.strip().lower() != "student":
         return None
-    return TUAccount(verified_username, display_name, account_type, True)
+    display_name = ""
+    for field in ("displayname_th", "displayname_en"):
+        value = body.get(field)
+        if isinstance(value, str) and value.strip():
+            display_name = value.strip()
+            break
+    normalized_username = username.strip()
+    if not normalized_username or not display_name:
+        return None
+    return TUAccount(normalized_username, display_name, "student", True)
 
 
 def verify_tu_account(username: str, password: str) -> TUAccount | None:

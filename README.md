@@ -49,7 +49,7 @@ Authorization: Bearer <access_token>
 ```bash
 curl -X POST http://127.0.0.1:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"student","password":"password123"}'
+  -d '{"username":"6800000000","password":"0000000000000"}'
 ```
 
 ตรวจสถานะ Login:
@@ -65,8 +65,8 @@ curl http://127.0.0.1:8000/api/auth/status \
 
 | กรณีทดสอบ | ข้อมูลทดสอบ | ผลที่คาดหวัง |
 |---|---|---|
-| Login สำเร็จ | `student / password123` | HTTP 200, ได้ token และ `logged_in=true` |
-| รหัสผ่านผิด | `student / wrong` | HTTP 401 และไม่สร้าง session |
+| Login สำเร็จ | `6800000000 / 0000000000000` | HTTP 200, ได้ token และ `logged_in=true` |
+| รหัสผ่านผิด | `6800000000 / wrong` | HTTP 401 และไม่สร้าง session |
 | Logout | token ที่ได้จาก Login | HTTP 200 และ token เดิมใช้ดู `/me` ไม่ได้ (HTTP 401) |
 
 ## หมายเหตุด้านการเก็บข้อมูล
@@ -75,7 +75,7 @@ curl http://127.0.0.1:8000/api/auth/status \
 
 ## Task11: ยืนยันบัญชีกับ TU API
 
-การ Login เรียก service ยืนยันบัญชีกับ TU API ก่อนสร้าง session โดยค่าเริ่มต้นใช้ Mock สำหรับทดสอบในเครื่อง และเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL` และ `TU_API_TIMEOUT` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
+การ Login เรียก service ยืนยันบัญชีกับ TU API ก่อนสร้าง session โดยค่าเริ่มต้นใช้ Mock สำหรับทดสอบในเครื่อง และเปลี่ยนเป็น TU API จริงได้ด้วย `TU_API_MODE=real`, `TU_API_URL`, `TU_API_KEY` และ `TU_API_TIMEOUT` ในไฟล์ `.env` ห้าม commit ข้อมูลลับจริง
 
-ระบบอนุญาตเฉพาะบัญชีนักศึกษาที่มีสถานะ active และ fail-closed เมื่อ TU API ใช้งานไม่ได้หรือข้อมูลยืนยันไม่ครบ รายงาน Task11 อยู่ที่ `docs/U1/Task11-tu-api-verification.md`
+ระบบยอมรับบัญชีนักศึกษาที่ผ่านการยืนยันและ fail-closed เมื่อ TU API ใช้งานไม่ได้หรือข้อมูลยืนยันไม่ครบ ค่า `active=True` เป็น mapping ของ Adapter เพราะ response ที่ TU เผยแพร่ไม่มีฟิลด์ active. รายงาน Task11 อยู่ที่ `docs/U1/U1_Task11_TU_API_Verification.md`
 

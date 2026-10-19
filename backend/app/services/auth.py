@@ -13,7 +13,7 @@ class User:
 
 
 USERS = {
-    "student": User(1, "student", "Student User", "student"),
+    "6800000000": User(1, "6800000000", "Student User", "student"),
 }
 
 # In-memory session สำหรับการสาธิตและการทดสอบ

@@ -8,6 +8,7 @@ from fastapi.routing import APIRoute
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.schemas.guides import ErrorDetailDTO, ErrorFieldDTO, ErrorResponseDTO
+from app.services.publish_guide import GuidePublishNotFound
 from app.services.read_guide import GuideReadNotFound
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,12 @@ class GuideApiRoute(APIRoute):
                     else "ไม่พบแนวข้อสอบ"
                 )
                 return _error_response(404, exc.code, message)
+            except GuidePublishNotFound:
+                return _error_response(
+                    404,
+                    "COURSE_NOT_FOUND",
+                    "ไม่พบรายวิชาที่เผยแพร่หรือรายวิชาไม่อยู่ในขอบเขต",
+                )
             except StarletteHTTPException as exc:
                 code, message = _http_error(exc.status_code)
                 return _error_response(exc.status_code, code, message, headers=exc.headers)
