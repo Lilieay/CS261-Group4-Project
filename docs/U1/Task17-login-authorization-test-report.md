@@ -138,3 +138,99 @@ $env:TU_API_MODE='mock'
 - ข้อสังเกต/ประเด็นที่ต้องแก้: ____________________________________________________
 - ผลตรวจรับ: `รอตรวจ` / `รับรอง` / `ไม่รับรอง`
 - ผู้ตรวจ/PO: ______________________________ วันที่: ______________
+
+## 10. ผู้ทดสอบและผู้ตรวจรับควรเป็นใคร
+
+### ผู้ทดสอบ
+
+ควรเป็น Developer หรือ QA/Tester ของทีมที่ไม่ได้เป็นคนแก้โค้ดทุกส่วนของ Login เพียงคนเดียว หากเป็นไปได้ให้มีผู้ทดสอบอีกคนช่วยทดสอบซ้ำ เพราะหน้าที่คือทดลองตามกรณีในตารางจริง ทั้งกรณีผ่านและกรณีปฏิเสธ แล้วบันทึกผลที่เห็นโดยไม่แก้ผลให้ตรงกับที่คาดหวัง
+
+เหตุผลที่เหมาะกับบทบาทนี้:
+
+- เข้าใจวิธีเปิด Frontend/Backend และอ่าน HTTP status ได้
+- ทำซ้ำกรณี Login สำเร็จ, password ผิด, token ไม่มี/ผิด และ logout ได้
+- ตรวจหลักฐานทางเทคนิค เช่น response status, route และผลจาก test runner ได้
+- สามารถปิดบัง password, token และข้อมูลส่วนบุคคลก่อนแนบหลักฐาน
+
+ชื่อที่ควรกรอก: คนที่ลงมือรันทดสอบจริง เช่น `ผู้พัฒนา/QA ของกลุ่ม 4 — __________` ไม่ควรใส่ชื่อคนที่ไม่ได้ทดสอบ
+
+### ผู้ตรวจรับ/PO
+
+ควรเป็น Product Owner หรือผู้รับผิดชอบ User Story U1 ที่ได้รับมอบหมายจากทีม เช่น ผู้ดูแล Sprint/เจ้าของงาน ไม่จำเป็นต้องเป็นคนเขียนโค้ด Login
+
+เหตุผลที่เหมาะกับบทบาทนี้:
+
+- ตรวจว่าการ Login และการป้องกันทุกฟังก์ชันตรงตามความต้องการของผู้ใช้ ไม่ใช่แค่โค้ดไม่ error
+- ตัดสินใจได้ว่าผลลัพธ์เพียงพอสำหรับรับงานหรือยัง
+- ตรวจว่าบัญชีและข้อมูลที่ใช้สาธิตเหมาะสม และไม่มีข้อมูลลับหลุด
+- ลงความเห็น `รับรอง` หรือ `ไม่รับรอง` หลังเห็นผลจริงและหลักฐาน ไม่ใช่เซ็นจากผลคาดหวัง
+
+ถ้าในทีมยังไม่มี PO แยก ให้แต่งตั้งสมาชิกหนึ่งคนเป็นผู้แทน PO อย่างชัดเจน และไม่ควรใช้คนเดียวกันเป็นทั้งผู้ทดสอบและผู้ตรวจรับโดยไม่มีคนทวนซ้ำ
+
+## 11. กรณีทดสอบ TU API จริง
+
+กรณีนี้ต้องใช้ Endpoint, Application-Key และบัญชีทดสอบของ TU ที่ทีมได้รับอนุญาตเท่านั้น ห้ามใช้บัญชีส่วนตัวของสมาชิกโดยไม่ได้รับอนุญาต และห้าม commit ค่าเหล่านี้ลง Git
+
+### ข้อมูลที่ต้องเตรียมในเครื่องทดสอบ
+
+กำหนดไว้ใน `backend/.env` ที่ไม่ถูก commit หรือใน Environment ของ process:
+
+```text
+TU_API_MODE=real
+TU_API_URL=<Authentication endpoint ที่ TU อนุญาตให้ใช้ทดสอบ>
+TU_API_KEY=<Application-Key จาก TU API Developer>
+TU_API_TIMEOUT=5
+TU_TEST_USERNAME=<บัญชีนักศึกษาทดสอบที่ได้รับอนุญาต>
+TU_TEST_PASSWORD=<รหัสผ่านของบัญชีทดสอบ>
+```
+
+ตรวจเฉพาะว่าตัวแปรมีค่าหรือไม่ ห้ามพิมพ์ค่าจริงออกหน้าจอ:
+
+```powershell
+foreach ($name in 'TU_API_MODE','TU_API_URL','TU_API_KEY','TU_TEST_USERNAME','TU_TEST_PASSWORD') {
+  if ([string]::IsNullOrWhiteSpace((Get-Item "Env:$name" -ErrorAction SilentlyContinue).Value)) {
+    Write-Host "$name is missing"
+  } else {
+    Write-Host "$name is configured"
+  }
+}
+```
+
+### วิธีทดสอบแบบไม่บันทึก secret
+
+รันจาก `backend` โดยตั้งค่าลับเฉพาะใน process ปัจจุบัน หรือโหลดจากไฟล์ `.env` ที่ไม่ commit:
+
+```powershell
+cd C:\Users\ASUS\Downloads\CS261-Group4-Project-git\backend
+& .\.venv\Scripts\python.exe -c @'
+import os
+from app.services.tu_api import verify_tu_account
+
+username = os.environ["TU_TEST_USERNAME"]
+password = os.environ["TU_TEST_PASSWORD"]
+account = verify_tu_account(username, password)
+print({
+    "verified": account is not None,
+    "account_type": account.account_type if account else None,
+    "username": "[redacted]" if account else None,
+})
+'@
+```
+
+ถ้าใช้ PowerShell รุ่นที่ไม่รองรับ here-string แบบนี้ ให้รันผ่านไฟล์ชั่วคราวที่อยู่นอก Git และลบไฟล์หลังทดสอบ ห้ามใส่ username/password จริงใน command ที่จะถูก copy ไปเป็นหลักฐาน
+
+### ผลที่ต้องบันทึก
+
+| รหัส | ข้อมูลที่ใช้ | ผลคาดหวัง | ผลจริง | สถานะ | หลักฐานที่ปิดข้อมูลลับแล้ว |
+|---|---|---|---|---|---|
+| T17-REAL-01 | บัญชีนักศึกษาทดสอบที่ TU อนุญาต, endpoint/key ถูกต้อง | TU ตอบนักศึกษาผ่าน; ระบบคืน account type student และ Login สร้าง token | __________________ | ______ | response ที่ลบ username/password/token แล้ว |
+| T17-REAL-02 | password ผิด | TU ปฏิเสธ; ระบบตอบ 401 และไม่สร้าง session | __________________ | ______ | status/ข้อความทั่วไปเท่านั้น |
+| T17-REAL-03 | บัญชีที่ไม่ใช่นักศึกษา หรือ response ไม่ผ่านเงื่อนไข | ระบบปฏิเสธและไม่ออก token | __________________ | ______ | response ที่ลบข้อมูลส่วนบุคคลแล้ว |
+| T17-REAL-04 | ปิด network หรือใช้ endpoint ที่ไม่พร้อม | ระบบ fail-closed ไม่ออก token และไม่แสดง error ลับ | __________________ | ______ | status/เวลา/ข้อความทั่วไป |
+| T17-REAL-05 | ไม่มี `TU_API_KEY` หรือ URL ไม่ครบ | ระบบไม่พยายาม Login สำเร็จและตอบ error ที่ควบคุมได้ | __________________ | ______ | ห้ามแนบค่าที่ขาดหรือค่า key |
+
+### สถานะการทดสอบจริงในรอบนี้
+
+รอบการจัดทำรายงานนี้ **ยังไม่ได้เรียก TU API จริง** เพราะ environment ของเครื่องไม่มี `TU_API_URL`, `TU_API_KEY`, `TU_TEST_USERNAME` หรือ `TU_TEST_PASSWORD` ที่พร้อมใช้ และไม่ควรนำ secret มาใส่ในแชตหรือ repository ดังนั้น T17-REAL-01 ถึง T17-REAL-05 ต้องเป็น `รอทดสอบจริง` จนกว่าจะมีบัญชีทดสอบและสิทธิ์จาก TU อย่างถูกต้อง
+
+ผล `60 passed, 23 subtests passed` ในหัวข้อก่อนหน้าเป็นผลจาก SQLite และ mock/response จำลอง ใช้ยืนยัน flow และการ fail-closed เท่านั้น ไม่ควรเขียนแทนผล TU API จริง
