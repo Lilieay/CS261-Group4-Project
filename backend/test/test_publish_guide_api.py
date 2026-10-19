@@ -253,6 +253,41 @@ class PublishGuideApiTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 201, response.text)
                 self.assertEqual(response.json()["academic_year"], year)
 
+    def test_read_and_publish_use_the_same_publisher_display_name(self):
+        headers = self.headers_for("publisher_display_user")
+        cases = [
+            ("  ชื่อไทย  ", "  English Name  ", "ชื่อไทย (English Name)"),
+            ("ชื่อไทย", None, "ชื่อไทย"),
+            (None, "English Name", "English Name"),
+            (None, None, "ไม่ระบุชื่อ"),
+            ("   ", "\t", "ไม่ระบุชื่อ"),
+        ]
+        for thai_name, english_name, expected in cases:
+            with self.subTest(thai_name=thai_name, english_name=english_name):
+                with self.session_factory() as session:
+                    publisher = session.get(User, self.authenticated_user_id)
+                    publisher.displayname_th = thai_name
+                    publisher.displayname_en = english_name
+                    session.commit()
+
+                published = self.client.post(
+                    "/guides", json=self.payload(), headers=headers
+                )
+                self.assertEqual(published.status_code, 201, published.text)
+                guide_id = published.json()["id"]
+                self.assertEqual(published.json()["publisher_name"], expected)
+
+                detail = self.client.get(f"/guides/{guide_id}", headers=headers)
+                self.assertEqual(detail.status_code, 200, detail.text)
+                self.assertEqual(detail.json()["publisher_name"], expected)
+
+                listed = self.client.get(
+                    f"/courses/{self.cs_course_id}/guides", headers=headers
+                )
+                self.assertEqual(listed.status_code, 200, listed.text)
+                row = next(item for item in listed.json()["items"] if item["id"] == guide_id)
+                self.assertEqual(row["publisher_name"], expected)
+
 
 if __name__ == "__main__":
     unittest.main()

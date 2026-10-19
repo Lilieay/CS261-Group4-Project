@@ -1,7 +1,6 @@
 from app.dao.course_dao import CourseDAO
 from app.dao.read_guide_dao import ReadGuideDAO
 from app.models.guide import Guide
-from app.models.user import User
 from app.schemas.guides import (
     CourseInfoDTO,
     GuideDetailResponseDTO,
@@ -9,6 +8,7 @@ from app.schemas.guides import (
     GuideListItemDTO,
     GuideListResponseDTO,
 )
+from app.services.publisher_name import format_publisher_name
 
 
 class GuideReadNotFound(Exception):
@@ -76,13 +76,5 @@ class ReadGuideService:
             academic_year=guide.academic_year,
             semester=guide.semester,
             exam_period=guide.exam_period,
-            publisher_name=ReadGuideService._publisher_name(guide.publisher),
+            publisher_name=format_publisher_name(guide.publisher),
         )
-
-    @staticmethod
-    def _publisher_name(publisher: User) -> str:
-        thai_name = (publisher.displayname_th or "").strip()
-        english_name = (publisher.displayname_en or "").strip()
-        if thai_name and english_name:
-            return f"{thai_name} ({english_name})"
-        return thai_name or english_name or "ไม่ระบุชื่อ"

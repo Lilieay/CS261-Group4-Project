@@ -24,11 +24,24 @@ class MyGuideStorageError(Exception):
 
 
 class MyGuidesService:
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        course_dao: CourseDAO,
+        user_dao: UserDAO,
+        my_guide_dao: MyGuideDAO,
+        update_owned_guide_dao: UpdateOwnedGuideDAO,
+        delete_owned_guide_dao: DeleteOwnedGuideDAO,
+    ):
         self.session = session
+        self.course_dao = course_dao
+        self.user_dao = user_dao
+        self.my_guide_dao = my_guide_dao
+        self.update_owned_guide_dao = update_owned_guide_dao
+        self.delete_owned_guide_dao = delete_owned_guide_dao
 
     def list_for_user(self, username: str) -> list[MyGuideDTO]:
-        guides = MyGuideDAO(self.session).list_by_username(username)
+        guides = self.my_guide_dao.list_by_username(username)
         return [self._to_dto(guide) for guide in guides]
 
     def update(
@@ -38,15 +51,15 @@ class MyGuidesService:
         payload: MyGuideUpdateRequest,
     ) -> MyGuideDTO:
         try:
-            owner = UserDAO(self.session).get_by_username(username)
+            owner = self.user_dao.get_by_username(username)
             if owner is None:
                 raise MyGuideNotFound
 
-            course = CourseDAO(self.session).get_by_id(payload.course_id)
+            course = self.course_dao.get_by_id(payload.course_id)
             if course is None:
                 raise MyGuideCourseNotFound
 
-            guide = UpdateOwnedGuideDAO(self.session).update_owned(
+            guide = self.update_owned_guide_dao.update_owned(
                 guide_id, owner.id, payload
             )
             if guide is None:
@@ -60,11 +73,11 @@ class MyGuidesService:
 
     def delete(self, guide_id: int, username: str) -> None:
         try:
-            owner = UserDAO(self.session).get_by_username(username)
+            owner = self.user_dao.get_by_username(username)
             if owner is None:
                 raise MyGuideNotFound
 
-            deleted = DeleteOwnedGuideDAO(self.session).delete_owned(
+            deleted = self.delete_owned_guide_dao.delete_owned(
                 guide_id, owner.id
             )
             if not deleted:

@@ -4,9 +4,19 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.dao.course_dao import CourseDAO
+from app.dao.delete_owned_guide_dao import DeleteOwnedGuideDAO
+from app.dao.my_guide_dao import MyGuideDAO
+from app.dao.publish_guide_dao import PublishGuideDAO
+from app.dao.read_guide_dao import ReadGuideDAO
+from app.dao.update_owned_guide_dao import UpdateOwnedGuideDAO
+from app.dao.user_dao import UserDAO
 from app.db import SessionLocal
 from app.services.auth import AuthenticatedUser, AuthService
+from app.services.courses import CourseService
 from app.services.my_guides import MyGuidesService
+from app.services.publish_guide import PublishGuideService
+from app.services.read_guide import ReadGuideService
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -36,4 +46,34 @@ def get_db_session() -> Generator[Session, None, None]:
 def get_my_guides_service(
     session: Session = Depends(get_db_session),
 ) -> MyGuidesService:
-    return MyGuidesService(session)
+    return MyGuidesService(
+        session=session,
+        course_dao=CourseDAO(session),
+        user_dao=UserDAO(session),
+        my_guide_dao=MyGuideDAO(session),
+        update_owned_guide_dao=UpdateOwnedGuideDAO(session),
+        delete_owned_guide_dao=DeleteOwnedGuideDAO(session),
+    )
+
+
+def get_course_service(
+    session: Session = Depends(get_db_session),
+) -> CourseService:
+    return CourseService(CourseDAO(session))
+
+
+def get_read_guide_service(
+    session: Session = Depends(get_db_session),
+) -> ReadGuideService:
+    return ReadGuideService(CourseDAO(session), ReadGuideDAO(session))
+
+
+def get_publish_guide_service(
+    session: Session = Depends(get_db_session),
+) -> PublishGuideService:
+    return PublishGuideService(
+        session,
+        CourseDAO(session),
+        UserDAO(session),
+        PublishGuideDAO(session),
+    )
