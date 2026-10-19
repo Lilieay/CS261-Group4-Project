@@ -1,0 +1,140 @@
+# Task17: U1 — รายงานทดสอบการป้องกัน Login กับฟังก์ชัน Sprint 1
+
+รายงานนี้ตรวจว่าหน้าและ API ใน Sprint 1 บังคับให้ Login ก่อนใช้งานหรือไม่ รวมทั้งตรวจบัญชีที่ใช้ได้ บัญชีที่ไม่ควรผ่าน token ที่ไม่มี/ผิด และกรณีระบบยืนยันตัวตนหรือฐานข้อมูลมีปัญหา ผล Automated Test ในรายงานนี้ไม่ใช่ผลการ Demo ผ่าน Browser จริง เว้นแต่ระบุไว้ชัดเจน
+
+## 1. ข้อมูลการทดสอบ
+
+| รายการ | รายละเอียด |
+|---|---|
+| ผู้ทดสอบ | ______________________________ |
+| PO/ผู้ตรวจรับ | ______________________________ |
+| วันที่ทดสอบ | 19 ตุลาคม 2026 |
+| รุ่นโค้ดที่ทดสอบ | `49670bb69e7562d1bc1c52423c6ec5a5698efb95` |
+| Backend | FastAPI + TestClient, SQLite ชั่วคราว |
+| Frontend | Node test runner และ HTTP proxy ในเครื่อง |
+| TU API mode | `mock` ใน automated test; ไม่เรียก TU API จริง |
+| บัญชีทดสอบที่ใช้ | นักศึกษา mock `6800000000` และรหัสผ่านจำลองที่ไม่บันทึกในรายงาน; กรณีรหัสผ่านผิดใช้ค่า `wrong` |
+| ข้อมูลลับ | ไม่บันทึก password, access token หรือ Application-Key จริง |
+
+## 2. ขอบเขตหน้าและ API
+
+### API ที่ต้องตรวจ Login
+
+| กลุ่ม | เส้นทาง | สิทธิ์ที่คาดหวัง |
+|---|---|---|
+| Authentication | `POST /api/auth/login` | ไม่ต้องมี token แต่ต้องยืนยันบัญชีและ password |
+| Authentication | `GET /api/auth/status` | ไม่มี token ได้สถานะ `logged_in=false`; token ถูกต้องได้ข้อมูลผู้ใช้ |
+| Authentication | `GET /api/auth/me` | ต้องมี Bearer token ที่ถูกต้อง |
+| Authentication | `POST /api/auth/logout` | ต้องมี Bearer token ที่ถูกต้อง |
+| Course | `GET /courses`, `GET /courses/{course_id}` | ต้อง Login |
+| Read/Publish Guide | `GET /courses/{course_id}/guides`, `GET /guides/{guide_id}`, `GET /courses/{course_id}/guides/filter-options`, `POST /guides` | ต้อง Login |
+| My Guides | `GET /api/my-guides` | ต้อง Login และคืนเฉพาะของผู้ใช้ปัจจุบัน |
+| My Guides | `PUT /api/my-guides/{guide_id}` | ต้อง Login และต้องเป็นเจ้าของรายการ |
+| My Guides | `DELETE /api/my-guides/{guide_id}` | ต้อง Login และต้องเป็นเจ้าของรายการ |
+
+### หน้าที่เกี่ยวข้อง
+
+- `login.html`: รับข้อมูล Login และเก็บเฉพาะ access token ใน `sessionStorage` หลัง Login สำเร็จ
+- `courses.html` และ `choose-courses.html`: เรียก Course API พร้อม Bearer token
+- `read-courses.html`: ใช้ API อ่านรายละเอียดและรายการแนวข้อสอบ
+- `upload.html`: ใช้ API เผยแพร่เมื่อเปิดโหมด API; โหมด preview เป็นข้อมูล localStorage และไม่ใช่การตรวจสิทธิ์ Backend
+- `shared-courses.html`: ใช้สำหรับดู/แก้ไข/ลบรายการของฉันตามโหมดที่หน้าเว็บเปิดใช้
+- `index.html` และ `saved-courses.html`: หน้าส่วนติดต่อ/ข้อมูล preview บางส่วน จึงต้องแยกจาก API ที่บังคับ Login และไม่ถือว่าการเปิด HTML เพียงอย่างเดียวคือการผ่านสิทธิ์ Backend
+
+## 3. บัญชีและข้อมูลที่ใช้
+
+| รหัส | ข้อมูลทดสอบ | ใช้ตรวจ |
+|---|---|---|
+| AUTH-01 | นักศึกษา mock ที่ password ถูกต้อง | Login สำเร็จ, ได้ token และ user role เป็น student |
+| AUTH-02 | นักศึกษาเดิมแต่ password ผิด | Login ไม่สำเร็จและไม่สร้าง token/ผู้ใช้ในฐานข้อมูล |
+| AUTH-03 | บัญชีที่ TU ตอบว่าไม่ใช่นักศึกษา เช่น employee | ถูกปฏิเสธและไม่สร้าง session |
+| AUTH-04 | ไม่มี Authorization header | API ที่ป้องกันตอบ HTTP 401 |
+| AUTH-05 | `Bearer invalid-token` | API ที่ป้องกันตอบ HTTP 401 |
+| AUTH-06 | token ที่ Logout แล้ว | เรียก `/me` ต่อไม่ได้ ตอบ HTTP 401 |
+| AUTH-07 | TU API ล่ม/ตอบผิด/ตั้งค่าไม่ครบ | fail-closed ไม่ออก tokenและไม่สร้าง user บางส่วน |
+| AUTH-08 | ฐานข้อมูลบันทึกผู้ใช้ไม่ได้ | Login ตอบ HTTP 503 และไม่ออก token |
+
+## 4. ตารางผลการทดสอบ API/Backend
+
+| รหัส | กรณีทดสอบและข้อมูล | ผลคาดหวัง | ผลจริง | สถานะ | หลักฐาน |
+|---|---|---|---|---|---|
+| T17-API-01 | Login ด้วยบัญชีนักศึกษาเดิมและ password ที่ถูกต้อง | HTTP 200, ได้ Bearer token, user เป็น student | HTTP 200, ได้ token และ user id/username ถูกต้อง | ผ่าน | `test_login_success_and_status` |
+| T17-API-02 | Login ด้วย password ผิด | HTTP 401, ไม่มี token และไม่สร้าง user ใหม่ | HTTP 401, ไม่มี `access_token`, จำนวน User เป็น 0 | ผ่าน | `test_login_rejects_wrong_password` |
+| T17-API-03 | Login ซ้ำด้วยบัญชีเดิม | ได้ token ใหม่ แต่ใช้ user database เดิม ไม่สร้าง user ซ้ำ | user id จากการ Login สองครั้งเท่ากัน | ผ่าน | `test_repeated_login_reuses_database_user` |
+| T17-API-04 | ตรวจ `/status` ด้วย token จาก Login | `logged_in=true` และคืน user ที่ถูกต้อง | ได้สถานะ Login เป็นจริง | ผ่าน | `test_login_success_and_status` |
+| T17-API-05 | เรียก `/me` และ `/logout` โดยไม่มี/มี token ตามกรณี | ไม่มี token ได้ 401; token ถูกต้องใช้ได้; หลัง logout token เดิมใช้ไม่ได้ | Logout สำเร็จ และ `/me` หลัง logout ได้ 401 | ผ่าน | `test_logout_invalidates_token` และ `current_user` |
+| T17-API-06 | TU ตอบ false, employee, student แต่ข้อมูลไม่ครบ หรือ network/config ผิด | HTTP 401 และไม่สร้าง session/user | ทุกกรณีตอบ 401 และไม่ persist user | ผ่าน | `test_real_tu_refusal_returns_401_without_persisting_user` (9 subtests) |
+| T17-API-07 | Database ใช้งานไม่ได้ระหว่าง Login | HTTP 503 และไม่มี token | HTTP 503 และไม่มี `access_token` | ผ่าน | `test_database_failure_does_not_issue_login_token` |
+| T17-API-08 | เรียก Course API โดยไม่มี token/ด้วย token ผิด/ถูก | ไม่มีหรือผิดได้ 401; ถูกจึงค้นหา/อ่านวิชาได้ | ระบบบังคับ Bearer token และชุด Course API ผ่าน | ผ่าน | `test_course_api.py` |
+| T17-API-09 | เรียก Guide list/read/filter/publish โดยไม่มี token/ข้อมูลไม่ถูกต้อง | ต้อง Login และไม่บันทึกข้อมูลเมื่อไม่ผ่าน | ตรวจด้วยชุด API test ของ Sprint 1 และไม่พบการข้าม dependency | ผ่าน | `test_publish_guide_api.py`, `test_read_guide_api.py` |
+| T17-API-10 | เรียก My Guides โดยไม่มี/ผิด token และเรียกด้วย token ของผู้ใช้ | 401 เมื่อไม่ยืนยัน; เมื่อยืนยันคืนเฉพาะรายการของผู้ใช้ | ผ่านการกรอง owner และกรณีไม่มีรายการคืน array ว่าง | ผ่าน | `test_my_guides_api.py` |
+| T17-API-11 | PUT/DELETE รายการของตนเองและของผู้อื่น | เจ้าของทำได้; ผู้ไม่ใช่เจ้าของได้ 404/ไม่เปลี่ยนข้อมูล | update/delete ของเจ้าของผ่าน และของผู้อื่นถูกปฏิเสธ | ผ่าน | `test_my_guide_updates_api.py`, `test_my_guide_deletions_api.py` |
+
+## 5. ตารางผลการทดสอบ Frontend/Proxy
+
+| รหัส | กรณีทดสอบ | ผลคาดหวัง | ผลจริง | สถานะ | หลักฐาน |
+|---|---|---|---|---|---|
+| T17-UI-01 | หน้า Course ส่งคำขอพร้อม token | ส่ง `Authorization: Bearer ...` ไป Backend | ส่ง header ถูกต้องและ map DTO ได้ | ผ่าน | `course client sends a same-origin authenticated search and maps the DTO` |
+| T17-UI-02 | เปิดหน้าค้นหาโดยไม่มี token | ล้าง/ตรวจสถานะและพาไป Login | client redirect เมื่อไม่มี token | ผ่าน | `course client redirects when there is no token` |
+| T17-UI-03 | Backend ตอบ 401 ระหว่างค้นหา | ล้าง token และพาไป Login | client ล้าง token และ redirect เมื่อได้ 401 | ผ่าน | `course client clears an expired token and redirects on 401` |
+| T17-UI-04 | Proxy ส่งต่อ token และรักษา status error | ไม่กลืน 401/422/404 และไม่สร้าง URL จาก ID ผิดรูปแบบ | ทดสอบ proxy ครบทุกกรณี | ผ่าน | `server.test.js` |
+| T17-UI-05 | Login response ผิดรูปแบบหรือ Backend ใช้ไม่ได้ | แสดงข้อความทั่วไป ไม่แสดงข้อมูลลับ | ตรวจเส้นทาง validation/error ใน `login.js` และ syntax ผ่าน | ผ่าน | `node --check frontend/public/js/login.js` |
+| T17-UI-06 | เปิดหน้า static โดยตรงโดยไม่มี Login | ไม่ถือว่า static HTML เป็นการอนุญาต API; API ต้องปฏิเสธเอง | สอดคล้องกับการป้องกันที่ dependency `current_user` | ผ่านตามโค้ด; Browser UAT รอทดสอบ | รายการ route ในหัวข้อ 2 |
+
+## 6. ผลการรันทดสอบรวม
+
+### Backend
+
+คำสั่งที่ใช้จากโฟลเดอร์ `backend`:
+
+```powershell
+$env:DB_CONNECTION_STRING='sqlite:///:memory:'
+$env:PYTHONPATH='.'
+$env:TU_API_MODE='mock'
+.venv\Scripts\python.exe -m pytest -q test\test_auth.py test\test_course_api.py test\test_my_guides_api.py test\test_my_guide_updates_api.py test\test_my_guide_deletions_api.py test\test_publish_guide_api.py test\test_read_guide_api.py
+```
+
+ผลจริง: **60 passed, 1 warning, 23 subtests passed in 1.75s**
+
+คำเตือนเป็น Starlette deprecation warning เรื่อง `httpx`/`httpx2` ไม่ใช่ test failure
+
+### Frontend
+
+คำสั่งที่ใช้จากโฟลเดอร์ `frontend`:
+
+```powershell
+& 'C:\Program Files\nodejs\node.exe' --test src/server.test.js src/course-api.test.js src/course-pages.test.js
+```
+
+ผลจริง: **13 passed, 0 failed**
+
+## 7. ข้อมูลก่อน/หลังที่ต้องปิดบัง
+
+หลักฐานที่แนบกับรายงานต้องปิดบังสิ่งต่อไปนี้ก่อนส่งให้ PO หรือขึ้น GitHub:
+
+- password ทุกบัญชี
+- access token และ Application-Key
+- ค่าใน `.env` และ connection string
+- ชื่อหรือรหัสบัญชีจริง หากไม่ใช่บัญชีทดสอบที่อนุญาต
+- response จาก TU ที่มีข้อมูลส่วนบุคคล
+
+ตัวอย่างการบันทึกที่ปลอดภัย:
+
+```text
+ก่อนทดสอบ: ไม่มี token ใน session / บัญชีทดสอบ [ปกปิด]
+หลัง Login: ได้ token [ปกปิด] และ role=student
+หลัง Logout: เรียก /me ได้ HTTP 401
+```
+
+## 8. ข้อจำกัดของหลักฐาน
+
+- Automated test ใช้ SQLite ชั่วคราวและ TU response จำลอง จึงไม่ใช่การยืนยัน TU API จริงหรือฐานข้อมูล Production
+- ผล Frontend เป็น Node test และ proxy test; ยังไม่ใช่การตรวจด้วย Chrome ทุกหน้าด้วยมือ
+- การเปิด static HTML ได้ไม่ได้แปลว่าผ่านสิทธิ์ เพราะการป้องกันที่ต้องเชื่อถืออยู่ที่ Backend API
+- ก่อนตรวจรับจริงควรทำ Browser UAT ซ้ำด้วยบัญชีทดสอบ และแนบภาพที่ปิดข้อมูลลับแล้ว
+
+## 9. ผลตรวจรับของ PO
+
+- ข้อสังเกต/ประเด็นที่ต้องแก้: ____________________________________________________
+- ผลตรวจรับ: `รอตรวจ` / `รับรอง` / `ไม่รับรอง`
+- ผู้ตรวจ/PO: ______________________________ วันที่: ______________
