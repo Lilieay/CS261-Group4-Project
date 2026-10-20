@@ -43,7 +43,7 @@ docker compose ps
 
 ควรเห็น containers 3 ตัว: `sqlserver`, `backend` และ `frontend` สถานะ backend/frontend ควรเป็น `healthy`/`running` ตาม healthcheck ที่กำหนด
 
-### URLs
+### Default-port URLs
 
 - หน้า Login: <http://localhost:5000/login.html>
 - Backend health: <http://localhost:8000/>
@@ -67,6 +67,8 @@ docker compose up -d --build
 
 ถ้ามี volume เดิม ต้องใช้ `MSSQL_SA_PASSWORD` เดิมที่ใช้สร้าง SQL Server volume นั้น การ init ใช้ `CREATE DATABASE IF MISSING` และ ORM `create_all`; seed จะ reuse รายวิชา/แนวข้อสอบของชุดตัวอย่างที่ตรงกัน ไม่มีการ drop database, ล้างตาราง หรือ reset volume และข้อมูลที่ผู้ใช้เพิ่มไว้จะยังอยู่
 
+Initialization จัดการข้อมูล seed ตามกติกาของแต่ละ service: แนวข้อสอบ seed ที่มีชื่อและผู้เผยแพร่ตรงกับชุด `test` จะถูกปรับ fields ให้ตรงกับ dataset ปัจจุบันทุกครั้งที่เริ่มระบบ ส่วนรายวิชาที่ seed ไว้มี snapshot ตรวจการแก้ไข หากพบว่ารายวิชาที่ระบบ seed และบันทึก ownership ไว้ถูกแก้ ระบบจะหยุด initialization เพื่อไม่เขียนทับข้อมูลที่เปลี่ยนไป ข้อมูลที่ผู้ใช้สร้างเองซึ่งไม่ใช่รายการ seed จะไม่ถูกลบหรือ refresh โดย seed startup
+
 ## Manual Docker Workflow
 
 ทำทีละขั้นเพื่อศึกษา Docker ได้ โดยแต่ละคำสั่งใช้ startup และ seed logic ชุดเดียวกับคำสั่งเริ่มระบบแบบครั้งเดียว:
@@ -85,7 +87,7 @@ docker compose ps
 - `docker compose build` สร้าง Frontend และ Backend images ส่วน `docker compose up` สร้างและรัน containers; `--build` สั่ง build ก่อนรัน
 - **Healthcheck/dependency** ให้ Compose รอ SQL Server และ Backend พร้อมก่อนเริ่ม service ถัดไป
 - **Database initialization** สร้าง database เมื่อยังไม่มี แล้วสร้างเฉพาะ ORM tables ที่ยังไม่มี
-- **Seed data** ใช้ CourseSeedService ชุด `demo` และ GuideSeedService ชุด `test` ภายใน transaction เดียวกับการ seed; รันซ้ำแล้วไม่เพิ่มรายการซ้ำ
+- **Seed data** ใช้ CourseSeedService ชุด `demo` และ GuideSeedService ชุด `test` ภายใน transaction เดียวกัน; รายวิชาที่ตรงกับ seed จะ reuse ส่วนแนวข้อสอบ seed เดิมจะ refresh fields ให้ตรง dataset เมื่อเริ่มระบบ รายวิชา seed ที่ถูกแก้จนไม่ตรง snapshot อาจทำให้ initialization ล้มเหลว ข้อมูลผู้ใช้ที่ไม่ใช่รายการ seed จะถูกเก็บไว้
 - **Volume** `sqlserver_data` เก็บไฟล์ฐานข้อมูลนอก container การ recreate หรือ rebuild containers จึงไม่ลบข้อมูล
 
 ## Demo Account & URLs
@@ -96,7 +98,7 @@ docker compose ps
 |---|---|
 | `6800000000` | `0000000000000` |
 
-หน้าเว็บและ API ใช้ URL ตามหัวข้อ Fresh Setup ด้านบน บัญชีนี้ใช้สำหรับ mock demo เท่านั้น ไม่ใช่บัญชี TU จริง
+หน้าเว็บและ API ใช้ URL พอร์ตปริยายตามหัวข้อ Fresh Setup ด้านบน บัญชีนี้ใช้สำหรับ mock demo เท่านั้น ไม่ใช่บัญชี TU จริง
 
 ## Troubleshooting
 
@@ -111,7 +113,15 @@ docker compose logs --tail=100 sqlserver backend
 
 **พอร์ต 1433, 8000 หรือ 5000 ถูกใช้อยู่**
 
-ปิดโปรแกรมที่ใช้พอร์ตนั้น หรือแก้เฉพาะพอร์ตฝั่ง host ใน `compose.yaml` เช่น `"127.0.0.1:5001:5000"` แล้วรัน `docker compose up -d` อีกครั้ง
+กำหนดพอร์ต host ที่ว่างใน `.env` แล้วรัน `docker compose up -d` อีกครั้ง:
+
+```dotenv
+FRONTEND_HOST_PORT=5001
+BACKEND_HOST_PORT=8001
+SQLSERVER_HOST_PORT=1434
+```
+
+ตัวแปรเหล่านี้เปลี่ยนเฉพาะพอร์ตบน host; พอร์ตภายใน containers ยังคงเป็น 5000, 8000 และ 1433 ตามลำดับ ใช้ URL `localhost:5001` สำหรับ Frontend และ `localhost:8001` สำหรับ Backend เมื่อกำหนดค่าตัวอย่างนี้
 
 **ดู logs แบบต่อเนื่อง**
 
