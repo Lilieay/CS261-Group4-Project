@@ -49,6 +49,34 @@ function createApp({backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:80
     });
   }
 
+  app.all(['/api/saved-guides', '/api/saved-guides/:guideId'], async (req, res) => {
+    res.set('Cache-Control', 'no-store');
+    const id = req.params.guideId;
+    if (!['GET', 'PUT', 'DELETE'].includes(req.method) || (!id && req.method !== 'GET')) {
+      return res.status(405).json({detail: 'METHOD_NOT_ALLOWED'});
+    }
+    if (id !== undefined && (!/^[1-9]\d*$/.test(id) || Number(id) > 2147483647)) {
+      return res.status(422).json({detail: 'GUIDE_ID_INVALID'});
+    }
+    if (Object.keys(req.query).length) return res.status(422).json({detail: 'QUERY_NOT_ALLOWED'});
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const base = new URL(backendUrl);
+      if (!['http:', 'https:'].includes(base.protocol)) throw new Error('Invalid backend protocol');
+      const headers = {Accept: 'application/json'};
+      if (req.get('authorization')) headers.Authorization = req.get('authorization');
+      const response = await fetch(new URL(`/api/saved-guides${id ? `/${id}` : ''}`, base), {
+        method: req.method, headers, signal: controller.signal, cache: 'no-store', redirect: 'manual'
+      });
+      const body = await response.text();
+      if (response.headers.get('content-type')) res.set('Content-Type', response.headers.get('content-type'));
+      return res.status(response.status).send(body);
+    } catch (_) {
+      return res.status(502).json({detail: 'ตรวจสอบรายการที่บันทึกไม่ได้ กรุณาลองใหม่'});
+    } finally { clearTimeout(timer); }
+  });
+
   app.get(['/api/courses', '/api/courses/:courseId'], async (req, res) => {
     res.set('Cache-Control', 'no-store');
     const courseId = req.params.courseId;

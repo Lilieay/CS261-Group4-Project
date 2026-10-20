@@ -64,10 +64,6 @@
     <symbol id="i-bookmark" viewBox="0 0 24 24">
       <path d="M6 3h12v18l-6-4-6 4z" />
     </symbol>
-    <symbol id="i-back" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 7 7 12l5 5M7 12h10" />
-    </symbol>
     <symbol id="i-chevron-down" viewBox="0 0 24 24">
       <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
         d="m6 9 6 6 6-6" />
@@ -76,7 +72,7 @@
 
   <!-- Top Navigation Bar -->
   <header class="topbar">
-    <a class="brand" href="index.html" aria-label="หน้าแรก">
+    <a class="brand" href="courses.html" aria-label="หน้าแรก">
       <svg class="icon brand-icon">
         <use href="#i-file" />
       </svg>
@@ -102,17 +98,12 @@
     <b data-user-name>กำลังโหลด…</b>
     <small data-user-id></small>
   </span>
+  <button class="logout" type="button" data-logout aria-label="ออกจากระบบ" title="ออกจากระบบ"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10"/></svg></button>
 </div>
   </header>
 
   <!-- Main Content -->
   <main class="page">
-    <a class="back-link" href="courses.html" aria-label="กลับหน้ารายวิชา">
-      <svg class="icon">
-        <use href="#i-back" />
-      </svg>
-    </a>
-
     <section class="content">
       <div class="page-header">
         <h1>เผยแพร่แนวข้อสอบวิชา CS</h1>
@@ -281,6 +272,7 @@
       <a href="#">ข้อกำหนดการใช้งาน</a><span>•</span><a href="#">แจ้งปัญหา</a>
     </div>
   </footer>
+<p id="session-status" class="session-status" role="status" aria-live="polite"></p>
 </body>
 
 </html>
