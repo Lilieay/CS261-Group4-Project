@@ -1,0 +1,60 @@
+name: cs261-group4
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+    ports:
+      - "127.0.0.1:${SQLSERVER_HOST_PORT:-1433}:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          SQLCMDPASSWORD="$${MSSQL_SA_PASSWORD}"
+          /opt/mssql-tools18/bin/sqlcmd
+          -S localhost -U sa -C -b
+          -Q "SELECT 1" -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    build: ./backend
+    environment:
+      DB_CONNECTION_STRING: "DRIVER={ODBC Driver 18 for SQL Server};SERVER=sqlserver,1433;DATABASE=CS261Group4Dev;UID=sa;Encrypt=yes;TrustServerCertificate=yes"
+      DB_PASSWORD: "${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env}"
+      TU_API_MODE: "${TU_API_MODE:-mock}"
+      TU_API_URL: "${TU_API_URL:-}"
+      TU_API_KEY: "${TU_API_KEY:-}"
+      TU_API_TIMEOUT: "${TU_API_TIMEOUT:-5}"
+      AUTH_SESSION_TTL_SECONDS: "${AUTH_SESSION_TTL_SECONDS:-28800}"
+    ports:
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8000}:8000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: "http://backend:8000"
+    ports:
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-5000}:5000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  sqlserver_data:

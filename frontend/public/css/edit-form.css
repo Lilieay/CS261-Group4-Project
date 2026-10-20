@@ -1,0 +1,199 @@
+/* Full replacement for edit-form.css. Load after shared-courses.css. */
+#editor {
+  width: 560px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #e9b7ca;
+  border-radius: 16px;
+  background: #fff;
+  color: #1a1f2a;
+  box-shadow: 0 18px 60px #161c302b;
+  font-family: 'Prompt', sans-serif;
+}
+#editor::backdrop { background: #171b2899; }
+#editor #edit-form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 28px);
+  margin: 0;
+}
+#editor .edit-header {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 98px;
+  gap: 16px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #d9def4;
+  background: #f1f2ff;
+}
+#editor .edit-heading-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 32px;
+  border-radius: 4px;
+  background: #e0e3f2;
+  color: #d00e3a;
+}
+#editor .edit-heading-icon .icon { width: 20px; height: 20px; }
+#editor #editor-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.6;
+  letter-spacing: -.5px;
+}
+#editor .edit-body {
+  display: grid;
+  min-height: 0;
+  gap: 16px;
+  padding: 20px 18px 18px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+#editor .edit-field { display: flex; flex-direction: column; min-width: 0; gap: 5px; }
+#editor label {
+  display: block;
+  color: #1b202b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+#editor label > span { margin-left: 5px; color: #d20b35; }
+#editor :is(input, select, textarea) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 37px;
+  margin: 0;
+  padding: 8px 11px;
+  border: 1px solid #dadff4;
+  border-radius: 4px;
+  background: #f2f3ff;
+  color: #1a1f2a;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+#editor input::placeholder { color: #7f8494; opacity: 1; }
+#editor select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23727b91' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+#editor option { background: white; }
+#editor #edit-course { min-height: 40px; }
+#editor #edit-title { min-height: 40px; background: white; font-size: 15px; font-weight: 500; }
+#editor .edit-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
+#editor .edit-row-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+#editor textarea { min-height: 64px; resize: vertical; }
+#editor #edit-notes { min-height: 64px; }
+#editor .field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #ff9aaa;
+  border-radius: 4px;
+  background: #fff5f5;
+  color: #d30025;
+  font-size: 10px;
+  line-height: 1.7;
+}
+#editor .field-error::before {
+  content: '!';
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 1;
+}
+#editor [aria-invalid="true"] { border-color: #d80734 !important; box-shadow: 0 0 0 1px #d80734; }
+#editor .edit-error-summary { padding: 10px; border: 1px solid #ff9aaa; border-radius: 4px; background: #fff5f5; color: #b40022; font-size: 11px; }
+#editor .edit-error-summary a { display: block; padding: 3px 0; text-decoration: underline; }
+#editor .edit-count-hint { margin: 0; color: #69748d; font-size: 11px; line-height: 1.6; }
+#editor .edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 62px;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 18px;
+  border-top: 1px solid #d9def4;
+  background: #f1f2ff;
+  font-size: 12px;
+}
+#editor .edit-footer button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 37px;
+  gap: 22px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid #dadff4;
+  border-radius: 4px;
+  background: white;
+  color: #202532;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+#editor .edit-footer .edit-save { min-width: 175px; border-color: #cc0b35; background: #cc0b35; color: white; font-weight: 600; }
+#editor .edit-save .icon { width: 15px; height: 15px; }
+#editor .edit-save:hover { background: #b0082c; }
+#editor :where(input, select, textarea, button):focus-visible { outline: 3px solid #7186b9; outline-offset: 2px; }
+#editor [hidden] { display: none !important; }
+@media (max-width: 400px) {
+  #editor .edit-header { min-height: 80px; gap: 10px; padding: 18px 16px; }
+  #editor #editor-title { font-size: 20px; }
+  #editor .edit-row-three { grid-template-columns: 1fr; }
+  #editor .edit-footer button { min-height: 44px; }
+}
+
+
+/* Text areas and disabled counts: latest U5 adjustments. */
+#editor #edit-topics,
+#editor #edit-notes {
+  display: block;
+  width: 100%;
+  height: 64px;
+  min-height: 64px;
+  padding: 10px 11px;
+  border: 1px solid #dadff4;
+  border-radius: 4px;
+  background: #f2f3ff;
+  color: #1a1f2a;
+  font-family: "Prompt", sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+  resize: vertical;
+}
+#editor input[type="number"]:disabled {
+  border-color: #e0e3eb;
+  background: #e9ebf1;
+  color: #9298a5;
+  cursor: not-allowed;
+  opacity: 1;
+}
+#editor input[type="number"]:disabled::placeholder {
+  color: #9298a5;
+}

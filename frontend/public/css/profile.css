@@ -1,0 +1,69 @@
+/* Profile truncation, logout controls and session feedback. */
+
+.profile {
+  max-width: 280px;
+}
+
+.profile .logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  min-height: 36px;
+  margin-left: auto;
+  padding: 6px;
+  border: 0;
+  border-radius: 4px;
+  color: #654b4b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profile .logout:hover {
+  background: #f1f2ff;
+  color: #c8102e;
+}
+
+.profile .logout:focus-visible {
+  outline: 2px solid #4b6591;
+  outline-offset: 2px;
+}
+
+.profile .logout:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+.session-status {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 100;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px;
+  border: 1px solid #cbd3e5;
+  border-radius: 6px;
+  background: #fff;
+  color: #18202c;
+  font-size: 14px;
+}
+
+.session-status:empty {
+  display: none;
+}
+
+.profile .avatar {
+  flex-shrink: 0;
+}
+
+.profile-copy {
+  min-width: 0;
+}
+
+.profile-copy b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

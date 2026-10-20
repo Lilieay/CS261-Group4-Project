@@ -1,0 +1,247 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   Upload Page Specific Styles (Aligned with Project Design System)
+   ========================================================================== */
+
+.page {
+  max-width: 1140px;
+  width: 100%;
+  margin: 1.5rem auto 3rem;
+  padding: 0 1.5rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 0.5rem;
+}
+
+.page-header h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+
+.page-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #e11d48;
+  font-weight: 700;
+}
+
+/* Form Layout Grid */
+.upload-form {
+  width: 100%;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.form-column-right {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group.full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Inputs, Selects & Textarea Styling */
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  background-color: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  font-family: inherit;
+  font-size: 0.925rem;
+  color: #334155;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #94a3b8;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.form-group input[readonly] {
+  background-color: #e2e8f0;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.select-icon {
+  position: absolute;
+  right: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 380px;
+  height: 100%;
+}
+
+/* Action Buttons */
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel,
+.btn-submit {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 0.375rem;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.btn-cancel {
+  background-color: #ffffff;
+  border: 1.5px solid #0f172a;
+  color: #0f172a;
+}
+
+.btn-cancel:hover {
+  background-color: #f8fafc;
+}
+
+.btn-submit {
+  background-color: #be123c;
+  border: none;
+  color: #ffffff;
+}
+
+.btn-submit:hover {
+  background-color: #9f1239;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group textarea {
+    min-height: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .page {
+    padding: 0 1rem;
+  }
+}
+
+/* Task58: scoped validation, number inputs, and publishing states. */
+#upload-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.upload-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.upload-form [hidden], .content > [hidden] { display: none !important; }
+.upload-form .form-group input[type="number"] { width: 100%; min-width: 0; padding: .75rem 1rem; background: #f1f5f9; border: 1px solid transparent; border-radius: .375rem; font: inherit; color: #334155; }
+.upload-form #exam-topics { min-height: 84px; height: 84px; line-height: 1.6; }
+.upload-form .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.upload-form .form-column, .upload-form .form-group { min-width: 0; }
+.upload-form [aria-invalid="true"] { border-color: #dc2626 !important; }
+.upload-field-error { color: #b91c1c; font-size: 12px; line-height: 1.6; }
+.publish-errors { padding: 14px 16px; margin-bottom: 16px; border: 1px solid #fca5a5; border-radius: 6px; background: #fff5f5; color: #991b1b; }
+.publish-errors strong, .publish-errors a { display: block; line-height: 1.8; }
+.publish-errors a { color: inherit; text-decoration: underline; }
+.publish-mode, .publish-notice { padding: 12px 16px; border: 1px solid #d8dff0; border-radius: 6px; background: #f5f7ff; color: #354563; font-size: 13px; line-height: 1.7; }
+.publish-status { min-height: 1.5em; margin: 8px 0; color: #43546b; }
+.publish-status[data-kind="error"] { color: #b91c1c; }
+.publish-status[data-kind="success"] { color: #166534; }
+.publish-help { display: inline-block; margin-bottom: 12px; color: #9f1239; text-decoration: underline; }
+.publish-retry { padding: 10px 16px; border: 1px solid #cad5e7; border-radius: 6px; background: white; color: #263a57; cursor: pointer; }
+.publish-success { padding: 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; }
+.publish-success a { color: inherit; text-decoration: underline; }
+.upload-count-hint { color: #61718b; font-size: 12px; margin: -8px 0 0; }
+.upload-form input:disabled, .upload-form select:disabled, .upload-form textarea:disabled { background: #e5e7eb; color: #64748b; cursor: not-allowed; }
+.upload-form .btn-submit:disabled, .upload-form fieldset:disabled .btn-submit { opacity: .65; cursor: not-allowed; }
+.upload-form .btn-cancel[aria-disabled="true"] { opacity: .65; cursor: wait; }
+.upload-form :focus-visible, .publish-success a:focus-visible { outline: 2px solid #5277c0; outline-offset: 3px; }
+@media (max-width: 900px) { .upload-form .form-grid { grid-template-columns: minmax(0, 1fr); } }
