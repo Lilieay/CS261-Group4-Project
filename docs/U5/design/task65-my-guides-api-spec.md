@@ -1,82 +1,56 @@
-# Task65: API รายการ แก้ไข และลบแนวข้อสอบของฉัน
+# Task65 U5 API จัดการแนวข้อสอบของฉัน
 
-## ขอบเขต
+เอกสารนี้อธิบาย API ที่ใช้งานแล้วสำหรับดู แก้ไข และลบผลงานของผู้ใช้ ทุกคำขอต้องมี `Authorization: Bearer <access_token>` ที่ยังใช้ได้ รายการว่างไม่ใช่ข้อผิดพลาด และการแก้ไขหรือลบต้องเป็นเจ้าของรายการ
 
-เอกสารนี้กำหนด API สำหรับดูรายการแนวข้อสอบของผู้ใช้ปัจจุบัน แก้ไข และลบรายการของตนเอง อ้างอิงกติกา Task62, กรณีทดสอบใน Task67, แบบข้อมูล Guide ใน Task36 และ FastAPI/Pydantic ที่ใช้ใน Backend
+## เส้นทางและผลสำเร็จ
 
-Task65 ส่งมอบ API Spec, DTO Schema และแผนภาพ Router/API กับ DTO ส่วนการพัฒนา DAO และ API เป็นงาน Task68–73
+| Method | Backend path | Response |
+|---|---|---|
+| GET | `/api/my-guides` | `200 list[MyGuideDTO]` |
+| PUT | `/api/my-guides/{guide_id}` | `200 MyGuideUpdateResponse` |
+| DELETE | `/api/my-guides/{guide_id}` | `200 MyGuideDeleteResponse` |
+| GET | `/guides/{guide_id}` | `200 GuideDetailResponseDTO` จาก API อ่านเดิมของ U3 |
 
-## API
+Browser เรียก GET/PUT/DELETE ของ `/api/my-guides` ผ่าน Node proxy ด้วย path เดียวกัน ส่วนหน้าอ่านใช้ `/api/guides/guides/{guide_id}` ที่ proxy ส่งต่อเป็น `/guides/{guide_id}`
 
-ทุก API ต้องส่ง Bearer token ที่ยังใช้ได้ Backend อ่านผู้ใช้จาก `current_user` และใช้ `user.id` ตรวจเจ้าของรายการ
-
-| Method | Path | หน้าที่ | ผลสำเร็จ |
-|---|---|---|---|
-| `GET` | `/guides/me` | อ่านรายการของผู้ใช้ปัจจุบัน | `200 OK` |
-| `GET` | `/guides/{guide_id}` | อ่านรายละเอียดรายการที่เลือก ใช้ API เดิม | `200 OK` |
-| `PUT` | `/guides/{guide_id}` | แทนข้อมูลที่แก้ไขของรายการเดิม | `200 OK` |
-| `DELETE` | `/guides/{guide_id}` | ลบรายการของผู้ใช้ปัจจุบัน | `204 No Content` |
-
-ต้องประกาศ `/guides/me` ก่อน `/guides/{guide_id}` เพื่อไม่ให้ FastAPI ตีความ `me` เป็นค่า `guide_id`
-
-## อ่านรายการของฉัน
-
-### `GET /guides/me`
-
-อ่านเฉพาะแนวข้อสอบที่ `publisher_id` ตรงกับผู้ใช้จาก token รายการว่างตอบ `200 OK` พร้อม `items: []`
+## ดูรายการของฉัน
 
 ```http
-GET /guides/me
+GET /api/my-guides
 Authorization: Bearer <access_token>
 ```
+
+Backend กรองด้วย username ที่ Session ยืนยันแล้ว ไม่รับ username หรือ publisher_id จาก query เพื่อเลือกดูผลงานของคนอื่น ผลสำเร็จเป็น array โดยตรง ไม่ครอบด้วย `items` หากไม่มีผลงานตอบ `[]`
+
+ตัวอย่างข้อมูลสมมติ:
 
 ```json
-{
-  "items": [
-    {
-      "id": 42,
-      "course": {
-        "id": 1,
-        "course_code": "CS261",
-        "course_name": "โครงสร้างข้อมูล",
-        "instructor_names": "ชื่อผู้สอน"
-      },
-      "title": "แนวข้อสอบปลายภาค",
-      "academic_year": 2568,
-      "semester": 1,
-      "exam_period": "final",
-      "topics": "การเรียงลำดับและกราฟ",
-      "exam_format": "mixed",
-      "objective_count": 20,
-      "subjective_count": 3,
-      "publisher_name": "ชื่อผู้เผยแพร่",
-      "additional_advice": null
-    }
-  ]
-}
+[
+  {
+    "id": 42,
+    "course_id": 1,
+    "course_code": "CS261",
+    "course_name": "INTRODUCTION TO SOFTWARE ENGINEERING",
+    "instructor_name": null,
+    "title": "แนวข้อสอบปลายภาค",
+    "academic_year": 2568,
+    "semester": 1,
+    "exam_period": "final",
+    "topics": "การออกแบบ API",
+    "exam_format": "mixed",
+    "objective_count": 20,
+    "subjective_count": 3,
+    "additional_advice": null
+  }
+]
 ```
 
-Response ใช้ `MyGuidesResponseDTO` ซึ่งมี `items` เป็นรายการ `GuideDetailResponseDTO` เพื่อให้หน้าของฉันแสดงข้อมูลที่ Task62 กำหนด และเปิดรายละเอียดรายการที่เลือกได้โดยใช้ `id`
+ข้อมูลรายวิชาเป็นฟิลด์ระดับเดียวกับ Guide ไม่ใช่ object `course` ซ้อนอยู่ และ MyGuideDTO ไม่มี `publisher_name` เพราะรายการนี้กรองผลงานของบัญชีที่ Login อยู่แล้ว หน้าอ่านรายละเอียดใช้ DTO อีกแบบตาม U3
 
-## อ่านรายละเอียดรายการ
-
-### `GET /guides/{guide_id}`
-
-ใช้ API อ่านแนวข้อสอบเดิมและ `GuideDetailResponseDTO` ผู้ใช้ที่เข้าสู่ระบบแล้วอ่านรายการได้ตามสิทธิ์ของ API ปัจจุบัน หากไม่พบรายการตอบ `404 GUIDE_NOT_FOUND`
+## แก้ไขและย้ายรายวิชา
 
 ```http
-GET /guides/42
-Authorization: Bearer <access_token>
-```
-
-## แก้ไขรายการ
-
-### `PUT /guides/{guide_id}`
-
-แก้ไขข้อมูลของรายการเดิม เจ้าของต้องตรงกับผู้ใช้จาก token การแก้ไขคง `id` และ `publisher_id` เดิม และไม่สร้างรายการใหม่
-
-```http
-PUT /guides/42
+PUT /api/my-guides/42
 Authorization: Bearer <access_token>
 Content-Type: application/json
 ```
@@ -84,155 +58,95 @@ Content-Type: application/json
 ```json
 {
   "course_id": 1,
-  "title": "แนวข้อสอบปลายภาค ฉบับปรับปรุง",
+  "title": "แนวข้อสอบปลายภาค ฉบับแก้ไข",
   "academic_year": 2568,
   "semester": 1,
   "exam_period": "final",
-  "topics": "การเรียงลำดับ กราฟ และการวิเคราะห์ความซับซ้อน",
+  "topics": "การออกแบบ API และฐานข้อมูล",
   "exam_format": "mixed",
   "objective_count": 18,
   "subjective_count": 4,
-  "additional_advice": "ฝึกทำโจทย์กราฟ"
+  "additional_advice": "ทบทวนการออกแบบข้อมูล"
 }
 ```
 
-| ฟิลด์ | ชนิด | กติกา |
-|---|---|---|
-| `course_id` | integer | บังคับ มากกว่า 0 และต้องมีอยู่ในระบบ |
-| `title` | string | บังคับ หลังตัดช่องว่างต้องไม่ว่าง ความยาวไม่เกิน 200 ตัวอักษรตาม Entity |
-| `academic_year` | integer | บังคับ ปี พ.ศ. ชุดปีที่อนุญาตต้องตรงกับฟอร์มและระบบ |
-| `semester` | integer | บังคับ รับ `1`, `2` หรือ `3` |
-| `exam_period` | string | บังคับ รับ `midterm` หรือ `final` |
-| `topics` | string | บังคับ หลังตัดช่องว่างต้องไม่ว่าง ความยาวไม่เกิน 2,000 ตัวอักษร |
-| `exam_format` | string | บังคับ เลือกหนึ่งค่าจาก `objective`, `subjective`, `mixed` |
-| `objective_count` | integer หรือ null | จำนวนข้อปรนัย ตาม Entity |
-| `subjective_count` | integer หรือ null | จำนวนข้ออัตนัย ตาม Entity |
-| `additional_advice` | string หรือ null | ไม่บังคับ ความยาวไม่เกิน 2,000 ตัวอักษร |
+ส่งข้อมูลครบตาม MyGuideUpdateRequest การแก้ไขคง Guide ID และเจ้าของเดิม หากเปลี่ยน `course_id` จะย้ายรายการเดิมไปวิชาใหม่ ไม่สร้างสำเนา ผลสำเร็จเป็น object แบบเดียวกับหนึ่งรายการในตัวอย่าง GET โดยใช้ค่าล่าสุด
 
-ค่าจำนวนข้อที่ระบุต้องเป็นจำนวนเต็มมากกว่า 0 ส่วนที่ไม่ระบุเป็น `null` ตาม Task36 และ Entity ปัจจุบัน เมื่อเปลี่ยนรายวิชา รายการเดิมย้ายไปวิชาใหม่ ผู้สอนมาจากข้อมูลรายวิชาที่เลือก ไม่รับ `publisher_id` หรือชื่อผู้สอนจาก Request
+| ฟิลด์ | กติกาสำหรับข้อมูลแก้ไข |
+|---|---|
+| `course_id` | บังคับ มากกว่า 0 และต้องมีรายวิชาในฐานข้อมูล |
+| `title` | บังคับ ตัดช่องว่างหัวท้ายแล้วต้องไม่ว่าง ไม่เกิน 200 ตัวอักษร |
+| `academic_year` | บังคับ หนึ่งใน 2566, 2567, 2568, 2569 |
+| `semester` | บังคับ 1, 2 หรือ 3 โดย 3 คือภาคฤดูร้อน |
+| `exam_period` | บังคับ midterm หรือ final |
+| `topics` | บังคับ ตัดช่องว่างหัวท้ายแล้วต้องไม่ว่าง ไม่เกิน 2,000 ตัวอักษร |
+| `exam_format` | บังคับ objective, subjective หรือ mixed |
+| `objective_count`, `subjective_count` | เว้นได้หรือส่ง null หากระบุต้องมากกว่า 0 |
+| `additional_advice` | เว้นได้ ไม่เกิน 2,000 ตัวอักษร ข้อความว่างหลัง trim เปลี่ยนเป็น null |
 
-Response ใช้ `GuideDetailResponseDTO` ที่แสดงข้อมูลล่าสุด รวมข้อมูล Course และชื่อผู้เผยแพร่
+แบบ objective ต้องไม่ส่ง subjective_count และแบบ subjective ต้องไม่ส่ง objective_count ส่วนแบบ mixed เว้นจำนวนทั้งสองฝั่งได้ ไม่มีตัวเลือก other
 
-```json
-{
-  "id": 42,
-  "title": "แนวข้อสอบปลายภาค ฉบับปรับปรุง",
-  "academic_year": 2568,
-  "semester": 1,
-  "exam_period": "final",
-  "publisher_name": "ชื่อผู้เผยแพร่",
-  "course": {
-    "id": 1,
-    "course_code": "CS261",
-    "course_name": "โครงสร้างข้อมูล",
-    "instructor_names": "ชื่อผู้สอน"
-  },
-  "topics": "การเรียงลำดับ กราฟ และการวิเคราะห์ความซับซ้อน",
-  "exam_format": "mixed",
-  "objective_count": 18,
-  "subjective_count": 4,
-  "additional_advice": "ฝึกทำโจทย์กราฟ"
-}
-```
+Schema ปัจจุบันยังแปลงค่าบางชนิดเป็น integer และละทิ้ง field ส่วนเกิน ต่างจาก schema เผยแพร่ที่ใช้ strict integer และห้าม field เกิน การส่ง `publisher_id` ไม่สามารถเปลี่ยนเจ้าของได้ แต่ U5 ไม่ได้ปฏิเสธ field เกินทุกตัวด้วย 422
 
 ## ลบรายการ
 
-### `DELETE /guides/{guide_id}`
-
-เจ้าของยืนยันการลบบนหน้าเว็บก่อนส่งคำขอ เมื่อสำเร็จ API ตอบ `204 No Content` และไม่มี body หากผู้ใช้ยกเลิกการยืนยัน หน้าเว็บไม่ส่งคำขอ
-
 ```http
-DELETE /guides/42
+DELETE /api/my-guides/42
 Authorization: Bearer <access_token>
 ```
 
-## DTO Schema
-
-| DTO | หน้าที่ | ฟิลด์หลัก |
-|---|---|---|
-| `MyGuidesResponseDTO` | คืนรายการแนวข้อสอบของฉัน | `items` |
-| `GuideDetailResponseDTO` | แสดงรายละเอียดและผลหลังแก้ไข | ฟิลด์ Guide, `course`, `publisher_name` |
-| `GuideUpdateRequestDTO` | ตรวจข้อมูลจากฟอร์มแก้ไข | ฟิลด์ที่แก้ไขได้ตามตาราง Request ไม่รวม `id` และ `publisher_id` |
-| `ErrorResponseDTO` | คืนข้อผิดพลาดรูปแบบเดียวกัน | `error.code`, `error.message`, `error.fields` |
-
-Pydantic ตรวจชนิดข้อมูล ค่าที่อนุญาต ความยาว และฟิลด์บังคับที่ขอบเขต API Service ตรวจว่ารายวิชาและรายการมีอยู่จริง รวมถึงสิทธิ์เจ้าของ
-
-## ข้อผิดพลาด
-
-| HTTP | Code | เงื่อนไข |
-|---|---|---|
-| `401` | `AUTH_REQUIRED` | ไม่มี token หรือ token ใช้ไม่ได้ |
-| `403` | `FORBIDDEN` | ผู้ใช้ไม่ใช่เจ้าของรายการที่แก้ไขหรือลบ |
-| `404` | `GUIDE_NOT_FOUND` | ไม่พบรายการ หรือรายการถูกลบแล้ว |
-| `404` | `COURSE_NOT_FOUND` | ไม่พบรายวิชาที่ส่งในคำขอแก้ไข |
-| `422` | `INVALID_PARAMETERS` | Path หรือ Request body ไม่ผ่านการตรวจสอบ |
-| `500` | `INTERNAL_ERROR` | เกิดข้อผิดพลาดระหว่างอ่าน บันทึก หรือลบ |
-
-ตัวอย่างข้อมูลไม่ผ่านการตรวจสอบ:
+เมื่อผู้ใช้ยกเลิกกล่องยืนยัน หน้าเว็บไม่ส่ง DELETE เมื่อยืนยันและลบสำเร็จตอบ `200` พร้อม body:
 
 ```json
-{
-  "error": {
-    "code": "INVALID_PARAMETERS",
-    "message": "ข้อมูลสำหรับแก้ไขไม่ถูกต้อง",
-    "fields": [
-      {
-        "field": "exam_format",
-        "message": "ต้องเลือก objective, subjective หรือ mixed"
-      }
-    ]
-  }
-}
+{"id": 42, "message": "ลบแนวข้อสอบสำเร็จ"}
 ```
 
-เมื่อแก้ไขหรือลบไม่สำเร็จ ข้อมูลเดิมต้องไม่เปลี่ยนบางส่วนและ API ต้องไม่ตอบว่าสำเร็จ การแก้ไขหรือลบรายการที่ไม่พบต้องไม่เปลี่ยนรายการอื่น
+ลบเฉพาะ Guide ของเจ้าของ ไม่ลบ User หรือ Course ส่วน bookmark ใน saved_guides ที่อ้าง Guide นี้ถูกลบตาม FK CASCADE จึงไม่มีรายการบันทึกที่ชี้ไปยัง Guide ที่ลบแล้ว
 
-## การแบ่งหน้าที่
+## สิทธิ์และข้อผิดพลาด
 
-| ส่วน | หน้าที่ |
-|---|---|
-| `backend/app/routers/guides.py` | ประกาศเส้นทาง จัดการ `current_user` รับ DTO และเรียก Service |
-| `backend/app/schemas/guides.py` | ประกาศ Request, Response และ Error DTO ด้วย Pydantic |
-| `backend/app/services/my_guides.py` | ตรวจเจ้าของและรายวิชา แปลง Entity เป็น Response DTO และประสานการแก้ไขหรือลบ |
-| `backend/app/dao/my_guides_dao.py` | ค้นรายการตามเจ้าของ อ่านรายการตาม ID อัปเดต และลบผ่าน SQLAlchemy session |
-| `backend/app/models/guide.py` | ใช้ Entity `Guide` เดิม |
+Service อ่าน `users.id` จาก username ที่ผ่าน Login แล้ว DAO แก้ไขหรือลบด้วยเงื่อนไขทั้ง Guide ID และ publisher_id ไม่พึ่งการซ่อนปุ่มใน UI ผู้ใช้ไม่ใช่เจ้าของและรายการไม่พบตอบ 404 เหมือนกัน
 
-Service และ DAO เป็นคลาสเมื่อถือ dependency เช่น DAO และ SQLAlchemy session ตามรูปแบบ `ReadGuideService` และ `ReadGuideDAO` ไม่เพิ่มคลาสสำหรับแปลงค่าที่มีผู้เรียกเพียงจุดเดียว
+| HTTP | `detail` หรือรูปแบบผลตอบกลับ | กรณี |
+|---|---|---|
+| 401 | ข้อความจาก current_user | ไม่มี token, token ใช้ไม่ได้ หรือหมดอายุ |
+| 404 | `GUIDE_NOT_FOUND` | รายการไม่พบหรือไม่ใช่เจ้าของ |
+| 422 | `GUIDE_ID_INVALID` | Guide ID ไม่เป็นค่าบวก |
+| 422 | `COURSE_NOT_FOUND` | ไม่พบรายวิชาปลายทางในงานแก้ไข |
+| 422 | รายการ validation errors ใน `detail` | path/body ไม่ผ่าน Pydantic |
+| 500 | `GUIDE_UPDATE_FAILED` | SQLAlchemyError ใน workflow แก้ไข |
+| 500 | `GUIDE_DELETE_FAILED` | SQLAlchemyError ใน workflow ลบ |
 
-## แผนภาพ Router/API กับ DTO
+ตัวอย่างเมื่อแก้ไขหรือลบรายการที่ไม่พบ:
+
+```json
+{"detail": "GUIDE_NOT_FOUND"}
+```
+
+U5 ไม่ได้ใช้ ErrorResponseDTO ของ U3/U4 ทุกกรณี ส่วน GET รายการที่เกิด storage exception จะเป็น server error โดยไม่มี contract error.code เฉพาะ หาก proxy ติดต่อ backend ไม่ได้จะตอบ 502
+
+## โครงสร้างที่ใช้งาน
 
 ```mermaid
 flowchart LR
-    CLIENT["หน้าแนวข้อสอบของฉัน"] --> AUTH["current_user"]
-    AUTH --> ROUTER["Guide Router"]
-    ROUTER --> LIST["GET /guides/me"]
-    ROUTER --> DETAIL["GET /guides/{guide_id}"]
-    ROUTER --> UPDATE["PUT /guides/{guide_id}"]
-    ROUTER --> DELETE["DELETE /guides/{guide_id}"]
-    UPDATE --> REQUEST["GuideUpdateRequestDTO"]
-    LIST --> LIST_DTO["MyGuidesResponseDTO"]
-    DETAIL --> DETAIL_DTO["GuideDetailResponseDTO"]
-    UPDATE --> DETAIL_DTO
-    ROUTER --> SERVICE["MyGuidesService"]
-    SERVICE --> DAO["MyGuidesDAO"]
-    DAO --> ENTITY["Guide Entity"]
-    ROUTER --> ERROR["ErrorResponseDTO"]
+    UI[หน้าแนวข้อสอบของฉัน] --> Router[My Guides Routers]
+    Router --> Auth[current_user]
+    Router --> Service[MyGuidesService]
+    Service --> DAO[MyGuideDAO และ DAO แก้ไขหรือลบ]
+    DAO --> Guide[Guide Entity]
+    Router --> DTO[MyGuideDTO และ Request Response ของ U5]
 ```
 
-แผนภาพนี้แสดงความสัมพันธ์ระหว่าง API กับ DTO ส่วนลำดับการเรียกเมธอดระหว่าง UI, API, DAO และฐานข้อมูลเป็นงาน Task66
+- [dependencies.py](../../../backend/app/dependencies.py) ประกอบ service กับ DAO โดยใช้ Session เดียวกัน
+- Router แยกเป็น [รายการ](../../../backend/app/routers/my_guides.py), [แก้ไข](../../../backend/app/routers/my_guide_updates.py) และ [ลบ](../../../backend/app/routers/my_guide_deletions.py)
+- [MyGuidesService](../../../backend/app/services/my_guides.py) ควบคุม transaction ของงานเขียนและแปลง Entity เป็น DTO
+- DAO แยกเป็น [MyGuideDAO](../../../backend/app/dao/my_guide_dao.py), [UpdateOwnedGuideDAO](../../../backend/app/dao/update_owned_guide_dao.py) และ [DeleteOwnedGuideDAO](../../../backend/app/dao/delete_owned_guide_dao.py)
+- DTO จริงคือ [MyGuideDTO](../../../backend/app/schemas/my_guide.py), [MyGuideUpdateRequest/Response](../../../backend/app/schemas/my_guide_update.py) และ [MyGuideDeleteResponse](../../../backend/app/schemas/my_guide_delete.py)
 
-## ข้อตกลงที่ต้องยืนยันก่อนพัฒนา
+## ข้อจำกัดของโค้ดปัจจุบัน
 
-1. Task62 ระบุว่าผู้ใช้ที่ไม่ใช่เจ้าของต้องถูกปฏิเสธ แต่ยังไม่กำหนดว่า API จะตอบ `403 FORBIDDEN` หรือซ่อนรายการโดยตอบ `404 GUIDE_NOT_FOUND` เอกสารนี้เสนอ `403`
-2. Task36 กำหนดจำนวนข้อที่ระบุต้องมากกว่า 0 และใช้ `null` เมื่อไม่ระบุ ส่วนฟอร์มแก้ไขตัวอย่างยังยอมรับ `0` ทีมต้องทำให้ฟอร์มและ API ใช้กติกาเดียวกัน
-3. Entity จำกัด `title` ที่ 200 ตัวอักษร แต่ฟอร์มแก้ไขตัวอย่างตรวจที่ 255 ตัวอักษร ฟอร์มต้องปรับให้ตรงกับ Entity
-4. ชุดปีการศึกษาที่ฟอร์มอนุญาตต้องยืนยันกับผู้ดูแลข้อมูลก่อนทำ Task72
+งาน update ตรวจรายวิชาปลายทางด้วย get_by_id ซึ่งตรวจการมีอยู่ ไม่ได้บังคับ CS-only ใน service นี้
 
-## เกณฑ์ตรวจรับ
+งาน update commit ก่อนแปลง DTO ถ้าการอ่านเพื่อสร้าง DTO ล้มเหลวหลัง commit อาจตอบ error ทั้งที่ข้อมูลเปลี่ยนแล้ว การ rollback ไม่ย้อน commit ที่สำเร็จไปก่อนหน้า ส่วน network timeout ก็ไม่ยืนยันว่ารายการยังไม่เปลี่ยน ต้องโหลดข้อมูลใหม่ก่อนลองซ้ำ ข้อจำกัดนี้ยังไม่ได้แก้ในงานเอกสาร
 
-- ระบุวิธีเรียก API, Request, Response และข้อผิดพลาดของรายการ ดูรายละเอียด แก้ไข และลบ
-- รายการของฉันจำกัดด้วยผู้ใช้จาก token
-- แก้ไขและลบตรวจสอบเจ้าของทุกครั้ง
-- DTO ใช้ชื่อและชนิดข้อมูลตรงกับ Entity `Guide`
-- รูปแบบข้อสอบรับ `objective`, `subjective` หรือ `mixed` ค่าเดียว และจำนวนข้อใช้ `objective_count` กับ `subjective_count`
-- แผนภาพแสดง Router, Auth, DTO, Service, DAO และ Entity โดยไม่แทน Sequence Diagram ของ Task66
+ดู [Sequence Task66](task66-my-guides-management-sequence-diagram.md), [กติกา Task62](../requirements/task62-my-sample-exam-validation.md) และ [API อ่าน U3](../../U3/design/task35-guide-api.md)
