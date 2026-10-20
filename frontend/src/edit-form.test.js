@@ -80,3 +80,28 @@ test('editor retains inputs on API failure and prevents duplicate submissions wh
   assert.equal(page.get('edit-title').value, 'Original');
   assert.match(page.get('edit-error').textContent, /ยืนยันผลการแก้ไขไม่ได้/);
 });
+
+test('editor accepts academic years 2566 through 2569', async () => {
+  for (const year of [2566, 2567, 2568, 2569]) {
+    const calls = [];
+    const page = editor(async (_id, payload) => { calls.push(payload); });
+    await page.open(async () => {});
+    page.get('edit-year').value = String(year);
+    await page.submit();
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].academic_year, year);
+  }
+});
+
+test('editor rejects academic years outside 2566 through 2569 before sending', async () => {
+  for (const year of [2565, 2570]) {
+    let calls = 0;
+    const page = editor(async () => { calls += 1; });
+    await page.open(async () => {});
+    page.get('edit-year').value = String(year);
+    await page.submit();
+    assert.equal(calls, 0);
+    assert.equal(page.get('edit-year-error').hidden, false);
+    assert.equal(page.dialog.open, true);
+  }
+});

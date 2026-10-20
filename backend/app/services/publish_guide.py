@@ -11,7 +11,8 @@ from app.schemas.guides import (
     GuideDetailResponseDTO,
     GuidePublishRequestDTO,
 )
-from app.services.auth import User as AuthenticatedUser
+from app.services.auth import AuthenticatedUser
+from app.services.publisher_name import format_publisher_name
 
 
 class GuidePublishNotFound(Exception):
@@ -75,20 +76,13 @@ class PublishGuideService:
     def _to_detail(
         guide: Guide, course: Course, publisher: User
     ) -> GuideDetailResponseDTO:
-        thai_name = (publisher.displayname_th or "").strip()
-        english_name = (publisher.displayname_en or "").strip()
-        publisher_name = (
-            f"{thai_name} ({english_name})"
-            if thai_name and english_name
-            else thai_name or english_name or "ไม่ระบุชื่อ"
-        )
         return GuideDetailResponseDTO(
             id=guide.id,
             title=guide.title,
             academic_year=guide.academic_year,
             semester=guide.semester,
             exam_period=guide.exam_period,
-            publisher_name=publisher_name,
+            publisher_name=format_publisher_name(publisher),
             course=CourseInfoDTO(
                 id=course.id,
                 course_code=course.course_code,

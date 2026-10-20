@@ -3,6 +3,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
+AcademicYear = Literal[2566, 2567, 2568, 2569]
+
+
 class GuideListItemDTO(BaseModel):
     id: int
     title: str
@@ -46,7 +49,7 @@ class GuidePublishRequestDTO(BaseModel):
 
     course_id: int = Field(gt=0, strict=True)
     title: str = Field(min_length=1, max_length=200)
-    academic_year: Literal[2566, 2567, 2568, 2569]
+    academic_year: AcademicYear
     semester: Literal[1, 2, 3]
     exam_period: Literal["midterm", "final"]
     topics: str = Field(min_length=1, max_length=2000)

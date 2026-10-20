@@ -7,12 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import Base
-from app.dependencies import get_db_session
+from app.dependencies import get_auth_service, get_db_session
 from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.routers.auth import get_auth_service
 from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 
@@ -237,6 +236,57 @@ class PublishGuideApiTests(unittest.TestCase):
         self.assertEqual(response.json()["error"]["code"], "INTERNAL_ERROR")
         with self.session_factory() as session:
             self.assertEqual(session.scalar(select(func.count(Guide.id))), 0)
+
+    def test_publish_accepts_only_supported_academic_years(self):
+        headers = self.headers_for("supported-year-user")
+        for year in (2565, 2570):
+            with self.subTest(year=year):
+                response = self.client.post(
+                    "/guides", json=self.payload(academic_year=year), headers=headers
+                )
+                self.assertEqual(response.status_code, 422, response.text)
+        for year in (2566, 2567, 2568, 2569):
+            with self.subTest(year=year):
+                response = self.client.post(
+                    "/guides", json=self.payload(academic_year=year), headers=headers
+                )
+                self.assertEqual(response.status_code, 201, response.text)
+                self.assertEqual(response.json()["academic_year"], year)
+
+    def test_read_and_publish_use_the_same_publisher_display_name(self):
+        headers = self.headers_for("publisher_display_user")
+        cases = [
+            ("  ชื่อไทย  ", "  English Name  ", "ชื่อไทย (English Name)"),
+            ("ชื่อไทย", None, "ชื่อไทย"),
+            (None, "English Name", "English Name"),
+            (None, None, "ไม่ระบุชื่อ"),
+            ("   ", "\t", "ไม่ระบุชื่อ"),
+        ]
+        for thai_name, english_name, expected in cases:
+            with self.subTest(thai_name=thai_name, english_name=english_name):
+                with self.session_factory() as session:
+                    publisher = session.get(User, self.authenticated_user_id)
+                    publisher.displayname_th = thai_name
+                    publisher.displayname_en = english_name
+                    session.commit()
+
+                published = self.client.post(
+                    "/guides", json=self.payload(), headers=headers
+                )
+                self.assertEqual(published.status_code, 201, published.text)
+                guide_id = published.json()["id"]
+                self.assertEqual(published.json()["publisher_name"], expected)
+
+                detail = self.client.get(f"/guides/{guide_id}", headers=headers)
+                self.assertEqual(detail.status_code, 200, detail.text)
+                self.assertEqual(detail.json()["publisher_name"], expected)
+
+                listed = self.client.get(
+                    f"/courses/{self.cs_course_id}/guides", headers=headers
+                )
+                self.assertEqual(listed.status_code, 200, listed.text)
+                row = next(item for item in listed.json()["items"] if item["id"] == guide_id)
+                self.assertEqual(row["publisher_name"], expected)
 
 
 if __name__ == "__main__":

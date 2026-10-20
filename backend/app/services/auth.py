@@ -1,20 +1,21 @@
 from __future__ import annotations
 
 import secrets
-import time
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
+from time import monotonic
 from typing import Callable
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.config import AUTH_SESSION_TTL_SECONDS
 from app.dao.user_dao import UserDAO
 from app.services.tu_api import TUAccount, TUVerificationError, verify_tu_account
 
 
 @dataclass(frozen=True)
-class User:
+class AuthenticatedUser:
     id: int
     username: str
     display_name: str
@@ -24,7 +25,8 @@ class User:
 @dataclass(frozen=True)
 class LoginSession:
     token: str
-    user: User
+    user: AuthenticatedUser
+    expires_at: float
 
 
 class LoginRejected(Exception):
@@ -41,16 +43,16 @@ class AuthService:
         session_factory: Callable[[], AbstractContextManager[Session]],
         verify: Callable[[str, str], TUAccount | None] = verify_tu_account,
         *,
-        session_ttl_seconds: float = 8 * 60 * 60,
-        clock: Callable[[], float] = time.monotonic,
+        session_ttl_seconds: int = AUTH_SESSION_TTL_SECONDS,
+        clock: Callable[[], float] = monotonic,
     ):
-        self._session_factory = session_factory
-        self._verify = verify
         if session_ttl_seconds <= 0:
             raise ValueError("session_ttl_seconds must be positive")
-        self._session_ttl = session_ttl_seconds
+        self._session_factory = session_factory
+        self._verify = verify
+        self._session_ttl_seconds = session_ttl_seconds
         self._clock = clock
-        self._sessions: dict[str, tuple[User, float]] = {}
+        self._sessions: dict[str, LoginSession] = {}
 
     def login(self, username: str, password: str) -> LoginSession:
         normalized_username = username.strip()
@@ -71,42 +73,49 @@ class AuthService:
 
         try:
             with self._session_factory() as session:
-                stored_user = UserDAO(session).get_or_create_from_tu_profile(
-                    account.username.strip(),
-                    displayname_en=account.display_name,
-                )
-                display_name = (
-                    (stored_user.displayname_th or "").strip()
-                    or (stored_user.displayname_en or "").strip()
-                    or account.display_name.strip()
-                    or stored_user.username
-                )
-                user = User(
-                    id=stored_user.id,
-                    username=stored_user.username,
-                    display_name=display_name,
-                    role="student",
-                )
+                try:
+                    stored_user = UserDAO(session).get_or_create_from_tu_profile(
+                        account.username.strip(),
+                        displayname_en=account.display_name,
+                    )
+                    display_name = (
+                        (stored_user.displayname_th or "").strip()
+                        or (stored_user.displayname_en or "").strip()
+                        or account.display_name.strip()
+                        or stored_user.username
+                    )
+                    user = AuthenticatedUser(
+                        id=stored_user.id,
+                        username=stored_user.username,
+                        display_name=display_name,
+                        role="student",
+                    )
+                    session.commit()
+                except SQLAlchemyError:
+                    session.rollback()
+                    raise
         except SQLAlchemyError as error:
             raise AuthStorageUnavailable from error
 
         token = secrets.token_urlsafe(32)
         now = self._clock()
-        for key, (_, expires_at) in list(self._sessions.items()):
-            if expires_at <= now:
-                self._sessions.pop(key, None)
-        self._sessions[token] = (user, now + self._session_ttl)
-        return LoginSession(token=token, user=user)
+        for expired_token, login_session in list(self._sessions.items()):
+            if login_session.expires_at <= now:
+                self._sessions.pop(expired_token, None)
+        login_session = LoginSession(
+            token=token, user=user, expires_at=now + self._session_ttl_seconds
+        )
+        self._sessions[token] = login_session
+        return login_session
 
-    def get_user(self, token: str) -> User | None:
-        session = self._sessions.get(token)
-        if session is None:
+    def get_user(self, token: str) -> AuthenticatedUser | None:
+        login_session = self._sessions.get(token)
+        if login_session is None:
             return None
-        user, expires_at = session
-        if self._clock() >= expires_at:
+        if login_session.expires_at <= self._clock():
             self._sessions.pop(token, None)
             return None
-        return user
+        return login_session.user
 
     def logout(self, token: str) -> None:
         self._sessions.pop(token, None)

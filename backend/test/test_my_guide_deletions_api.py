@@ -10,12 +10,12 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from app.dao.delete_owned_guide_dao import DeleteOwnedGuideDAO
-from app.db import Base, get_db_session
+from app.db import Base
+from app.dependencies import get_auth_service, get_db_session
 from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.user import User
-from app.routers.auth import get_auth_service
 from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 
@@ -211,6 +211,22 @@ def test_database_error_returns_500_and_preserves_data(api):
         "delete_owned",
         side_effect=SQLAlchemyError("simulated database failure"),
     ):
+        response = client.delete(
+            f"/api/my-guides/{ids['owned_guide']}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+    assert response.status_code == 500
+    assert response.json()["detail"] == "GUIDE_DELETE_FAILED"
+    assert guide_ids(session) == before
+
+
+def test_delete_rolls_back_changes_when_commit_fails(api):
+    client, session, ids = api
+    token = login(client)
+    before = guide_ids(session)
+
+    with patch.object(session, "commit", side_effect=SQLAlchemyError("commit failed")):
         response = client.delete(
             f"/api/my-guides/{ids['owned_guide']}",
             headers={"Authorization": f"Bearer {token}"},

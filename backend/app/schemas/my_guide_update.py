@@ -2,11 +2,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from app.schemas.my_guide import MyGuideDTO
+from app.schemas.guides import AcademicYear
+
 
 class MyGuideUpdateRequest(BaseModel):
     course_id: int = Field(gt=0)
     title: str = Field(min_length=1, max_length=200)
-    academic_year: int = Field(ge=1, le=32767)
+    academic_year: AcademicYear
     semester: Literal[1, 2, 3]
     exam_period: Literal["midterm", "final"]
     topics: str = Field(min_length=1, max_length=2000)
@@ -40,18 +43,5 @@ class MyGuideUpdateRequest(BaseModel):
         return self
 
 
-class MyGuideUpdateResponse(BaseModel):
-    id: int
-    course_id: int
-    course_code: str
-    course_name: str
-    instructor_name: str | None
-    title: str
-    academic_year: int
-    semester: int
-    exam_period: str
-    topics: str
-    exam_format: str
-    objective_count: int | None
-    subjective_count: int | None
-    additional_advice: str | None
+class MyGuideUpdateResponse(MyGuideDTO):
+    pass
