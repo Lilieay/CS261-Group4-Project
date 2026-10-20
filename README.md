@@ -17,7 +17,7 @@
 ```bash
 git clone https://github.com/Lilieay/cs261-group4-100001.git
 cd cs261-group4-100001
-git switch integration/sprint1
+git switch main
 cp .env.example .env
 ```
 
@@ -55,7 +55,7 @@ docker compose ps
 อัปเดต branch และไฟล์ก่อนเริ่ม:
 
 ```bash
-git switch integration/sprint1
+git switch main
 git pull --ff-only
 ```
 
@@ -146,4 +146,4 @@ Compose จะ recreate services ที่จำเป็นและรัน i
 - [Course seed runbook](docs/U2/runbooks/task26-course-seed-data.md)
 - [Guide seed runbook](docs/U3/runbooks/task41-guide-seed-data.md)
 - [Task60 isolated Docker test runbook](docs/U4/runbooks/task60-docker-runbook.md)
-- [Task80 Docker integration report](docs/U5/testing/task81-docker-integration-test-report.md)
+- [Task81 Docker integration report](docs/U5/testing/task81-docker-integration-test-report.md)
