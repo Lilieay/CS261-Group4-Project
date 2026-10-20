@@ -20,6 +20,7 @@
   }
 
   async function request(path, {method = 'GET', body} = {}) {
+    const savedPath = /^\/api\/saved-guides(?:\/[1-9]\d*)?$/.test(path);
     const token = accessToken();
     if (!token) {
       window.location.replace('login.html');
@@ -28,13 +29,13 @@
     if (method === 'POST' && (!config || config.mode !== 'api' || path !== config.publishPath)) {
       throw new GuideApiError('เส้นทางเผยแพร่แนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    if (method === 'PUT' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+    if (method === 'PUT' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path) && !savedPath) {
       throw new GuideApiError('เส้นทางแก้ไขแนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    if (method === 'DELETE' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path)) {
+    if (method === 'DELETE' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path) && !savedPath) {
       throw new GuideApiError('เส้นทางลบแนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    const target = ['PUT', 'DELETE'].includes(method) ? path
+    const target = savedPath ? path : ['PUT', 'DELETE'].includes(method) ? path
       : method === 'POST' && path === config.publishPath
       ? '/api/guides'
       : method === 'GET' && (path === config.mePath || path === config.myGuidesPath)
@@ -76,7 +77,9 @@
       const text = await response.text();
       try { payload = text ? JSON.parse(text) : null; } catch (_) { payload = null; }
     } catch (_) {
-      throw new GuideApiError(method === 'POST'
+      throw new GuideApiError(savedPath
+        ? 'ยังยืนยันรายการที่บันทึกไม่ได้ กรุณาโหลดข้อมูลใหม่เพื่อตรวจสอบ'
+        : method === 'POST'
         ? 'ยังยืนยันผลเผยแพร่ไม่ได้ กรุณาตรวจรายการของคุณก่อนส่งซ้ำ เพื่อหลีกเลี่ยงรายการซ้ำ'
         : method === 'DELETE'
         ? 'ยังยืนยันผลการลบไม่ได้ กรุณาตรวจรายการของคุณก่อนลองอีกครั้ง'
@@ -178,6 +181,39 @@
     return payload.map(normalizeMyGuide);
   }
 
+  function savedGuideId(id) {
+    if (!/^[1-9]\d*$/.test(String(id)) || Number(id) > 2147483647) {
+      throw new GuideApiError('รหัสแนวข้อสอบไม่ถูกต้อง', {status: 422});
+    }
+    return `/api/saved-guides/${id}`;
+  }
+
+  async function saved() {
+    const {payload} = await request('/api/saved-guides');
+    if (!Array.isArray(payload)) throw new GuideApiError('รายการที่บันทึกไม่ถูกต้อง');
+    const ids = new Set();
+    return payload.map(row => {
+      const detail = validateDetail(row, row?.course?.course_code, null, {allowZeroCounts: true});
+      if (!Number.isSafeInteger(detail.course.id) || detail.course.id <= 0
+          || typeof detail.course.course_name !== 'string' || !detail.course.course_name.trim()
+          || typeof detail.course.course_code !== 'string' || !/^CS\d{3}$/.test(detail.course.course_code)
+          || ids.has(detail.id)) throw new GuideApiError('รายการที่บันทึกไม่ถูกต้อง');
+      ids.add(detail.id);
+      return {...toPreviewRow(detail), course_id: detail.course.id, course_name: detail.course.course_name};
+    });
+  }
+
+  async function savedState(id, desired) {
+    const path = savedGuideId(id);
+    const method = desired === undefined ? 'GET' : desired ? 'PUT' : 'DELETE';
+    const {payload} = await request(path, {method});
+    if (payload?.id !== Number(id) || typeof payload.saved !== 'boolean'
+        || (desired !== undefined && payload.saved !== desired)) {
+      throw new GuideApiError('ยืนยันรายการที่บันทึกไม่ได้ กรุณาโหลดข้อมูลใหม่');
+    }
+    return payload.saved;
+  }
+
   function normalizeMyGuide(row) {
     if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
         || !Number.isSafeInteger(row.course_id) || row.course_id <= 0
@@ -273,5 +309,5 @@
     };
   }
 
-  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, remove, list, filterOptions, toPreviewRow});
+  window.GuideApi = Object.freeze({request, currentUser, courses, publish, read, mine, update, remove, list, filterOptions, toPreviewRow, saved, savedState});
 })();

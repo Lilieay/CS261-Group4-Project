@@ -350,3 +350,39 @@ test('guide proxy rejects backend paths outside the read API allowlist', async t
     assert.equal(calls, 0);
   });
 });
+
+
+test('saved proxy pins paths, forwards the session, and preserves backend failures', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  const calls = [];
+  global.fetch = async (url, init) => {
+    calls.push([url.href, init]);
+    return new Response(JSON.stringify({id: 12, saved: init.method !== 'DELETE'}),
+      {status: 200, headers: {'content-type': 'application/json'}});
+  };
+  await withServer(async port => {
+    for (const [method, path] of [['GET', '/api/saved-guides'], ['GET', '/api/saved-guides/12'],
+      ['PUT', '/api/saved-guides/12'], ['DELETE', '/api/saved-guides/12']]) {
+      const response = await request(port, path, method, {Authorization: 'Bearer saved-test'});
+      assert.equal(response.status, 200);
+      assert.equal(response.headers['cache-control'], 'no-store');
+      const [target, init] = calls.at(-1);
+      assert.equal(target, `http://backend:8000${path}`);
+      assert.equal(init.method, method);
+      assert.equal(init.headers.Authorization, 'Bearer saved-test');
+      assert.equal(init.redirect, 'manual');
+    }
+    const count = calls.length;
+    for (const [method, path, status] of [['GET', '/api/saved-guides/0', 422],
+      ['GET', '/api/saved-guides/2147483648', 422], ['GET', '/api/saved-guides?user_id=2', 422],
+      ['POST', '/api/saved-guides/12', 405], ['PUT', '/api/saved-guides', 405]]) {
+      assert.equal((await request(port, path, method)).status, status);
+    }
+    assert.equal(calls.length, count);
+    global.fetch = async () => new Response('{"detail":"Unauthorized"}', {status: 401});
+    assert.equal((await request(port, '/api/saved-guides')).status, 401);
+    global.fetch = async () => { throw new Error('offline'); };
+    assert.equal((await request(port, '/api/saved-guides')).status, 502);
+  });
+});

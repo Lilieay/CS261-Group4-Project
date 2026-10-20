@@ -123,7 +123,7 @@ test('my guides page renders API rows, filters them, and opens the exact guide',
 
   assert.match(get('#exam-list').innerHTML, /CS902/);
   assert.match(get('#exam-list').innerHTML, /วิชานอก catalog/);
-  assert.doesNotMatch(get('#exam-list').innerHTML, /undefined|NaN|คะแนนรีวิว|ดาวน์โหลด|อัปเดตเมื่อ/);
+  assert.doesNotMatch(get('#exam-list').innerHTML, /undefined|NaN|คะแนนรีวิว|ดาวน์โหลด|อัปเดตเมื่อ|ผู้สอน|อาจารย์/);
   assert.match(get('#course-filter').innerHTML, /CS902/);
 
   get('#search').value = 'missing';

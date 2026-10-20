@@ -14,32 +14,6 @@
   flex-direction: column;
 }
 
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 50%;
-  color: #0f172a;
-  text-decoration: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  margin-bottom: 1.25rem;
-  transition: all 0.2s ease;
-}
-
-.back-link:hover {
-  background-color: #f1f5f9;
-  transform: translateX(-2px);
-}
-
-.back-link .icon {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
 .content {
   background: transparent;
   display: flex;

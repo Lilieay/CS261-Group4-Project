@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import time
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from typing import Callable
@@ -39,10 +40,17 @@ class AuthService:
         self,
         session_factory: Callable[[], AbstractContextManager[Session]],
         verify: Callable[[str, str], TUAccount | None] = verify_tu_account,
+        *,
+        session_ttl_seconds: float = 8 * 60 * 60,
+        clock: Callable[[], float] = time.monotonic,
     ):
         self._session_factory = session_factory
         self._verify = verify
-        self._sessions: dict[str, User] = {}
+        if session_ttl_seconds <= 0:
+            raise ValueError("session_ttl_seconds must be positive")
+        self._session_ttl = session_ttl_seconds
+        self._clock = clock
+        self._sessions: dict[str, tuple[User, float]] = {}
 
     def login(self, username: str, password: str) -> LoginSession:
         normalized_username = username.strip()
@@ -83,11 +91,22 @@ class AuthService:
             raise AuthStorageUnavailable from error
 
         token = secrets.token_urlsafe(32)
-        self._sessions[token] = user
+        now = self._clock()
+        for key, (_, expires_at) in list(self._sessions.items()):
+            if expires_at <= now:
+                self._sessions.pop(key, None)
+        self._sessions[token] = (user, now + self._session_ttl)
         return LoginSession(token=token, user=user)
 
     def get_user(self, token: str) -> User | None:
-        return self._sessions.get(token)
+        session = self._sessions.get(token)
+        if session is None:
+            return None
+        user, expires_at = session
+        if self._clock() >= expires_at:
+            self._sessions.pop(token, None)
+            return None
+        return user
 
     def logout(self, token: str) -> None:
         self._sessions.pop(token, None)

@@ -43,9 +43,13 @@ class ReadGuideService:
         guide = self.guide_dao.get_by_id(guide_id)
         if guide is None:
             raise GuideReadNotFound("GUIDE_NOT_FOUND")
+        return self.detail(guide)
+
+    @staticmethod
+    def detail(guide: Guide) -> GuideDetailResponseDTO:
         course = guide.course
         return GuideDetailResponseDTO(
-            **self._list_item(guide).model_dump(),
+            **ReadGuideService._list_item(guide).model_dump(),
             course=CourseInfoDTO(
                 id=course.id,
                 course_code=course.course_code,
