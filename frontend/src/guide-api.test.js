@@ -30,6 +30,7 @@ function loadGuideApi({token = 'test-token', mode = 'preview', apiBaseUrl = 'htt
     fetch: (...args) => { calls.push(args); return fetchImpl(...args); },
     URL, URLSearchParams, AbortController, Response, setTimeout, clearTimeout
   };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/http-client.js'), 'utf8'), context);
   vm.runInNewContext(source, context, {filename: 'guide-api.js'});
   return {api: window.GuideApi, calls, redirects, values};
 }

@@ -1,4 +1,9 @@
-.profile { max-width: 280px; }
+/* Profile truncation, logout controls and session feedback. */
+
+.profile {
+  max-width: 280px;
+}
+
 .profile .logout {
   display: inline-flex;
   align-items: center;
@@ -14,9 +19,22 @@
   background: transparent;
   cursor: pointer;
 }
-.profile .logout:hover { background: #f1f2ff; color: #c8102e; }
-.profile .logout:focus-visible { outline: 2px solid #4b6591; outline-offset: 2px; }
-.profile .logout:disabled { opacity: .55; cursor: wait; }
+
+.profile .logout:hover {
+  background: #f1f2ff;
+  color: #c8102e;
+}
+
+.profile .logout:focus-visible {
+  outline: 2px solid #4b6591;
+  outline-offset: 2px;
+}
+
+.profile .logout:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
 .session-status {
   position: fixed;
   right: 16px;
@@ -30,13 +48,22 @@
   color: #18202c;
   font-size: 14px;
 }
-.session-status:empty { display: none; }
-.profile .avatar { flex-shrink: 0; }
-.profile-copy { min-width: 0; }
-.profile-copy b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.profile-page { width: min(560px, calc(100% - 32px)); margin: 40px auto; padding: 24px; border: 1px solid #d9dff3; border-radius: 12px; }
-.profile-page h1 { margin-top: 24px; text-align: left; font-size: 24px; }
-.profile-page dl { display: grid; gap: 8px; }
-.profile-page dt { margin-top: 12px; color: #63708b; }
-.profile-page dd { margin: 0; overflow-wrap: anywhere; font-size: 16px; }
-.profile-page a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+
+.session-status:empty {
+  display: none;
+}
+
+.profile .avatar {
+  flex-shrink: 0;
+}
+
+.profile-copy {
+  min-width: 0;
+}
+
+.profile-copy b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

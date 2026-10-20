@@ -1,9 +1,7 @@
 (() => {
   'use strict';
   const $ = selector => document.querySelector(selector);
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[character]);
+  const {escapeHtml} = window.UiUtils;
   let rows = [];
   let loading = false;
   let deleting = false;

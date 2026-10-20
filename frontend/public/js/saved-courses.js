@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const data = window.CourseData;
+  const data = window.UiUtils;
   const e = data.escapeHtml;
   const $ = selector => document.querySelector(selector);
   let rows = [];

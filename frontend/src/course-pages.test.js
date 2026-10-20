@@ -39,6 +39,8 @@ function runPage(file, {url, api, guideApi = {}, data = {}}) {
     CourseApi: api, GuideApi: {savedState: async () => false, ...guideApi}, CourseData: data
   };
   const source = fs.readFileSync(path.join(__dirname, '../public/js', file), 'utf8');
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/ui-utils.js'), 'utf8'), {window});
+  window.UiUtils = {...window.UiUtils, ...data};
   vm.runInNewContext(source, {window, document, URL, URLSearchParams, AbortController, setTimeout, clearTimeout});
   return {elements, get};
 }
@@ -254,4 +256,48 @@ test('read bookmark waits for API state, prevents duplicate writes, and toggles 
   assert.match(get('#readingContent').innerHTML, /aria-pressed="true"/);
   assert.match(get('#reading-status').textContent, /เพิ่มในรายวิชาที่บันทึกแล้ว/);
   assert.match(get('#readingContent').innerHTML, /review-button" type="button" disabled/);
+});
+
+test('an older filter response cannot overwrite rows later rendered by sorting', async () => {
+  const old = deferred();
+  const row = (id, title) => ({id, title, year: '2568', semester: '1', period: 'กลางภาค', publisher_name: 'Publisher'});
+  const {get} = runPage('choose-courses.js', {
+    url: 'http://frontend/choose-courses.html?courseId=4&course=CS261',
+    api: {getCourse: async () => ({id: 4, code: 'CS261', name: 'Software Engineering'})},
+    guideApi: {
+      filterOptions: async () => ({academic_years: [2567, 2568], semesters: [1], exam_periods: ['midterm']}),
+      list: async (_, filters) => filters.academic_year === '2567' ? old.promise : [row('2', 'Newest response')]
+    }
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  get('#yearFilter').value = '2567'; get('#yearFilter').listeners.change();
+  get('#yearFilter').value = '2568'; get('#yearFilter').listeners.change();
+  await new Promise(resolve => setImmediate(resolve));
+  old.resolve([row('1', 'Stale response')]);
+  await new Promise(resolve => setImmediate(resolve));
+  get('#sortFilter').value = 'title'; get('#sortFilter').listeners.change();
+  assert.match(get('#documentList').innerHTML, /Newest response/);
+  assert.doesNotMatch(get('#documentList').innerHTML, /Stale response/);
+});
+
+test('clearing a filter chip reloads API rows with the remaining filters', async () => {
+  const calls = [];
+  const {get} = runPage('choose-courses.js', {
+    url: 'http://frontend/choose-courses.html?courseId=4&course=CS261',
+    api: {getCourse: async () => ({id: 4, code: 'CS261', name: 'Software Engineering'})},
+    guideApi: {
+      filterOptions: async () => ({academic_years: [2568], semesters: [1], exam_periods: ['midterm']}),
+      list: async (_, filters) => {
+        calls.push(filters);
+        return [{id: '1', title: filters.academic_year ? 'Filtered list' : 'Full list', year: '2568', semester: '1', period: 'กลางภาค', publisher_name: 'Publisher'}];
+      }
+    }
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  get('#yearFilter').value = '2568'; get('#yearFilter').listeners.change();
+  await new Promise(resolve => setImmediate(resolve));
+  get('#activeFilters').listeners.click({target: {closest: () => ({dataset: {clearFilter: 'year'}})}});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls.at(-1).academic_year, null);
+  assert.match(get('#documentList').innerHTML, /Full list/);
 });

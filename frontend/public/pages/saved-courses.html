@@ -7,37 +7,34 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/read-courses.css">
-  <link rel="stylesheet" href="css/guide-actions.css">
-  <link rel="stylesheet" href="css/profile.css">
-<script src="js/profile.js" defer></script>
-<script src="js/course-data.js" defer></script>
-  <script src="js/login-config.js" defer></script>
-  <script src="js/upload-config.js" defer></script>
-  <script src="js/guide-api.js" defer></script>
-  <script src="js/saved-courses.js" defer></script>
+  <link rel="stylesheet" href="/css/navbar.css">
+  <link rel="stylesheet" href="/css/read-courses.css">
+  <link rel="stylesheet" href="/css/guide-actions.css">
+  <link rel="stylesheet" href="/css/profile.css">
+  <script src="/js/login-config.js" defer></script>
+  <script src="/js/ui-utils.js" defer></script>
+  <script src="/js/http-client.js" defer></script>
+  <script src="/js/profile.js" defer></script>
+  <script src="/js/upload-config.js" defer></script>
+  <script src="/js/guide-api.js" defer></script>
+  <script src="/js/saved-courses.js" defer></script>
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <symbol id="i-file" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M8 12h8M8 16h8"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol>
-    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M5 2h9l5 5v15H5zM14 2v6h5M12 19V11m-3 3 3-3 3 3"/></symbol>
-    <symbol id="i-shared" viewBox="0 0 24 24"><path d="M3 5h7l2 3h9v12H3zM14 12h4m-2-2 2 2-2 2M12 17h6"/></symbol>
-    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
     <symbol id="i-back" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7 7 12l5 5M7 12h10"/></symbol>
     <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 4h14l2 2v14H4zM8 4v6h8V4M8 20v-6h8v6"/></symbol>
   </svg>
 
   <header class="topbar">
     <a class="brand" href="courses.html" aria-label="หน้าแรก">
-      <svg class="icon brand-icon"><use href="#i-file"/></svg>
+      <svg class="icon brand-icon"><use href="/assets/icons/navbar.svg#i-file"/></svg>
       <span class="brand-copy"><b>พี่จ๋า</b><span>ขอแนวข้อสอบหน่อย</span></span>
     </a>
     <nav aria-label="เมนูหลัก">
-      <a href="courses.html"><svg class="icon"><use href="#i-search"/></svg>ค้นหา</a>
-      <a href="upload.html"><svg class="icon"><use href="#i-upload"/></svg>อัปโหลดเอกสาร</a>
-      <a href="shared-courses.html"><svg class="icon"><use href="#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
-      <a class="active" href="saved-courses.html" aria-current="page"><svg class="icon"><use href="#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
+      <a href="courses.html"><svg class="icon"><use href="/assets/icons/navbar.svg#i-search"/></svg>ค้นหา</a>
+      <a href="upload.html"><svg class="icon"><use href="/assets/icons/navbar.svg#i-upload"/></svg>อัปโหลดเอกสาร</a>
+      <a href="shared-courses.html"><svg class="icon"><use href="/assets/icons/navbar.svg#i-shared"/></svg>รายวิชาที่แบ่งปัน</a>
+      <a class="active" href="saved-courses.html" aria-current="page"><svg class="icon"><use href="/assets/icons/navbar.svg#i-bookmark"/></svg>รายวิชาที่บันทึก</a>
     </nav>
     <div class="profile">
   <span class="avatar" data-user-avatar>?</span>

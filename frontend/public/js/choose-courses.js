@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const data = window.CourseData;
+  const data = window.UiUtils;
   const $ = selector => document.querySelector(selector);
   const e = data.escapeHtml;
   const params = new URL(window.location.href).searchParams;
@@ -65,12 +65,13 @@
     render();
     const filters = filterState();
     try {
-      rows = await window.GuideApi.list(course.id, {
+      const result = await window.GuideApi.list(course.id, {
         academic_year: filters.year === 'all' ? null : filters.year,
         semester: filters.semester === 'all' ? null : filters.semester,
         exam_period: filters.period === 'all' ? null : filters.period === 'กลางภาค' ? 'midterm' : 'final'
       });
       if (version !== rowLoadVersion) return;
+      rows = result;
     } catch (error) {
       if (version !== rowLoadVersion) return;
       rows = [];
@@ -242,7 +243,7 @@
     $('#activeFilters').addEventListener('click', event => {
       const button = event.target.closest('[data-clear-filter]'); if (!button) return;
       const id = {period:'#periodFilter', year:'#yearFilter', semester:'#semesterFilter'}[button.dataset.clearFilter];
-      if (id) { $(id).value = 'all'; page = 1; render(); }
+      if (id) { $(id).value = 'all'; page = 1; loadFilteredRows(); }
     });
     const tabs = [...document.querySelectorAll('[data-tab]')];
     tabs.forEach((tab, index) => {

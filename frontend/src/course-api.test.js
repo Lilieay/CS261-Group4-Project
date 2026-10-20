@@ -25,9 +25,10 @@ function loadCourseApi({token = 'test-token', fetchImpl = async () => new Respon
       return fetchImpl(...args);
     },
     URLSearchParams,
-    AbortController,
+    AbortController, setTimeout, clearTimeout,
     Response
   };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/http-client.js'), 'utf8'), context);
   vm.runInNewContext(source, context, {filename: 'course-api.js'});
   return {api: window.CourseApi, calls, redirects, values};
 }

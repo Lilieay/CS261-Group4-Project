@@ -6,9 +6,7 @@
   let controller = null;
   let debounceTimer = null;
 
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[char]));
+  const {escapeHtml} = window.UiUtils;
 
   function courseCard(course) {
     const params = new URLSearchParams({courseId: String(course.id), course: course.code});
