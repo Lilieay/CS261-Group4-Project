@@ -26,6 +26,67 @@ function request(port, path, method = 'GET', headers = {}, body = '') {
   });
 }
 
+test('HTML pages in public/pages retain their original URLs and assets load from the public root', async () => {
+  await withServer(async port => {
+    const assets = new Set();
+    for (const page of ['index', 'login', 'courses', 'choose-courses', 'read-courses',
+      'shared-courses', 'saved-courses', 'upload']) {
+      const response = await request(port, `/${page}.html`);
+      assert.equal(response.status, 200, page);
+      assert.match(response.headers['content-type'], /text\/html/);
+      assert.match(response.body, /<!DOCTYPE html>/);
+      for (const match of response.body.matchAll(/(?:src|href)="(\/(?:css|js|assets)\/[^"#]+)(?:#[^"]*)?"/g)) {
+        assets.add(match[1]);
+      }
+      assert.doesNotMatch(response.body, /(?:src|href)="(?:css|js|assets)\//);
+    }
+    assert.equal((await request(port, '/')).status, 200);
+    for (const asset of assets) {
+      const response = await request(port, asset);
+      assert.equal(response.status, 200, asset);
+      assert.doesNotMatch(response.headers['content-type'], /text\/html/, asset);
+    }
+    assert.equal((await request(port, '/unknown-page.html')).status, 404);
+  });
+});
+
+test('folder URLs redirect to the original page URL while retaining course and guide parameters', async () => {
+  await withServer(async port => {
+    const query = '?source=api&courseId=4&course=CS261&guide=12&returnTo=saved-courses.html';
+    const response = await request(port, `/pages/read-courses.html${query}`);
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.location, `/read-courses.html${query}`);
+    const target = await request(port, response.headers.location);
+    assert.equal(target.status, 200);
+    assert.match(target.body, /id="readingContent"/);
+  });
+});
+
+test('shared proxy keeps auth payload filtering and does not expose upstream errors', async t => {
+  const originalFetch = global.fetch;
+  t.after(() => { global.fetch = originalFetch; });
+  let sent;
+  global.fetch = async (url, init) => {
+    sent = {url: url.href, init};
+    return new Response(JSON.stringify({access_token: 'test-token', token_type: 'bearer', internal: 'private',
+      user: {id: 1, username: 'student', display_name: 'Student', role: 'student', internal: 'private'}}));
+  };
+  await withServer(async port => {
+    const result = await request(port, '/api/auth/login', 'POST', {'Content-Type': 'application/json'},
+      JSON.stringify({username: 'student', password: 'test-password', ignored: 'do not forward'}));
+    assert.equal(result.status, 200);
+    assert.deepEqual(JSON.parse(sent.init.body), {username: 'student', password: 'test-password'});
+    assert.equal(sent.url, 'http://backend:8000/api/auth/login');
+    assert.doesNotMatch(result.body, /private|internal/);
+    global.fetch = async () => new Response('{"detail":"private upstream failure"}', {status: 401});
+    const failed = await request(port, '/api/auth/me');
+    assert.equal(failed.status, 401);
+    assert.doesNotMatch(failed.body, /private/);
+    global.fetch = async () => { throw new Error('offline'); };
+    assert.equal((await request(port, '/api/auth/me')).status, 502);
+  });
+});
+
 test('course list proxy pins the backend path and forwards search and authorization', async t => {
   const originalFetch = global.fetch;
   t.after(() => { global.fetch = originalFetch; });

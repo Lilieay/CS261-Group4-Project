@@ -1,27 +1,18 @@
 (() => {
   'use strict';
-  const tokenKey = window.LoginConfig?.tokenStorageKey || 'access_token';
+  const {clearToken} = window.HttpClient;
   let loggingOut = false;
-  function clearToken() {
-    sessionStorage.removeItem(tokenKey);
-    localStorage.removeItem(tokenKey);
-  }
 
   async function loadUser() {
-    const token = sessionStorage.getItem(tokenKey);
+    const token = window.HttpClient.token();
     if (!token) return null;
-    const response = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(10000)
-    });
+    const {response, payload: user} = await window.HttpClient.request('/api/auth/me', {token, timeoutMs: 10000});
     if (response.status === 401) {
       clearToken();
       return null;
     }
     if (!response.ok) throw new Error('โหลดข้อมูลผู้ใช้ไม่สำเร็จ');
-    const user = await response.json();
-    if (typeof user.username !== 'string' || typeof user.display_name !== 'string') {
+    if (!user || typeof user.username !== 'string' || typeof user.display_name !== 'string') {
       throw new Error('ข้อมูลผู้ใช้ไม่ถูกต้อง');
     }
     return user;
@@ -38,11 +29,10 @@
       const status = document.getElementById('session-status');
       if (status) status.textContent = 'กำลังออกจากระบบ…';
       try {
-        const token = sessionStorage.getItem(tokenKey) || localStorage.getItem(tokenKey);
+        const token = window.HttpClient.token(true);
         if (token) {
-          const response = await fetch('/api/auth/logout', {
-            method: 'POST', headers: {Authorization: `Bearer ${token}`, Accept: 'application/json'},
-            cache: 'no-store', signal: AbortSignal.timeout(10000)
+          const {response} = await window.HttpClient.request('/api/auth/logout', {
+            method: 'POST', token, timeoutMs: 10000
           });
           if (!response.ok && response.status !== 401) throw new Error('logout failed');
         }

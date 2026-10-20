@@ -181,15 +181,14 @@
         return;
       }
       if (config.mode === 'api') {
-        user = await window.GuideApi.currentUser();
+        if (!Number.isSafeInteger(user.id) || user.id <= 0) throw new Error('รูปแบบข้อมูลบัญชีจากเซิร์ฟเวอร์ไม่ถูกต้อง');
         catalog = await window.GuideApi.courses();
-        $('#author').value = user.display_name || user.username;
       } else {
         catalog = data.catalog;
-        $('#author').value = user.display_name || user.username;
         // Reading here detects unavailable or corrupted browser storage early.
         data.loadExams();
       }
+      $('#author').value = user.display_name || user.username;
       if (!catalog.length) throw new Error('ยังไม่มีรายวิชาให้เผยแพร่ กรุณาตรวจข้อมูลรายวิชา');
       setupSelect(field('course'), catalog, 'เลือกรายวิชา', row => row.code, row => `${row.code} - ${row.name}`);
       setupSelect(field('academicYear'), config.academicYears, 'เลือกปีการศึกษา', String, String);

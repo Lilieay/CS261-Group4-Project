@@ -11,31 +11,24 @@
   }
 
   function login() {
-    sessionStorage.removeItem(window.LoginConfig.tokenStorageKey);
+    window.HttpClient.clearToken(false);
     window.location.replace('login.html');
   }
 
   async function request(path, options = {}) {
-    const token = sessionStorage.getItem(window.LoginConfig.tokenStorageKey);
+    const token = window.HttpClient.token();
     if (!token) {
       login();
       throw new CourseApiError('กรุณาเข้าสู่ระบบก่อนค้นหารายวิชา', 401);
     }
 
-    let response;
+    let response, payload;
     try {
-      response = await fetch(`/api/courses${path}`, {
-        ...options,
-        headers: {...options.headers, Authorization: `Bearer ${token}`, Accept: 'application/json'},
-        cache: 'no-store'
-      });
+      ({response, payload} = await window.HttpClient.request(`/api/courses${path}`, {...options, token}));
     } catch (_) {
       throw new CourseApiError('เชื่อมต่อบริการรายวิชาไม่ได้ กรุณาลองใหม่');
     }
 
-    let payload;
-    try { payload = await response.json(); }
-    catch (_) { payload = null; }
     if (response.status === 401) {
       login();
       throw new CourseApiError('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 401, payload);

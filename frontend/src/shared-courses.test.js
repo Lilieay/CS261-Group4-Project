@@ -40,6 +40,7 @@ function runPage({mine, remove = async () => {}, user = {username: 'student'}}) 
     location: {replace: value => redirects.push(value), assign: value => navigations.push(value)}
   };
   const source = fs.readFileSync(path.join(__dirname, '../public/js/shared-courses.js'), 'utf8');
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/ui-utils.js'), 'utf8'), {window});
   vm.runInNewContext(source, {window, document, URLSearchParams});
   return {get, redirects, navigations};
 }

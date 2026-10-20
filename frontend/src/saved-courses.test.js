@@ -15,7 +15,7 @@ function page({saved = async () => [], savedState = async () => false, user = {u
     return elements.get(selector);
   };
   const window = {currentUserReady: Promise.resolve(user), GuideApi: {saved, savedState},
-    CourseData: {escapeHtml: value => String(value).replaceAll('<', '&lt;'), semesterLabel: String},
+    UiUtils: {escapeHtml: value => String(value).replaceAll('<', '&lt;'), semesterLabel: String},
     addEventListener: (type, callback) => { events[type] = callback; },
     location: {replace: value => redirects.push(value)}};
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/js/saved-courses.js'), 'utf8'),

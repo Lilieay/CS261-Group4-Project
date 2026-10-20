@@ -1,7 +1,6 @@
 (() => {
   'use strict';
   const config = window.GuidePublishConfig;
-  const tokenStorageKey = window.LoginConfig?.tokenStorageKey || config?.tokenStorageKey || 'access_token';
   class GuideApiError extends Error {
     constructor(message, {status = 0, fields = [], uncertain = false} = {}) {
       super(message);
@@ -12,11 +11,34 @@
 
   function accessToken() {
     try {
-      return sessionStorage.getItem(tokenStorageKey)
-        || localStorage.getItem(tokenStorageKey) || '';
+      return window.HttpClient.token(true);
     } catch (_) {
       throw new GuideApiError('อ่านสถานะเข้าสู่ระบบไม่ได้ กรุณาอนุญาตพื้นที่เก็บข้อมูลของเว็บไซต์');
     }
+  }
+
+  function resolveTarget(path, method, savedPath) {
+    if (savedPath || ['PUT', 'DELETE'].includes(method)) return path;
+    if (method === 'POST' && path === config.publishPath) return '/api/guides';
+    if (method === 'GET' && [config.mePath, config.myGuidesPath].includes(path)) return path;
+    if (method === 'GET' && path === config.coursesPath) return '/api/courses';
+    if (method === 'GET' && path.startsWith('/')) {
+      const local = new URL(path, window.location.origin);
+      const listPath = /^\/courses\/[1-9]\d*\/guides$/.test(local.pathname);
+      const allowed = listPath || /^\/courses\/[1-9]\d*\/guides\/filter-options$/.test(local.pathname)
+        || /^\/guides\/[1-9]\d*$/.test(local.pathname);
+      const allowedQuery = new Set(['academic_year', 'semester', 'exam_period']);
+      if (!allowed || (!listPath && local.search)
+          || [...local.searchParams.keys()].some(key => !allowedQuery.has(key))) {
+        throw new GuideApiError('เส้นทางอ่านแนวข้อสอบไม่ถูกต้อง', {status: 422});
+      }
+      return `/api/guides${local.pathname}${local.search}`;
+    }
+    const base = new URL(config.apiBaseUrl || window.location.origin);
+    if (!['http:', 'https:'].includes(base.protocol)) throw new GuideApiError('ที่อยู่ API ต้องเป็น HTTP หรือ HTTPS');
+    const url = new URL(path, base);
+    if (url.origin !== base.origin) throw new GuideApiError('เส้นทาง API ต้องอยู่ในเซิร์ฟเวอร์ที่ตั้งค่าไว้');
+    return url.href;
   }
 
   async function request(path, {method = 'GET', body} = {}) {
@@ -35,47 +57,14 @@
     if (method === 'DELETE' && !/^\/api\/my-guides\/[1-9]\d*$/.test(path) && !savedPath) {
       throw new GuideApiError('เส้นทางลบแนวข้อสอบไม่ถูกต้อง', {status: 422});
     }
-    const target = savedPath ? path : ['PUT', 'DELETE'].includes(method) ? path
-      : method === 'POST' && path === config.publishPath
-      ? '/api/guides'
-      : method === 'GET' && (path === config.mePath || path === config.myGuidesPath)
-      ? path
-      : method === 'GET' && path === config.coursesPath
-        ? '/api/courses'
-      : method === 'GET' && path.startsWith('/')
-        ? (() => {
-          const local = new URL(path, window.location.origin);
-          const listPath = /^\/courses\/[1-9]\d*\/guides$/.test(local.pathname);
-          const allowed = listPath
-            || /^\/courses\/[1-9]\d*\/guides\/filter-options$/.test(local.pathname)
-            || /^\/guides\/[1-9]\d*$/.test(local.pathname);
-          const allowedQuery = new Set(['academic_year', 'semester', 'exam_period']);
-          if (!allowed || (!listPath && local.search)
-              || [...local.searchParams.keys()].some(key => !allowedQuery.has(key))) {
-            throw new GuideApiError('เส้นทางอ่านแนวข้อสอบไม่ถูกต้อง', {status: 422});
-          }
-          return `/api/guides${local.pathname}${local.search}`;
-        })()
-      : (() => {
-        const base = new URL(config.apiBaseUrl || window.location.origin);
-        if (!['http:', 'https:'].includes(base.protocol)) throw new GuideApiError('ที่อยู่ API ต้องเป็น HTTP หรือ HTTPS');
-        const url = new URL(path, base);
-        if (url.origin !== base.origin) throw new GuideApiError('เส้นทาง API ต้องอยู่ในเซิร์ฟเวอร์ที่ตั้งค่าไว้');
-        return url.href;
-      })();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), config.timeoutMs || 15000);
+    const target = resolveTarget(path, method, savedPath);
     let response;
     let payload;
     try {
-      response = await fetch(target, {
-        method, signal: controller.signal, cache: 'no-store',
-        headers: {Accept: 'application/json', Authorization: `Bearer ${token}`,
-          ...(body === undefined ? {} : {'Content-Type': 'application/json'})},
-        ...(body === undefined ? {} : {body: JSON.stringify(body)})
-      });
-      const text = await response.text();
-      try { payload = text ? JSON.parse(text) : null; } catch (_) { payload = null; }
+      ({response, payload} = await window.HttpClient.request(target, {
+        method, token, timeoutMs: config.timeoutMs || 15000,
+        ...(body === undefined ? {} : {headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})
+      }));
     } catch (_) {
       throw new GuideApiError(savedPath
         ? 'ยังยืนยันรายการที่บันทึกไม่ได้ กรุณาโหลดข้อมูลใหม่เพื่อตรวจสอบ'
@@ -85,13 +74,12 @@
         ? 'ยังยืนยันผลการลบไม่ได้ กรุณาตรวจรายการของคุณก่อนลองอีกครั้ง'
         : 'ติดต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจการเชื่อมต่อและลองใหม่',
       {uncertain: method === 'POST' || method === 'DELETE'});
-    } finally { clearTimeout(timer); }
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
         try {
-          sessionStorage.removeItem(tokenStorageKey);
-          localStorage.removeItem(tokenStorageKey);
+          window.HttpClient.clearToken();
         } catch (_) { /* Storage may be unavailable. */ }
         window.location.replace('login.html');
       }
