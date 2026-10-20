@@ -1,6 +1,6 @@
 # Task11: U1 — เขียนส่วนยืนยันบัญชีกับ TU API
 
-## Artifact
+## หน้าที่ของ adapter
 
 - `backend/app/services/tu_api.py` เป็น Adapter สำหรับยืนยันบัญชีกับ TU API
 - `backend/app/services/auth.py` เรียก Adapter ก่อนสร้าง session และอนุญาตเฉพาะ `account_type=student` กับ `active=true`
@@ -26,9 +26,9 @@ Request ที่ส่งไปยัง TU API:
 {"UserName":"<บัญชีทดสอบ>","PassWord":"<ส่งผ่าน request เท่านั้น>"}
 ```
 
-Backend ส่ง Header `Application-Key` และรับฟิลด์ `status`, `type`, `displayname_th` และ `displayname_en` ตาม [เอกสาร TU Authentication API](https://restapi.tu.ac.th/home/documents/Authen.html). ระบบยอมรับเฉพาะ `status=true`, `type` ที่เป็นข้อความ `student` และชื่อที่ไม่ว่างอย่างน้อยหนึ่งภาษา. เลือกชื่อไทยก่อนชื่ออังกฤษ.
+Adapter ส่ง Header Application-Key และอ่าน status, type, displayname_th และ displayname_en ยอมรับเมื่อ status เป็น true, type เป็น student และมีชื่อไม่ว่างอย่างน้อยหนึ่งภาษา โดยเลือกชื่อไทยก่อนชื่ออังกฤษมาเป็น TUAccount.display_name
 
-เอกสาร TU ไม่มีฟิลด์ `active`. Adapter กำหนด `TUAccount.active=True` หลังยอมรับนักศึกษาที่ผ่านการยืนยัน เพื่อใช้กับโมเดลเดิมของระบบ. ค่านี้เป็นกติกาภายใน Adapter และไม่ได้ยืนยันสถานะการลงทะเบียน.
+Adapter ไม่ได้อ่านฟิลด์ active จาก response แต่กำหนด TUAccount.active=True หลังผ่านเงื่อนไขข้างต้น ค่านี้เป็นกติกาภายใน ไม่ได้ยืนยันสถานะการลงทะเบียนเรียนเพิ่มเติม AuthService ปัจจุบันส่ง display_name นี้เข้าพารามิเตอร์ displayname_en ของ UserDAO ไม่ได้บันทึกชื่อสองภาษาแยกคอลัมน์ครบทุกครั้ง
 
 ไม่บันทึก request password หรือ response ที่มีข้อมูลลับลงใน log/report
 
@@ -45,10 +45,12 @@ Backend ส่ง Header `Application-Key` และรับฟิลด์ `st
 | อาจารย์/บุคลากร | `admin / admin123` ใน mock mode | ต้องปฏิเสธ | `account_type=staff` ไม่ผ่าน | IMPLEMENTED |
 | TU API ไม่พร้อม | real mode, URL เรียกไม่ได้ | fail-closed, ไม่สร้าง session | `TUVerificationError` ถูกปฏิเสธ | IMPLEMENTED |
 | Response ยืนยันไม่ครบ | real mode, ขาด status/type/name หรือชนิดข้อมูลไม่ถูกต้อง | ไม่อนุญาต | Adapter คืน `None` | IMPLEMENTED |
-| ไม่ส่งบัญชีว่าง | username เป็นช่องว่าง | ไม่เรียก TU API | `authenticate` คืน `None` ก่อนเรียก Adapter | IMPLEMENTED |
+| ไม่ส่งบัญชีว่าง | username เป็นช่องว่าง | ไม่เรียก TU API | AuthService.login trim แล้ว raise LoginRejected ก่อนเรียก adapter | IMPLEMENTED |
 
 ## ขอบเขตหลักฐาน
 
-ผล automated tests และ revision ที่รันจริงอยู่ใน [รายงาน Task14](U1_Task14_Login_UI_API_Test_Report.md#การตรวจสอบ) โดยแยกจากตารางพฤติกรรมตามโค้ดข้างต้น
+ตารางข้างต้นเป็นการอธิบายเส้นทางในโค้ด ไม่ใช่ผล UAT ผล automated tests และ revision ที่รันจริงดู [รายงาน Task14](../testing/task14-login-ui-api-test-report.md#การตรวจสอบ)
 
-การทดสอบอัตโนมัติใช้ HTTP response จำลองเพื่อยืนยัน request, parsing และเส้นทางปฏิเสธ Login. ยังไม่มีการเรียก TU API จริงหรือยืนยันว่า endpoint/credentials ใช้งานได้.
+การทดสอบอัตโนมัติในรายงานใช้ HTTP response จำลอง ไม่ใช้แทนผลยืนยัน TU จริงของเครื่องที่นำไปสาธิต ผลตรวจรับ TU จริงต้องบันทึกรุ่นระบบ วันทดสอบ และหลักฐานของรอบนั้น โดยไม่ใส่รหัสผ่านหรือ API key
+
+ดู [โค้ด adapter](../../../backend/app/services/tu_api.py), [AuthService](../../../backend/app/services/auth.py) และ [Login API contract](task5-login-api-spec.md)

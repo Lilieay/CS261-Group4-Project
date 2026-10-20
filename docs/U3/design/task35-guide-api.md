@@ -1,6 +1,6 @@
 # Task35: กำหนด API รายการและรายละเอียดแนวข้อสอบ
 
-สถานะ: แบบร่างสำหรับทีมทบทวน
+เอกสารนี้อธิบาย API อ่านแนวข้อสอบที่ลงทะเบียนและใช้งานแล้ว
 
 ## 1. เป้าหมายและกติกากลาง
 
@@ -182,7 +182,7 @@ Frontend ใช้ `exam_format` เลือกแสดงส่วนจำ�
 
 ชื่อผู้เผยแพร่ใช้กติกาจาก Task6 คือชื่อไทย ตามด้วยชื่ออังกฤษ หรือ "ไม่ระบุชื่อ" เมื่อไม่มีทั้งสองชื่อ
 
-ข้อมูลผู้สอนอ่านจาก Course โดยชื่อฟิลด์ JSON กำหนดเป็น `instructor_names` ชนิดข้อความ ส่วนการอ่านจาก Entity ต้องเชื่อมกับฟิลด์ที่เจ้าของ Task22 กำหนด
+ข้อมูลผู้สอนอ่านจาก Course.instructor_name แล้วส่งเป็น course.instructor_names ชนิด string หรือ null ใน DTO ปัจจุบันหน้าอ่านไม่แสดงผู้สอน และ API ไม่มีตัวกรองผู้สอน
 
 ### กรณีไม่พบรายการ
 
@@ -239,9 +239,9 @@ Frontend ยังคงตัวเลือก "ทั้งหมด" ใน�
 
 ## 6. DTO Schema
 
-DTO คือแบบข้อมูลที่ API รับหรือส่ง ใช้ Pydantic กำหนดชนิดข้อมูลและรูปแบบผลตอบกลับผ่าน `response_model` ของ FastAPI [เอกสาร Response model](https://fastapi.tiangolo.com/tutorial/response-model/)
+DTO คือแบบข้อมูลที่ API ส่ง ใช้ Pydantic กำหนดรูปแบบผลตอบกลับผ่าน response_model ส่วน query ตรวจในพารามิเตอร์ของ route โดยตรง
 
-### GuideListQueryDTO
+### Query parameters ของ list_guides
 
 | ฟิลด์ | ชนิดข้อมูล | ค่าเริ่มต้น |
 |---|---|---|
@@ -249,7 +249,7 @@ DTO คือแบบข้อมูลที่ API รับหรือส�
 | `semester` | `1`, `2`, `3` หรือ null | `None` |
 | `exam_period` | `midterm`, `final` หรือ null | `None` |
 
-DTO นี้ใช้กับ Query parameters ส่วน `course_id` ตรวจแยกเป็น Path parameter
+โค้ดไม่ได้ประกาศคลาส GuideListQueryDTO ตารางนี้อธิบายพารามิเตอร์ของ list_guides ส่วน course_id ตรวจแยกเป็น path parameter
 
 ### GuideListItemDTO
 
@@ -277,7 +277,7 @@ DTO นี้ใช้กับ Query parameters ส่วน `course_id` ตร
 | `id` | integer |
 | `course_code` | string |
 | `course_name` | string |
-| `instructor_names` | string |
+| `instructor_names` | string หรือ null |
 
 ### GuideDetailResponseDTO
 
@@ -288,11 +288,11 @@ DTO นี้ใช้กับ Query parameters ส่วน `course_id` ตร
 | `course` | `CourseInfoDTO` |
 | `topics` | string |
 | `exam_format` | `objective`, `subjective`, `mixed` |
-| `objective_count` | integer มากกว่า 0 หรือ null |
-| `subjective_count` | integer มากกว่า 0 หรือ null |
+| `objective_count` | integer หรือ null |
+| `subjective_count` | integer หรือ null |
 | `additional_advice` | string หรือ null |
 
-จำนวนข้อแต่ละรูปแบบใช้กติกาของ Task36
+จำนวนข้อที่ส่งเข้าผ่านฟอร์มเผยแพร่หรือแก้ไขต้องมากกว่า 0 หรือไม่ระบุ ส่วน Response DTO ประกาศเพียง integer หรือ null ไม่ได้ตรวจขอบเขตซ้ำตาม Task36
 
 ### GuideFilterOptionsResponseDTO
 
@@ -350,7 +350,7 @@ Backend แปลง Entity เป็น DTO และคำนวณ `publisher
     "fields": [
       {
         "field": "semester",
-        "message": "ภาคเรียนต้องเป็น 1, 2 หรือ 3"
+        "message": "Input should be less than or equal to 3"
       }
     ]
   }
@@ -359,7 +359,7 @@ Backend แปลง Entity เป็น DTO และคำนวณ `publisher
 
 เมื่อได้รับ `401` Frontend นำผู้ใช้ไปหน้า Login ตามข้อกำหนด U3
 
-ตอนพัฒนาต้องจัดการ `HTTPException` และ `RequestValidationError` ให้คืนรูปแบบ ErrorResponseDTO นี้ โดยใช้ Exception handler ของ FastAPI [เอกสาร Handling errors](https://fastapi.tiangolo.com/tutorial/handling-errors/)
+GuideApiRoute ครอบ route handler เพื่อแปลง HTTPException, RequestValidationError, domain exceptions และข้อผิดพลาดภายในเป็น ErrorResponseDTO ไม่ใช่ global exception handler ที่ใช้กับทุก router
 
 ## 8. แบบ Router/API กับ DTO
 
@@ -381,7 +381,7 @@ flowchart LR
     ROUTER --> DETAIL["read_guide"]
     ROUTER --> FILTER["read_filter_options"]
 
-    QUERY["GuideListQueryDTO"] --> LIST
+    QUERY["Query parameters"] --> LIST
     LIST --> LISTRESP["GuideListResponseDTO"]
     LISTRESP --> ITEM["GuideListItemDTO"]
 
@@ -390,11 +390,13 @@ flowchart LR
 
     FILTER --> FILTERRESP["GuideFilterOptionsResponseDTO"]
 
-    ROUTER --> HANDLER["Exception handler"]
+    ROUTER --> SERVICE["ReadGuideService"]
+    SERVICE --> DAO["CourseDAO และ ReadGuideDAO"]
+    ROUTER --> HANDLER["GuideApiRoute"]
     HANDLER --> ERROR["ErrorResponseDTO"]
 ```
 
-ฟังก์ชัน API ตรวจข้อมูลรับเข้าและสถานะ Login เรียกส่วนอ่านข้อมูลตาม Task36 แล้วจัดข้อมูลเป็น DTO ก่อนคืน JSON
+Router ตรวจข้อมูลรับเข้าและใช้ current_user ตรวจ Login จากนั้นเรียก ReadGuideService ให้ประสาน DAO และแปลง Entity เป็น DTO ก่อนคืน JSON
 
 ## 9. ข้อตกลงร่วมกับงานอื่นและเอกสารส่งมอบ
 
@@ -405,9 +407,9 @@ flowchart LR
 | วิธีส่งและตรวจสถานะ Login | งานออกแบบ Login API ของ U1 |
 | ข้อมูลผู้สอนใน Course และผลอ่านรายวิชา | Task22 และ Task21 |
 | รูปแบบข้อสอบค่าเดียว 3 แบบ และกติกาข้อมูลร่วมกัน | งานออกแบบฟอร์มเผยแพร่และแก้ไข |
-| ลำดับรายการและการแบ่งหน้า | รอข้อสรุปจาก Task34 |
+| ลำดับรายการและการแบ่งหน้า | API คืนทุกรายการที่ตรงเงื่อนไข หน้าเว็บเรียงและแบ่งหน้าเอง |
 
-ร่างนี้คืนรายการที่ตรงเงื่อนไขทั้งหมด โดยยังไม่กำหนด Query parameters สำหรับเรียงรายการหรือแบ่งหน้า
+API ไม่มี query สำหรับเรียงรายการหรือแบ่งหน้า การเปลี่ยนหน้าบน UI จึงไม่ได้ส่ง page ไป backend
 
 เอกสารส่งมอบของ Task35 ประกอบด้วย:
 
@@ -416,3 +418,11 @@ flowchart LR
 - DTO Schema
 - แผนภาพ Router/API กับ DTO
 - หลักฐานการทบทวน พร้อมลิงก์ไฟล์และ commit บน GitHub
+
+## 10. เส้นทาง Browser และข้อจำกัด
+
+Browser เรียก Node proxy ด้วย prefix `/api/guides` เช่น `/api/guides/courses/1/guides` แล้ว proxy ส่งต่อ backend เป็น `/courses/1/guides` ทุก request ใช้ token เดิมของ U1 หาก proxy ติดต่อ backend ไม่ได้จะตอบ 502 ซึ่งต่างจาก error 500 ของ backend
+
+เมื่อเปิดหน้ารายวิชา UI โหลด filter-options แล้วโหลดรายการ ส่วน service ของ API รายการอ่าน filter values อีกครั้งเพื่อหา has_guides จึงมีการอ่านค่าซ้ำ การอธิบาย flow ต้องแยกสอง request นี้ ไม่อ้างว่า backend อ่านตัวกรองครั้งเดียวทั้งหน้า
+
+ดู [Guide Router](../../../backend/app/routers/guides.py), [GuideApiRoute](../../../backend/app/routers/guide_errors.py), [ReadGuideService](../../../backend/app/services/read_guide.py), [schemas](../../../backend/app/schemas/guides.py) และ [Sequence Task37](task37-sequence-diagram.md)
