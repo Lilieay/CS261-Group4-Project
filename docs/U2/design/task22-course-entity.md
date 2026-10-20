@@ -1,70 +1,81 @@
-# Task22: ออกแบบตารางและ Entity รายวิชา
+# Task22 U2 ตารางและ Entity รายวิชา
 
-## ตารางสำหรับ Course
+Course เป็นข้อมูลรายวิชาที่ seed ไว้ ไม่ได้สร้างจากการค้นหาหรือผูกกับผู้ใช้ในฐานะผู้เพิ่มรายวิชา เอกสารนี้อธิบาย SQL Server และ SQLAlchemy ที่ใช้งานปัจจุบัน
 
-| ฟิลด์ | ชนิดข้อมูล | รายละเอียด | เงื่อนไข |
+## โครงสร้างตาราง courses
+
+| ฟิลด์ | ชนิดข้อมูล SQL Server | เว้นว่างได้ | เงื่อนไข |
 |---|---|---|---|
-| `id` | Integer | รหัสภายในระบบ | Primary Key และเพิ่มอัตโนมัติ |
-| `course_code` | Varchar(30) | รหัสวิชา เช่น CS261 | ห้ามว่างและห้ามซ้ำ |
-| `course_name` | Varchar(255) | ชื่อรายวิชา | ห้ามว่าง |
-| `instructor_name` | Varchar(255) | ชื่ออาจารย์ผู้สอน | ว่างได้|
-| `description` | Text | รายละเอียดรายวิชา | ว่างได้ |
- 
+| `id` | `INT IDENTITY` | ไม่ได้ | Primary Key |
+| `course_code` | `VARCHAR(30)` | ไม่ได้ | Unique |
+| `course_name` | `NVARCHAR(255)` | ไม่ได้ | ชื่อวิชา รองรับข้อความไทย |
+| `instructor_name` | `NVARCHAR(255)` | ได้ | ข้อมูลผู้สอนที่ระดับวิชา ไม่มี instructor_name_2 |
+| `description` | `NVARCHAR(max)` | ได้ | รายละเอียดวิชา |
 
+SQLAlchemy ใช้ `String`, `Unicode` และ `UnicodeText` ตามคอลัมน์ข้างต้น ไม่ใช้ VARCHAR สำหรับข้อความไทยในชื่อวิชาและชื่อผู้สอน
 
-## ตัวอย่างข้อมูลในตาราง
+## Entity และ DAO
 
-| id | course_code | course_name | instructor_name  | description | 
-|---:|---|---|---|---|
-| 1 | CS261 | Software Engineering | songsakdi rongviriyapanish,theepprakorn rakfaen |  วิชาวิศวกรรมซอฟต์แวร์   |
-| 2 | CS230 | Database Systems | -  |  วิชาฐานข้อมูล  |
+```mermaid
+classDiagram
+    class Course {
+        int id
+        str course_code
+        str course_name
+        str instructor_name
+        str description
+    }
+    class CourseDAO {
+        search(keyword) list
+        get_by_id(course_id) Course
+        get_cs_by_id(course_id) Course
+    }
+    class CourseService {
+        search(keyword) list
+        get(course_id) CourseDTO
+        to_dto(course) CourseDTO
+    }
+    CourseService --> CourseDAO : uses
+    CourseDAO ..> Course : reads
+```
 
+`instructor_name` และ `description` รับ None ได้ เมธอดค้นตาม ID คืน None เมื่อไม่พบ ชนิดในภาพย่อเพื่อแสดงโครงสร้าง ตารางคอลัมน์เป็นแหล่งอ้างอิงเรื่อง nullability
 
+`CourseService.search` เรียก `CourseDAO.search` ซึ่งจำกัดรหัส CS แล้วค้นรหัสแบบส่วนต้นหรือชื่อบางส่วน ส่วน `CourseService.get` เรียก `get_cs_by_id` เมธอด `get_by_id` ต่างออกไปเพราะตรวจเพียง ID มีอยู่ ผู้เรียก เช่น service เผยแพร่หรือแก้ไข ต้องกำหนดกติกาขอบเขตของตนเอง
 
- โครงสร้าง Entity
+## ความสัมพันธ์
 
+```mermaid
+erDiagram
+    courses ||--o{ guides : contains
+    courses ||--o| course_seed_ownership : seed_receipt
+    courses {
+        int id PK
+        string course_code UK
+        string course_name
+        string instructor_name
+        string description
+    }
+    guides {
+        int id PK
+        int course_id FK
+    }
+    course_seed_ownership {
+        int course_id PK,FK
+        string expected_snapshot
+        boolean test_active
+        boolean demo_active
+    }
+```
 
-Course
-├── id
-├── course_code
-├── course_name
-├── instructor_name 
-├── description
+Course หนึ่งวิชามี Guide ได้ศูนย์รายการขึ้นไป การลบ Guide ไม่ลบ Course และการลบ Course ที่มี Guide อ้างถึงถูก FK ปฏิเสธ
 
+`course_seed_ownership` เป็นตารางเครื่องมือ seed มี receipt ได้ไม่เกินหนึ่งแถวต่อ Course ใช้จำว่าชุด test/demo ดูแลข้อมูลใดและตรวจ snapshot ก่อนคืนสภาพ ไม่ใช่ตารางเจ้าของรายวิชาที่เป็นนักศึกษา ค่า `expected_snapshot` ใช้ SQLAlchemy JSON ซึ่งเก็บเป็นข้อความบน SQL Server
 
+ข้อมูลผู้สอนยังอยู่ใน DB และ DTO แต่หน้าอ่านปัจจุบันไม่ได้แสดงและไม่มีตัวกรองผู้สอน ไม่เพิ่มความสัมพันธ์ User เป็นผู้สอนจากคอลัมน์ข้อความนี้
 
- Entity ใน Python
+## ไฟล์อ้างอิง
 
-Entity `Course` ใช้ SQLAlchemy แทนตาราง `courses` ในฐานข้อมูล
-
-
-from datetime import datetime
-
-from sqlalchemy import DateTime, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
-
-from app.db import Base
-
-
-class Course(Base):
-    __tablename__ = "courses"
-
-    id: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True
-    )
-    course_code: Mapped[str] = mapped_column(
-        String(30), unique=True, nullable=False
-    )
-    course_name: Mapped[str] = mapped_column(
-        String(255), nullable=False
-    )
-    instructor_name: Mapped[str | None] = mapped_column(
-        String(255), nullable=True
-    )
-    description: Mapped[str | None] = mapped_column(
-        Text, nullable=True
-    )
-  
-
-
-https://docs.google.com/document/d/1ED9GAX8_YccRXROtNuYREAZHAc5-OlWLRJ83aMESWc4/edit?usp=sharing ลื้งไฟล์docsสำหรับดูและแก้ไข
+- [Course Entity](../../../backend/app/models/course.py) และ [CourseSeedOwnership](../../../backend/app/models/course_seed_ownership.py)
+- [CourseDAO](../../../backend/app/dao/course_dao.py), [CourseService](../../../backend/app/services/courses.py) และ [CourseDTO](../../../backend/app/schemas/courses.py)
+- [Sequence ค้นหาและเปิดวิชา](task23-course-search-sequence-diagram.md) และ [ER ภาพรวม](../../U3/design/task36-db-er-entity-dao.md)

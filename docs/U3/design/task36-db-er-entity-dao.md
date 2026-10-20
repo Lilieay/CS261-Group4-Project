@@ -1,6 +1,6 @@
 # Task36: ออกแบบข้อมูลแนวข้อสอบสำหรับอ่านและใช้ต่อ
 
-สถานะ: แบบร่างสำหรับทีมทบทวน
+เอกสารนี้อธิบาย Entity และ DAO ที่ใช้งานอยู่ รวมถึงข้อกำหนดที่ตรวจในชั้น API
 
 ## 1. เป้าหมาย
 
@@ -33,7 +33,7 @@
 | `subjective_count` | `INT` | ได้ | จำนวนข้ออัตนัย ถ้าระบุต้องมากกว่า 0 |
 | `additional_advice` | `NVARCHAR(2000)` | ได้ | คำแนะนำเพิ่มเติม |
 
-ความยาวชื่อ 200 และข้อความ 2,000 เป็นค่าที่เสนอ ต้องใช้ตรงกันในฟอร์มเผยแพร่ ฟอร์มแก้ไข และการตรวจข้อมูลฝั่ง Backend
+ความยาวชื่อ 200 และข้อความ 2,000 ใช้ตาม Entity และ Pydantic schema ปัจจุบัน
 
 ชื่อแนวข้อสอบซ้ำกันได้ เพราะอาจเป็นรายการของคนละปี ช่วงสอบ หรือผู้เผยแพร่ โดยแต่ละรายการมี `guides.id` ของตนเอง
 
@@ -52,7 +52,7 @@
 | `exam_format` | `subjective` | อัตนัย |
 | `exam_format` | `mixed` | ผสม |
 
-ปีการศึกษาเก็บเป็นตัวเลข พ.ศ. โดยไม่กำหนดรายการปีตายตัวในตาราง ตัวเลือกปีสำหรับกรองอ่านจากแนวข้อสอบที่มีอยู่ในรายวิชานั้น
+ปีการศึกษาเก็บเป็นตัวเลข พ.ศ. โดยไม่กำหนดรายการปีตายตัวในตาราง ส่วน schema สำหรับเผยแพร่และแก้ไขรับเฉพาะ 2566–2569 ตัวเลือกปีสำหรับกรองอ่านจากแนวข้อสอบที่มีอยู่ในรายวิชานั้น
 
 ### ข้อมูลบังคับ
 
@@ -77,7 +77,7 @@
 | อัตนัย | ต้องเป็น `NULL` | จำนวนเต็มมากกว่า 0 หรือ `NULL` |
 | ผสม | จำนวนเต็มมากกว่า 0 หรือ `NULL` | จำนวนเต็มมากกว่า 0 หรือ `NULL` |
 
-สำหรับแบบผสม ร่างนี้เสนอให้เว้นจำนวนแต่ละส่วนแยกกันได้ หน้าอ่านแสดงทั้งสองส่วน เช่น "ปรนัย 20 ข้อ, อัตนัยไม่ระบุ" กติกานี้ต้องทบทวนร่วมกับคนทำฟอร์มเผยแพร่และแก้ไข
+สำหรับแบบผสม เว้นจำนวนแต่ละส่วนแยกกันได้ตาม schema เผยแพร่และแก้ไข หน้าอ่านแสดงทั้งสองส่วน เช่น "ปรนัย 20 ข้อ, อัตนัยไม่ระบุ"
 
 ## 4. ความสัมพันธ์และแหล่งข้อมูลที่ใช้แสดง
 
@@ -86,10 +86,10 @@
 | ชื่อแนวข้อสอบและข้อมูลการสอบ | ตาราง `guides` |
 | รหัสวิชา | `Course.course_code` ผ่าน `guides.course_id` |
 | ชื่อวิชา | `Course.course_name` ผ่าน `guides.course_id` |
-| ชื่อผู้สอน | ข้อมูลพื้นฐานของ Course |
+| ชื่อผู้สอนใน DTO | ข้อมูลพื้นฐานของ Course ปัจจุบันหน้าอ่านไม่แสดง |
 | ชื่อผู้เผยแพร่ | `User.displayname_th` หรือ `User.displayname_en` ผ่าน `guides.publisher_id` |
 
-ข้อมูลผู้สอนอยู่ใน Course ตามข้อสรุป Scrum ส่วนชื่อฟิลด์ `instructor_names` เป็นข้อเสนอที่รอเจ้าของ Task22 ยืนยัน
+ข้อมูลผู้สอนอยู่ใน `Course.instructor_name` ส่วน GuideDetailResponseDTO ใช้ชื่อ `course.instructor_names` ไม่ใช่คอลัมน์ใหม่ ไม่มีตัวกรองผู้สอนใน API ปัจจุบัน
 
 ### ผู้เผยแพร่และเจ้าของรายการ
 
@@ -99,8 +99,8 @@
 
 ชื่อที่ใช้แสดงยึดกติกาของ Task6:
 
-1. ใช้ `displayname_th` เมื่อมีค่า
-2. ถ้าไม่มีชื่อภาษาไทย ใช้ `displayname_en`
+1. ถ้ามีทั้งสองชื่อ แสดง `ชื่อไทย (ชื่ออังกฤษ)`
+2. ถ้ามีชื่อเดียว ใช้ชื่อนั้นหลังตัดช่องว่างหัวท้าย
 3. ถ้าไม่มีทั้งสองชื่อ แสดง "ไม่ระบุชื่อ"
 
 ชื่อผู้เผยแพร่อ่านจากตาราง User ในฐานข้อมูลของระบบ เมื่อข้อมูลชื่ออัปเดต แนวข้อสอบแสดงชื่อปัจจุบันของบัญชีนั้น
@@ -166,7 +166,7 @@ erDiagram
 
 ### ReadGuideDAO
 
-ร่างนี้ใช้คลาส `ReadGuideDAO` รวมเมธอดอ่านข้อมูลแนวข้อสอบจากฐานข้อมูล
+โค้ดใช้คลาส `ReadGuideDAO` รวมเมธอดอ่านข้อมูลแนวข้อสอบจากฐานข้อมูล โดย ReadGuideService เป็นผู้เรียกและแปลง Entity เป็น DTO
 
 | เมธอด | ข้อมูลรับเข้า | ผลที่คืน |
 |---|---|---|
@@ -236,10 +236,10 @@ classDiagram
 |---|---|---|
 | `course_id` อ้างถึง `courses.id` ชนิด `INT` | Task22 | ยืนยันจากแบบ Course แล้ว |
 | `publisher_id` อ้างถึง `users.id` ชนิด `INT` | Task6 | ยืนยันจากแบบ User แล้ว |
-| การเลือกชื่อไทย ชื่ออังกฤษ หรือ "ไม่ระบุชื่อ" | Task6 | ใช้กติกาเดียวกับแบบ User |
-| ข้อมูลผู้สอนใน Course | Task22 และ Task21 | รอเพื่อนปรับแบบตามข้อสรุป Scrum |
-| รหัสตัวเลือก ความยาวข้อความ และจำนวนข้อแบบผสม | งานออกแบบฟอร์มเผยแพร่และแก้ไข | เป็นข้อเสนอที่ต้องตกลงร่วมกัน |
-| รูปแบบ API ที่ใช้ข้อมูลและเมธอดอ่านเหล่านี้ | Task35 | ใช้แบบนี้ออกแบบต่อ |
+| ชื่อผู้เผยแพร่ | Task6 | ใช้ format_publisher_name ร่วมกัน มีสองชื่อแสดงไทยและอังกฤษในวงเล็บ |
+| ข้อมูลผู้สอนใน Course | Task22 และ Task21 | มีใน Entity/DTO แต่ไม่มีตัวกรองผู้สอนและหน้าอ่านไม่แสดง |
+| รหัสตัวเลือก ความยาวข้อความ และจำนวนข้อ | งานเผยแพร่และแก้ไข | ตรวจตาม Pydantic schema ปัจจุบัน ปีเขียนรับ 2566–2569 ส่วนการอ่านรองรับข้อมูลเดิม |
+| รูปแบบ API ที่ใช้ข้อมูลและเมธอดอ่านเหล่านี้ | Task35 | implement และลงทะเบียน router แล้ว ดู Sequence Task37 |
 
 ## 8. เอกสารส่งมอบ
 
@@ -251,3 +251,65 @@ Task36 ส่งมอบ:
 - หลักฐานการทบทวน พร้อมลิงก์ไฟล์และ commit บน GitHub
 
 Task36 พร้อมส่งต่อเมื่อทีมใช้ชื่อฟิลด์ คีย์ และกติกาข้อมูลตรงกัน คนทำ Task35 ใช้กำหนด API ต่อ และคนทำ Task39 ใช้สร้างตารางกับ Entity
+
+## 9. ER ภาพรวมฐานข้อมูลปัจจุบัน
+
+ภาพในข้อ 5 แสดงแกนของแนวข้อสอบ ส่วนภาพนี้รวมตารางรายการที่บันทึกและ receipt ของเครื่องมือ seed ที่เพิ่มภายหลัง ชนิดใน Mermaid ย่อเพื่อแสดงความสัมพันธ์ ไม่แทนรายละเอียด SQL ในตารางคอลัมน์
+
+```mermaid
+erDiagram
+    users ||--o{ guides : publishes
+    courses ||--o{ guides : contains
+    users ||--o{ saved_guides : saves
+    guides ||--o{ saved_guides : bookmarked_by
+    courses ||--o| course_seed_ownership : seed_receipt
+    users {
+        int id PK
+        string username UK
+        string displayname_th
+        string displayname_en
+    }
+    courses {
+        int id PK
+        string course_code UK
+        string course_name
+        string instructor_name
+        string description
+    }
+    guides {
+        int id PK
+        int course_id FK
+        int publisher_id FK
+        string title
+        int academic_year
+        int semester
+        string exam_period
+        string topics
+        string exam_format
+        int objective_count
+        int subjective_count
+        string additional_advice
+    }
+    saved_guides {
+        int user_id PK,FK
+        int guide_id PK,FK
+    }
+    course_seed_ownership {
+        int course_id PK,FK
+        string expected_snapshot
+        boolean test_active
+        boolean demo_active
+    }
+```
+
+- `saved_guides` ใช้ `(user_id, guide_id)` เป็น composite primary key จึงบันทึก Guide เดิมซ้ำในบัญชีเดียวไม่ได้ User บันทึก Guide ของตนเองหรือคนอื่นได้ ไม่เปลี่ยน publisher ของ Guide
+- `saved_guides.guide_id` มี `ON DELETE CASCADE` เมื่อลบ Guide แถว bookmark ของทุกบัญชีที่อ้าง Guide นั้นถูกลบตาม การนำ bookmark ออกไม่ลบ Guide
+- `saved_guides.user_id` ไม่มี cascade ที่กำหนดไว้ใน model การลบ User ที่ยังถูกอ้างถึงถูก FK ปฏิเสธ
+- `course_seed_ownership` ใช้ `course_id` เป็น PK และ FK เก็บ snapshot กับสถานะชุด test/demo เพื่อคืนสภาพข้อมูล seed ไม่เกี่ยวกับสิทธิ์เจ้าของผลงาน
+- Session Login อยู่ใน memory ของ AuthService ไม่ได้มีตาราง Session หรือ Token ใน ER นี้
+
+โค้ดอ้างอิง: [Guide](../../../backend/app/models/guide.py), [SavedGuide](../../../backend/app/models/saved_guide.py), [CourseSeedOwnership](../../../backend/app/models/course_seed_ownership.py), [แบบ User](../../U1/design/task6-db-er-entity-dao.md) และ [แบบ Course](../../U2/design/task22-course-entity.md)
+
+Sequence ที่ใช้ร่วมกัน: [อ่าน](task37-sequence-diagram.md), [เผยแพร่](../../U4/design/task53-publish-guide-sequence-diagram.md) และ [จัดการผลงาน](../../U5/design/task66-my-guides-management-sequence-diagram.md)
+
+กติกาค่าตัวเลือก ข้อความไม่ว่าง และจำนวนข้อข้างต้นตรวจใน Pydantic schema ของงานเขียน ฐานข้อมูล ORM ปัจจุบันไม่ได้ประกาศ CHECK constraints สำหรับทุกกติกา จึงต้องแยกข้อจำกัดชนิดข้อมูลในตารางออกจาก validation ของ API
