@@ -1,149 +1,139 @@
 # CS261 Group 4
 
-เว็บคลังรายวิชาและแนวข้อสอบ ใช้ Frontend (Node.js/Express), Backend (FastAPI) และ SQL Server 2022 บน Docker
+เว็บสำหรับค้นหารายวิชา อ่าน เผยแพร่ และจัดการแนวข้อสอบ ใช้ Frontend (Node.js/Express), Backend (FastAPI/SQLAlchemy) และ Microsoft SQL Server 2022 โดย Docker Compose จัดการทั้งสาม services
 
-## เปิดชุดทดสอบ Task60 ที่เตรียมไว้ในเครื่องนี้
+## Fresh Setup — เครื่องใหม่
 
-หาก containers ของ Task60 ยังทำงานอยู่ เปิด [หน้า Login ชุดทดสอบ](http://127.0.0.1:25001/login.html) ได้ทันที โดยใช้บัญชี mock ด้านล่าง
+### สิ่งที่ต้องเตรียม
 
-ชุดนี้ใช้ Compose project `cs261-task60-test` และ volume `cs261-task60-test_sqlserver_data` แยกจากฐานข้อมูลหลัก พอร์ต Frontend คือ `25001`, Backend คือ `28001` และ SQL Server คือ `21434`
+- Git
+- Docker Desktop ที่เปิดใช้งาน Linux containers และ Docker Engine แล้ว
+- RAM และพื้นที่ดิสก์เพียงพอสำหรับ SQL Server 2022
 
-ดูวิธีเริ่มชุดนี้ใหม่ใน [Docker runbook ของ Task60](docs/U4/U4_Task60_Docker_Runbook.md) คำสั่งในหัวข้อถัดไปใช้ชุดปกติซึ่งเปิด Frontend ที่พอร์ต `5000`
+ไม่ต้องติดตั้ง Python, Node.js หรือ SQL Server บนเครื่อง host
 
-## รันเว็บด้วย Docker ตั้งแต่เริ่มต้น
+### Clone และตั้งค่า
 
-### 1. เตรียมเครื่องและไฟล์ตั้งค่า
+```bash
+git clone https://github.com/Lilieay/cs261-group4-100001.git
+cd cs261-group4-100001
+git switch integration/sprint1
+cp .env.example .env
+```
 
-เปิด Docker Desktop ให้ engine ทำงาน แล้วเปิด PowerShell ที่โฟลเดอร์รากของ repository ซึ่งมี `compose.yaml`
+เปิด `.env` แล้วกำหนด `MSSQL_SA_PASSWORD` เป็นรหัสผ่าน SQL Server ที่ไม่ซ้ำกับบัญชีอื่นและผ่านข้อกำหนดความซับซ้อนของ SQL Server เก็บไฟล์นี้ไว้ในเครื่อง ห้าม commit รหัสผ่านหรือ TU API key
 
-สร้าง `.env` จากตัวอย่างเฉพาะเมื่อยังไม่มีไฟล์:
+ค่าเริ่มต้น `TU_API_MODE=mock` ใช้บัญชีสาธิตโดยไม่ต้องตั้งค่า TU API หากต้องใช้ Login จริง ให้ตั้ง `TU_API_MODE=real`, `TU_API_URL` และ `TU_API_KEY` ตามค่าที่ได้รับจากผู้ดูแล
 
-~~~powershell
-if (-not (Test-Path -LiteralPath '.env')) {
-    Copy-Item -LiteralPath '.env.example' -Destination '.env'
-}
-~~~
+### เริ่มระบบด้วยคำสั่งเดียว
 
-เปิดไฟล์ `.env` แล้วกำหนดค่า:
+จากโฟลเดอร์ที่มี `compose.yaml`:
 
-~~~dotenv
-MSSQL_SA_PASSWORD=<รหัสผ่าน SQL Server ของเครื่องนี้>
-TU_API_MODE=mock
-~~~
+```bash
+docker compose up -d --build
+```
 
-รหัสผ่าน SQL Server ใหม่ต้องมีอย่างน้อย 8 ตัวอักษรและผ่านข้อกำหนดความซับซ้อนของ SQL Server เช่น ใช้ตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก ตัวเลข และสัญลักษณ์ร่วมกัน หากใช้ volume เดิม ให้ใช้รหัสผ่านเดิมที่สร้าง SQL Server นั้น เก็บ `.env` ไว้ในเครื่องและอย่า commit
+Compose สร้าง Frontend/Backend images และดึง SQL Server image จากนั้นเริ่ม SQL Server, รอ healthcheck, แล้วให้ Backend สร้าง database และตารางที่ยังไม่มี พร้อม seed รายวิชา demo และแนวข้อสอบตัวอย่าง ก่อนเปิด API ส่วน Frontend จะเริ่มหลัง Backend healthcheck ผ่าน
 
-โหมด `mock` ใช้บัญชีทดสอบในเครื่อง จึงไม่ต้องตั้ง TU API key
+ตรวจสถานะ:
 
-### 2. เริ่ม SQL Server และ Backend
-
-~~~powershell
-powershell -ExecutionPolicy Bypass -File scripts/start-backend.ps1
-~~~
-
-สคริปต์ build Backend, รอ SQL Server healthy, รัน `db/init.sql` เพื่อสร้าง database, สร้างตาราง ORM ที่ยังไม่มี และเปิด Backend เมื่อสำเร็จจะแสดง URL ของ Backend และ API docs
-
-### 3. Seed รายวิชาและแนวข้อสอบตัวอย่าง
-
-~~~powershell
-docker compose exec backend python -m scripts.seed_courses --dataset demo --action seed
-docker compose exec backend python -m scripts.seed_guides --dataset test --action seed
-~~~
-
-ชุด demo มีรายวิชา 24 วิชาจากไฟล์ courses.json ส่วนแนวข้อสอบใช้ชุด test ซึ่งมี CS261 จำนวน 3 รายการ และ CS102 จำนวน 1 รายการ รายการที่เผยแพร่เพิ่มจะเก็บอยู่ในฐานข้อมูลด้วย
-
-ตรวจชุด seed ได้ด้วย:
-
-~~~powershell
-docker compose exec backend python -m scripts.seed_courses --dataset demo --action check
-docker compose exec backend python -m scripts.seed_guides --dataset test --action check
-~~~
-
-### 4. เปิด Frontend
-
-~~~powershell
-docker compose up -d --build frontend
+```bash
 docker compose ps
-~~~
+```
 
-| บริการ | URL |
+ควรเห็น containers 3 ตัว: `sqlserver`, `backend` และ `frontend` สถานะ backend/frontend ควรเป็น `healthy`/`running` ตาม healthcheck ที่กำหนด
+
+### URLs
+
+- หน้า Login: <http://localhost:5000/login.html>
+- Backend health: <http://localhost:8000/>
+- API docs: <http://localhost:8000/docs>
+- SQL Server (ถ้าต้องเชื่อมจาก host): `localhost,1433`
+
+## Existing Setup — เครื่องที่เคย clone แล้ว
+
+อัปเดต branch และไฟล์ก่อนเริ่ม:
+
+```bash
+git switch integration/sprint1
+git pull --ff-only
+```
+
+เก็บ `.env` เดิมไว้ แล้วรันคำสั่งเดียวกัน:
+
+```bash
+docker compose up -d --build
+```
+
+ถ้ามี volume เดิม ต้องใช้ `MSSQL_SA_PASSWORD` เดิมที่ใช้สร้าง SQL Server volume นั้น การ init ใช้ `CREATE DATABASE IF MISSING` และ ORM `create_all`; seed จะ reuse รายวิชา/แนวข้อสอบของชุดตัวอย่างที่ตรงกัน ไม่มีการ drop database, ล้างตาราง หรือ reset volume และข้อมูลที่ผู้ใช้เพิ่มไว้จะยังอยู่
+
+## Manual Docker Workflow
+
+ทำทีละขั้นเพื่อศึกษา Docker ได้ โดยแต่ละคำสั่งใช้ startup และ seed logic ชุดเดียวกับคำสั่งเริ่มระบบแบบครั้งเดียว:
+
+```bash
+docker compose build
+docker compose up -d sqlserver
+docker compose up -d backend
+docker compose up -d frontend
+docker compose ps
+```
+
+`docker compose up -d backend` จะรอ SQL Server healthy ตาม dependency จากนั้น Backend จะ initialize database ภายใน Backend container เดิม หากสำเร็จจึงเริ่ม FastAPI; หากล้มเหลว Uvicorn จะไม่เริ่ม Frontend รอ Backend healthy ก่อนเริ่มเช่นกัน ไม่มี init หรือ seed container แยก
+
+- **Image** คือแม่แบบที่ได้จาก build; **container** คือ process ที่รันจาก image
+- `docker compose build` สร้าง Frontend และ Backend images ส่วน `docker compose up` สร้างและรัน containers; `--build` สั่ง build ก่อนรัน
+- **Healthcheck/dependency** ให้ Compose รอ SQL Server และ Backend พร้อมก่อนเริ่ม service ถัดไป
+- **Database initialization** สร้าง database เมื่อยังไม่มี แล้วสร้างเฉพาะ ORM tables ที่ยังไม่มี
+- **Seed data** ใช้ CourseSeedService ชุด `demo` และ GuideSeedService ชุด `test` ภายใน transaction เดียวกับการ seed; รันซ้ำแล้วไม่เพิ่มรายการซ้ำ
+- **Volume** `sqlserver_data` เก็บไฟล์ฐานข้อมูลนอก container การ recreate หรือ rebuild containers จึงไม่ลบข้อมูล
+
+## Demo Account & URLs
+
+เมื่อใช้ `TU_API_MODE=mock`:
+
+| Username | Password |
 |---|---|
-| หน้า Login | http://127.0.0.1:5000/login.html |
-| ค้นหารายวิชา | http://127.0.0.1:5000/courses.html |
-| เผยแพร่แนวข้อสอบ | http://127.0.0.1:5000/upload.html |
-| Backend health | http://127.0.0.1:8000/ |
-| API docs | http://127.0.0.1:8000/docs |
+| `6800000000` | `0000000000000` |
 
-เปิดหน้าเว็บผ่าน Frontend server ตาม URL นี้ เพื่อให้การ Login และเรียก API ผ่าน proxy ทำงานครบ
+หน้าเว็บและ API ใช้ URL ตามหัวข้อ Fresh Setup ด้านบน บัญชีนี้ใช้สำหรับ mock demo เท่านั้น ไม่ใช่บัญชี TU จริง
 
-## บัญชี mock สำหรับทดสอบ
+## Troubleshooting
 
-| รหัสนักศึกษา | รหัสผ่าน | ชื่อที่แสดง |
-|---|---|---|
-| `6800000000` | `0000000000000` (เลขศูนย์ 13 ตัว) | Student User |
+**SQL Server ไม่ healthy หรือ Backend init ไม่สำเร็จ**
 
-บัญชีนี้ใช้เมื่อ `TU_API_MODE=mock` เท่านั้น ใช้ทดสอบระบบโดยไม่ยืนยันบัญชีมหาวิทยาลัยจริง
-
-## ลองใช้งานหน้าเว็บ
-
-### อัปเดต branch `fix/read-courses`
-
-Branch นี้เพิ่มตาราง `saved_guides` สำหรับบันทึกแนวข้อสอบแยกตามบัญชีผู้ใช้
-ก่อนทดลองปุ่มบันทึก ให้สร้างตารางที่เพิ่มมาและเริ่มบริการใหม่:
-
-~~~powershell
-powershell -ExecutionPolicy Bypass -File scripts/start-backend.ps1
-docker compose up -d --build frontend
-~~~
-
-สคริปต์สร้างเฉพาะตารางที่ยังไม่มี ไม่ลบข้อมูลเดิม หากรัน Backend ด้วย Python ในเครื่อง
-ให้ใช้คำสั่งต่อไปนี้จากโฟลเดอร์ `backend` แล้วเริ่ม Backend ใหม่:
-
-~~~powershell
-.\.venv\Scripts\python.exe -m app.init_db
-~~~
-
-การบันทึกใช้ข้อมูลแนวข้อสอบจริงจาก API ไม่ใช้รายการตัวอย่างที่เคยเก็บใน browser
-ลองเปิดอ่านแนวข้อสอบ กด **บันทึก** แล้วเปิด **รายวิชาที่บันทึก**:
-รายการต้องยังอยู่หลัง reload และกด **นำออก** ได้โดยไม่ลบแนวข้อสอบต้นฉบับ
-เมื่อผู้เผยแพร่แก้ไขหรือลบแนวข้อสอบ รายการที่บันทึกจะใช้ข้อมูลล่าสุด
-ปุ่มออกจากระบบใน navbar จะยกเลิก token ที่ Backend และกลับหน้า Login
-Session มีอายุเริ่มต้น 8 ชั่วโมง ปรับได้ด้วย `AUTH_SESSION_TTL_SECONDS` (หน่วยวินาที)
-และต้องเข้าสู่ระบบใหม่เมื่อ Backend เริ่มใหม่
-ระบบรีวิวคะแนนยังอยู่ใน Sprint 2
-
-### ขั้นตอนทดสอบการเผยแพร่
-
-1. เปิดหน้า Login แล้วเข้าสู่ระบบด้วยบัญชี mock
-2. ค้นหา CS261 และเปิดคลังรายวิชา
-3. ลองกรองปีการศึกษา ภาคเรียน และช่วงสอบ แล้วเปิดอ่านแนวข้อสอบ
-4. เปิดเมนูอัปโหลดเอกสาร เลือกรายวิชา และกรอกข้อมูลที่มีเครื่องหมาย *
-5. กดเผยแพร่ ระบบจะบันทึกลง SQL Server และเปิดหน้าอ่านของรายการที่สร้าง
-6. กลับไปคลังรายวิชาเพื่อตรวจรายการใหม่ แล้ว reload หน้าอ่านเพื่อดูว่าข้อมูลยังอยู่
-7. ลองส่งฟอร์มที่กรอกไม่ครบเพื่อตรวจข้อความ validation
-
-Login, ค้นหารายวิชา, รายการแนวข้อสอบ, หน้าอ่าน, การเผยแพร่, หน้า "แนวข้อสอบของฉัน" และการแก้ไข/ย้ายรายวิชาเชื่อม API จริงแล้ว ส่วนการลบรายการยังเป็นงาน Task82
-
-ผู้ใช้ที่ Login สำเร็จถูกเก็บใน SQL Server ส่วน token เก็บในหน่วยความจำของ Backend เมื่อ restart Backend ต้อง Login ใหม่
-
-## ดูสถานะและหยุดระบบปกติ
-
-~~~powershell
+```bash
 docker compose ps
-docker compose logs --tail=100 backend frontend
-docker compose down
-~~~
+docker compose logs --tail=100 sqlserver backend
+```
 
-`docker compose down` เก็บ volume และข้อมูลไว้ เมื่อต้องการเปิดใหม่ให้รันขั้นตอนเริ่ม Backend และ Frontend ด้านบน โดยใช้ `.env` เดิม อย่าใช้ `down -v` เพราะจะลบ volume ฐานข้อมูล
+ตรวจว่า Docker Engine ทำงาน, `.env` มีรหัสผ่านที่ถูกต้อง และถ้าใช้ volume เดิมรหัสผ่านตรงกับ volume นั้น Backend จะไม่เปิด API หากเชื่อมต่อหรือ initialize ไม่สำเร็จ
 
-หากพอร์ต `1433`, `8000` หรือ `5000` ถูกใช้งานอยู่ ให้ใช้ [ชุดทดสอบแยกของ Task60](docs/U4/U4_Task60_Docker_Runbook.md) ที่พอร์ต `21434`, `28001` และ `25001`
+**พอร์ต 1433, 8000 หรือ 5000 ถูกใช้อยู่**
 
-## เอกสารเพิ่มเติม
+ปิดโปรแกรมที่ใช้พอร์ตนั้น หรือแก้เฉพาะพอร์ตฝั่ง host ใน `compose.yaml` เช่น `"127.0.0.1:5001:5000"` แล้วรัน `docker compose up -d` อีกครั้ง
 
-- [คู่มือ Backend และ Login](docs/U1/U1_Task16_Backend_Docker_Runbook.md)
-- [คู่มือทดสอบ Task60 ด้วย project และ volume แยก](docs/U4/U4_Task60_Docker_Runbook.md)
-- [ผลทดสอบ UI–API ของ Task60](docs/U4/U4_Task60_UI_API_Test_Report.md)
-- [ผลทดสอบ API–DAO ของ Task60](docs/U4/U4_Task60_API_DAO_Test_Report.md)
-- [ผล System Test ของ Task60](docs/U4/U4_Task60_System_Test_Report.md)
+**ดู logs แบบต่อเนื่อง**
 
-- [Task82 deletion flow and verification](docs/U5/U5_Task82_Delete_My_Guides_Test_Report.md)
+```bash
+docker compose logs -f backend
+```
+
+กด `Ctrl+C` เพื่อหยุดดู logs โดยไม่หยุด containers
+
+**Restart หลังแก้ `.env` หรือ source**
+
+```bash
+docker compose up -d --build
+```
+
+Compose จะ recreate services ที่จำเป็นและรัน initialization แบบ idempotent อีกครั้ง การเริ่มใหม่ไม่ลบ volume ใช้ `docker compose down` เพื่อหยุดและลบ containers/network โดยเก็บข้อมูลไว้ ห้ามใช้ `docker compose down -v` กับฐานข้อมูลที่ต้องการเก็บ
+
+## Additional Documentation
+
+- [Backend และ Login runbook](docs/U1/runbooks/task16-backend-docker-runbook.md)
+- [การตั้งค่า TU API](docs/U1/design/task11-tu-api-verification.md)
+- [Course seed runbook](docs/U2/runbooks/task26-course-seed-data.md)
+- [Guide seed runbook](docs/U3/runbooks/task41-guide-seed-data.md)
+- [Task60 isolated Docker test runbook](docs/U4/runbooks/task60-docker-runbook.md)
+- [Task80 Docker integration report](docs/U5/testing/task81-docker-integration-test-report.md)
