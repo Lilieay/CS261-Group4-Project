@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(ENV_FILE)
 
-AUTH_SESSION_TTL_SECONDS = int(os.getenv("AUTH_SESSION_TTL_SECONDS", "3600"))
+AUTH_SESSION_TTL_SECONDS = int(os.getenv("AUTH_SESSION_TTL_SECONDS", "28800"))
 if AUTH_SESSION_TTL_SECONDS <= 0:
     raise RuntimeError("AUTH_SESSION_TTL_SECONDS must be a positive integer.")
 

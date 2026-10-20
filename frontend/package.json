@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test src/server.test.js src/course-api.test.js src/guide-api.test.js src/course-pages.test.js src/shared-courses.test.js src/edit-form.test.js"
+    "test": "node --test src/server.test.js src/course-api.test.js src/guide-api.test.js src/course-pages.test.js src/shared-courses.test.js src/edit-form.test.js src/saved-courses.test.js src/profile.test.js"
   },
   "dependencies": {
     "express": "^5.2.1"

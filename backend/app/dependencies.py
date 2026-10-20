@@ -9,6 +9,7 @@ from app.dao.delete_owned_guide_dao import DeleteOwnedGuideDAO
 from app.dao.my_guide_dao import MyGuideDAO
 from app.dao.publish_guide_dao import PublishGuideDAO
 from app.dao.read_guide_dao import ReadGuideDAO
+from app.dao.saved_guide_dao import SavedGuideDAO
 from app.dao.update_owned_guide_dao import UpdateOwnedGuideDAO
 from app.dao.user_dao import UserDAO
 from app.db import SessionLocal
@@ -17,6 +18,7 @@ from app.services.courses import CourseService
 from app.services.my_guides import MyGuidesService
 from app.services.publish_guide import PublishGuideService
 from app.services.read_guide import ReadGuideService
+from app.services.saved_guides import SavedGuidesService
 
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -76,4 +78,12 @@ def get_publish_guide_service(
         CourseDAO(session),
         UserDAO(session),
         PublishGuideDAO(session),
+    )
+
+
+def get_saved_guides_service(
+    session: Session = Depends(get_db_session),
+) -> SavedGuidesService:
+    return SavedGuidesService(
+        session, SavedGuideDAO(session), ReadGuideDAO(session)
     )

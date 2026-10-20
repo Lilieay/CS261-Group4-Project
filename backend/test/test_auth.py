@@ -18,6 +18,22 @@ from app.services.auth import AuthService
 from app.services.tu_api import TUAccount
 
 
+def test_sessions_expire_and_logout_revokes_token(session_factory):
+    now = [100.0]
+    service = AuthService(session_factory,
+                         verify=lambda username, _: TUAccount(username, "Student", "student", True),
+                         session_ttl_seconds=60, clock=lambda: now[0])
+    token = service.login("6800000000", "test").token
+    assert service.get_user(token) is not None
+    now[0] = 159.9
+    assert service.get_user(token) is not None
+    now[0] = 160.0
+    assert service.get_user(token) is None
+    new_token = service.login("6800000000", "test").token
+    service.logout(new_token)
+    assert service.get_user(new_token) is None
+
+
 @pytest.fixture
 def session_factory():
     engine = create_engine(
@@ -119,6 +135,10 @@ def test_session_expires_at_its_deadline_and_new_login_works(session_factory):
             assert client.get("/api/auth/status", headers=headers).json()["logged_in"] is False
             assert client.get("/courses", headers=headers).status_code == 401
             assert client.get("/api/my-guides", headers=headers).status_code == 401
+            assert client.get("/api/saved-guides", headers=headers).status_code == 401
+            assert client.get("/api/saved-guides/1", headers=headers).status_code == 401
+            assert client.put("/api/saved-guides/1", headers=headers).status_code == 401
+            assert client.delete("/api/saved-guides/1", headers=headers).status_code == 401
             fresh = client.post("/api/auth/login", json=payload)
             assert fresh.status_code == 200
             fresh_headers = {"Authorization": f"Bearer {fresh.json()['access_token']}"}

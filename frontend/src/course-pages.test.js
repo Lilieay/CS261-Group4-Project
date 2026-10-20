@@ -11,12 +11,14 @@ class Element {
     this.classList = {add() {}, remove() {}, toggle() {}};
     this.options = [{value: 'all'}];
     this.value = '';
+    this.dataset = {};
   }
   addEventListener(type, callback) { this.listeners[type] = callback; }
   setAttribute(name, value) { this.attributes[name] = value; }
   replaceChildren() { this.innerHTML = ''; this.textContent = ''; }
   append() {}
   focus() {}
+  querySelector() { return null; }
 }
 
 function runPage(file, {url, api, guideApi = {}, data = {}}) {
@@ -34,7 +36,7 @@ function runPage(file, {url, api, guideApi = {}, data = {}}) {
   };
   const window = {
     location: {href: url}, history: {replaceState() {}}, addEventListener() {},
-    CourseApi: api, GuideApi: guideApi, CourseData: data
+    CourseApi: api, GuideApi: {savedState: async () => false, ...guideApi}, CourseData: data
   };
   const source = fs.readFileSync(path.join(__dirname, '../public/js', file), 'utf8');
   vm.runInNewContext(source, {window, document, URL, URLSearchParams, AbortController, setTimeout, clearTimeout});
@@ -177,7 +179,7 @@ test('read page resolves a database course and guide by URL without the preview 
 
   assert.deepEqual(calls, [['71', 'CS902']]);
   assert.match(get('#readingContent').innerHTML, /แนวข้อสอบจาก API/);
-  assert.match(get('#readingContent').innerHTML, /อาจารย์จริง/);
+  assert.doesNotMatch(get('#readingContent').innerHTML, /อาจารย์จริง|ผู้สอน/);
   assert.match(get('#readingContent').innerHTML, /ผู้เผยแพร่จริง/);
   assert.doesNotMatch(get('#readingContent').innerHTML, /preview publisher/);
 });
@@ -225,4 +227,31 @@ test('course search page renders a Thai API result even when it is absent from t
   assert.deepEqual(calls, ['', 'วิศวกรรม']);
   assert.match(get('#course-grid').innerHTML, /วิศวกรรมซอฟต์แวร์ขั้นสูง/);
   assert.match(get('#course-grid').innerHTML, /CS902/);
+});
+
+
+test('read bookmark waits for API state, prevents duplicate writes, and toggles persisted state', async () => {
+  const state = deferred(), write = deferred();
+  const calls = [];
+  const {get} = runPage('read-courses.js', {
+    url: 'http://frontend/read-courses.html?source=api&courseId=4&course=CS261&guide=12',
+    api: {getCourse: async () => ({id: 4, code: 'CS261', name: 'Software Engineering'})},
+    guideApi: {read: async () => ({}), toPreviewRow: () => ({title: 'Guide', formats: ['ผสม']}),
+      savedState: async (id, desired) => { calls.push([id, desired]); return desired === undefined ? state.promise : write.promise; }},
+    data: {escapeHtml: String, semesterLabel: String, questionCounts: () => ({}), publisherName: () => 'Publisher'}
+  });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(get('#readingContent').innerHTML, /aria-pressed="false" disabled/);
+  state.resolve(false);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.doesNotMatch(get('#readingContent').innerHTML, /aria-pressed="false" disabled/);
+  const click = {target: {closest: selector => selector === '.save-button' ? {} : null}};
+  const pending = get('#readingContent').listeners.click(click);
+  get('#readingContent').listeners.click(click);
+  assert.equal(calls.length, 2);
+  write.resolve(true);
+  await pending;
+  assert.match(get('#readingContent').innerHTML, /aria-pressed="true"/);
+  assert.match(get('#reading-status').textContent, /เพิ่มในรายวิชาที่บันทึกแล้ว/);
+  assert.match(get('#readingContent').innerHTML, /review-button" type="button" disabled/);
 });
