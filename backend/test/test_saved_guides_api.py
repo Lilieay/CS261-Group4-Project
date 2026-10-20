@@ -1,17 +1,21 @@
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event, select
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
-from app.db import Base, get_db_session
+from app.db import Base
+from app.dao.saved_guide_dao import SavedGuideDAO
+from app.dependencies import current_user, get_db_session
 from app.main import app
 from app.models.course import Course
 from app.models.guide import Guide
 from app.models.saved_guide import SavedGuide
 from app.models.user import User
-from app.routers.auth import current_user
-from app.services.auth import User as AuthUser
+from app.services.auth import AuthenticatedUser as AuthUser
 
 
 @pytest.fixture
@@ -96,3 +100,49 @@ def test_saved_routes_require_login_and_valid_ids(saved_client):
     assert client.get("/api/saved-guides").status_code == 401
     assert client.put("/api/saved-guides/1").status_code == 401
     assert client.delete("/api/saved-guides/1").status_code == 401
+
+
+@pytest.mark.parametrize("method", ["put", "delete"])
+def test_saved_write_failure_rolls_back_without_changing_bookmarks(saved_client, method):
+    client, session, _ = saved_client
+    if method == "delete":
+        assert client.put("/api/saved-guides/1").status_code == 200
+    with patch.object(session, "commit", side_effect=SQLAlchemyError("write failed")):
+        response = getattr(client, method)("/api/saved-guides/1")
+    assert response.status_code == 503
+    assert response.json() == {"detail": "SAVED_GUIDES_UNAVAILABLE"}
+    session.expire_all()
+    assert client.get("/api/saved-guides/1").json()["saved"] is (method == "delete")
+
+
+def test_saved_duplicate_write_is_success_only_when_bookmark_exists(saved_client):
+    client, _, _ = saved_client
+    duplicate = IntegrityError("insert", {}, Exception("duplicate"))
+    with patch.object(SavedGuideDAO, "add", side_effect=duplicate):
+        assert client.put("/api/saved-guides/1").status_code == 503
+    assert client.put("/api/saved-guides/1").status_code == 200
+    with patch.object(SavedGuideDAO, "add", side_effect=duplicate):
+        response = client.put("/api/saved-guides/1")
+    assert response.status_code == 200
+    assert response.json() == {"id": 1, "saved": True}
+
+
+@pytest.mark.parametrize("path,operation", [
+    ("/api/saved-guides", "list_by_user"),
+    ("/api/saved-guides/1", "contains"),
+])
+def test_saved_read_failure_preserves_unavailable_response(saved_client, path, operation):
+    client, _, _ = saved_client
+    with patch.object(SavedGuideDAO, operation, side_effect=SQLAlchemyError("read failed")):
+        response = client.get(path)
+    assert response.status_code == 503
+    assert response.json() == {"detail": "SAVED_GUIDES_UNAVAILABLE"}
+
+
+def test_saved_duplicate_recheck_failure_returns_unavailable(saved_client):
+    client, _, _ = saved_client
+    with patch.object(SavedGuideDAO, "add", side_effect=IntegrityError("insert", {}, Exception())), \
+         patch.object(SavedGuideDAO, "contains", side_effect=SQLAlchemyError("read failed")):
+        response = client.put("/api/saved-guides/1")
+    assert response.status_code == 503
+    assert response.json() == {"detail": "SAVED_GUIDES_UNAVAILABLE"}

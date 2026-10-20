@@ -53,7 +53,7 @@
       else if (Array.from(payload[key]).length > limit) errors[key] = `ต้องไม่เกิน ${limit} ตัวอักษร`;
     }
     if (Array.from(payload.additional_advice || '').length > 2000) errors.additional_advice = 'คำแนะนำต้องไม่เกิน 2,000 ตัวอักษร';
-    if (!Number.isInteger(payload.academic_year) || payload.academic_year < 1 || payload.academic_year > 32767) errors.academic_year = 'กรุณากรอกปีการศึกษาที่ถูกต้อง';
+    if (!Number.isInteger(payload.academic_year) || payload.academic_year < 2566 || payload.academic_year > 2569) errors.academic_year = 'กรุณากรอกปีการศึกษาที่ถูกต้อง';
     if (![1, 2, 3].includes(payload.semester)) errors.semester = 'กรุณาเลือกภาคเรียน';
     if (!['midterm', 'final'].includes(payload.exam_period)) errors.exam_period = 'กรุณาเลือกช่วงสอบ';
     if (!['objective', 'subjective', 'mixed'].includes(payload.exam_format)) errors.exam_format = 'กรุณาเลือกรูปแบบข้อสอบ';

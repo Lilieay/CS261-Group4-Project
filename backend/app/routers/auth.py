@@ -1,31 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
 
+from app.dependencies import bearer_scheme, current_user, get_auth_service
 from app.schemas.auth import LoginRequest, LoginResponse, LoginStatusResponse, MessageResponse, UserDTO
-from app.services.auth import AuthService, AuthStorageUnavailable, LoginRejected, User
+from app.services.auth import AuthenticatedUser, AuthService, AuthStorageUnavailable, LoginRejected
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
-bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_auth_service(request: Request) -> AuthService:
-    return request.app.state.auth_service
-
-
-def to_user_dto(user: User) -> UserDTO:
+def to_user_dto(user: AuthenticatedUser) -> UserDTO:
     return UserDTO(id=user.id, username=user.username, display_name=user.display_name, role=user.role)
-
-
-def current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    auth_service: AuthService = Depends(get_auth_service),
-) -> tuple[str, User]:
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(status_code=401, detail="กรุณาส่ง Bearer token เพื่อยืนยันตัวตน", headers={"WWW-Authenticate": "Bearer"})
-    user = auth_service.get_user(credentials.credentials)
-    if user is None:
-        raise HTTPException(status_code=401, detail="Token ไม่ถูกต้องหรือหมดอายุ", headers={"WWW-Authenticate": "Bearer"})
-    return credentials.credentials, user
 
 
 @router.post("/login", response_model=LoginResponse)
@@ -58,13 +42,13 @@ def login_status(
 
 
 @router.get("/me", response_model=UserDTO)
-def me(user_context: tuple[str, User] = Depends(current_user)) -> UserDTO:
+def me(user_context: tuple[str, AuthenticatedUser] = Depends(current_user)) -> UserDTO:
     return to_user_dto(user_context[1])
 
 
 @router.post("/logout", response_model=MessageResponse)
 def logout(
-    user_context: tuple[str, User] = Depends(current_user),
+    user_context: tuple[str, AuthenticatedUser] = Depends(current_user),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> MessageResponse:
     auth_service.logout(user_context[0])

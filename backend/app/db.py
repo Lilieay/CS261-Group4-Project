@@ -1,8 +1,6 @@
-from collections.abc import Iterator
-
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from .config import DB_CONNECTION_STRING
 
@@ -18,11 +16,3 @@ class Base(DeclarativeBase):
     pass
 
 SessionLocal = sessionmaker(bind=engine)
-
-
-def get_db_session() -> Iterator[Session]:
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
