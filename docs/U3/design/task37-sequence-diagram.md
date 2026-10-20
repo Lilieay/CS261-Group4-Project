@@ -1,93 +1,70 @@
-# Task 37: Sequence Diagram เลือกและอ่านแนวข้อสอบ
+# Task37 U3 Sequence Diagram รายการและหน้าอ่านแนวข้อสอบ
 
-แผนภาพแสดงการดูรายการ กรอง และเปิดอ่านแนวข้อสอบตาม [API spec ของ Task 35](U3_%20guide%20api.md)
+ระบบลงทะเบียน Guide Router และเชื่อมหน้าเว็บกับ API แล้ว แผนภาพนี้แสดงเส้นทาง API ที่ใช้งานจริง ผ่าน Node proxy และ ReadGuideService ไม่ใช้เส้นทางข้อมูลตัวอย่างใน browser
 
-> เป็นแบบร่างสำหรับตรวจสอบ ปัจจุบันมี DAO แล้ว แต่ `backend/app/main.py` ยังไม่ได้ลงทะเบียน guides router และหน้าอ่านยังใช้ `CourseData`/`localStorage`
+ภาพใช้ระดับหน้าที่เพื่อให้อธิบายได้ง่าย: หน้าจอรวม JavaScript และ API client ส่วน API รวม Router กับ Service ภายใน Backend คำขอจาก Browser ยังผ่าน Node proxy และตรวจ Login ตามโค้ดจริง แต่ไม่แยกเป็น lifeline ในภาพ และ DAO ที่รวมไว้หมายถึง DAO หลายคลาสตามตารางอ้างอิง ชื่อ path บนลูกศรใช้ backend endpoint ยกเว้น U5 ที่ทั้งสองชั้นใช้ path เดียวกัน รายละเอียด validation และ error อยู่ในคำอธิบายประกอบ
 
-## แผนภาพ
-
-ทุกคำขอต้องผ่านการตรวจ Login และตรวจ path/query ก่อนอ่านข้อมูล กรณีไม่ผ่านให้จบคำขอด้วย `401` หรือ `422` ตามตารางด้านล่าง
+## ดูรายการ กรอง และเปิดอ่านแนวข้อสอบ
 
 ```mermaid
 sequenceDiagram
-    actor User as ผู้ใช้
-    participant UI as หน้ารายการ/หน้าอ่าน
-    participant API as API
-    participant CDAO as CourseDAO
-    participant GDAO as ReadGuideDAO
+    actor Student as นักศึกษา
+    participant UI as หน้าเว็บ
+    participant API as Guides API
+    participant DAO as DAO
     participant DB as ฐานข้อมูล
-
-    User->>UI: เปิดรายการหรือเลือกตัวกรอง
-    UI->>API: GET /courses/{course_id}/guides
-    API->>CDAO: get_by_id(course_id)
-    CDAO->>DB: อ่านรายวิชา
-    DB-->>CDAO: Course หรือ None
-    CDAO-->>API: Course หรือ None
-    break ไม่พบรายวิชา
-        API-->>UI: 404 COURSE_NOT_FOUND
-        UI-->>User: แจ้งไม่พบรายวิชา
-    end
-
-    API->>GDAO: get_filter_values(course_id)
-    GDAO->>DB: อ่านค่าตัวกรองทั้งหมดของรายวิชา
-    DB-->>GDAO: ค่าตัวกรอง
-    GDAO-->>API: ค่าที่ไม่ซ้ำ ใช้หา has_guides
-    API->>GDAO: list_by_course(course_id, ...)
-    GDAO->>DB: อ่านแนวข้อสอบที่ตรงทุกเงื่อนไข
-    DB-->>GDAO: รายการ Guide
-    GDAO-->>API: list[Guide]
-    API-->>UI: 200 {course_id, has_guides, items}
-    break items ว่าง
-        UI-->>User: แจ้งรายการว่างตาม has_guides
-    end
-    UI-->>User: แสดงรายการแนวข้อสอบ
-
-    User->>UI: เลือกแนวข้อสอบ
-    UI->>API: GET /guides/{guide_id}
-    API->>GDAO: get_by_id(guide_id)
-    GDAO->>DB: อ่านแนวข้อสอบตาม id
-    DB-->>GDAO: Guide หรือ None
-    GDAO-->>API: Guide หรือ None
-    alt ไม่พบแนวข้อสอบ
-        API-->>UI: 404 GUIDE_NOT_FOUND
-        UI-->>User: แจ้งไม่พบรายการและให้กลับหน้ารายการ
-    else พบแนวข้อสอบ
-        API-->>UI: 200 รายละเอียดแนวข้อสอบ
-        UI-->>User: แสดงรายละเอียด
+    Student->>UI: เปิดรายวิชา
+    UI->>API: GET /courses/id/guides/filter-options
+    API->>DAO: ตรวจวิชา และ get_filter_values(course_id)
+    DAO->>DB: อ่านค่าปี ภาคเรียน และช่วงสอบ
+    DB-->>DAO: ตัวเลือกที่มีในวิชา
+    DAO-->>API: ค่าตัวกรอง
+    API-->>UI: 200 ตัวเลือกตัวกรอง
+    Student->>UI: เลือกตัวกรอง หรือดูทั้งหมด
+    UI->>API: GET /courses/id/guides พร้อมตัวกรอง
+    activate API
+    API->>DAO: ตรวจวิชา อ่านค่าตัวกรอง และ list_by_course(...)
+    DAO->>DB: อ่านแนวข้อสอบที่ตรงวิชาและเงื่อนไข
+    DB-->>DAO: รายการ Guide
+    DAO-->>API: รายการและข้อมูลสำหรับ has_guides
+    API-->>UI: 200 has_guides และ items
+    deactivate API
+    UI-->>Student: แสดงรายการ หรือข้อความเมื่อรายการว่าง
+    opt มีรายการและผู้ใช้เลือกเปิดอ่าน
+        Student->>UI: เลือกแนวข้อสอบ
+        UI->>API: GET /guides/guide_id
+        activate API
+        API->>DAO: get_by_id(guide_id)
+        DAO->>DB: อ่าน Guide พร้อมรายวิชาและผู้เผยแพร่
+        DB-->>DAO: Guide หรือไม่พบ
+        DAO-->>API: ผลค้นหา
+        API-->>UI: 200 รายละเอียด หรือ 404 ไม่พบแนวข้อสอบ
+        deactivate API
+        UI-->>Student: แสดงรายละเอียด หรือแจ้งรายการถูกลบแล้ว
     end
 ```
 
-`break` หมายถึงจบการทำงานรอบนี้เมื่อเข้าเงื่อนไข จึงไม่เรียกขั้นตอนถัดไป
+เมื่อเปลี่ยนหรือล้างตัวกรอง หน้าเว็บเรียก API รายการใหม่ เลือกกรองได้เฉพาะ `academic_year`, `semester` และ `exam_period` เมื่อเลือกทั้งหมดจะละ query นั้น ไม่มีตัวกรองผู้สอนตามขอบเขตปัจจุบัน
 
-## รายละเอียดการเรียก
+`has_guides=false` หมายถึงวิชานี้ยังไม่มีแนวข้อสอบ ส่วน `has_guides=true` แต่ `items=[]` หมายถึงมีแนวข้อสอบแต่ไม่ตรงตัวกรอง หากผู้ใช้เลือกรายการที่ถูกลบหลังโหลดรายการแล้ว หน้าอ่านตอบว่าไม่พบรายการ
 
-| ขั้นตอน | ข้อกำหนด |
+DAO ในภาพรวม `CourseDAO` สำหรับตรวจวิชาและ `ReadGuideDAO` สำหรับอ่านแนวข้อสอบ Backend DTO ยังมี `course.instructor_names` แต่หน้าอ่านปัจจุบันไม่แสดงผู้สอน
+
+## ข้อผิดพลาดและขอบเขต
+
+| กรณี | Response |
 |---|---|
-| อ่านรายการ | API handler คือ `list_guides` ใช้ `courses.id` เป็น `course_id` |
-| กรอง | `...` ใน `list_by_course` ย่อจากพารามิเตอร์ `academic_year`, `semester`, `exam_period` ที่เลือกส่งได้ |
-| ส่งตัวกรอง | ส่งเป็น query parameters เฉพาะค่าที่เลือก เมื่อเลือก "ทั้งหมด" ให้ละ query นั้น เมื่อเปลี่ยนตัวกรองให้เรียก API รายการใหม่ |
-| หา `has_guides` | API ใช้ `bool(values["academic_years"])` จาก `get_filter_values` ตามแนวทางใน Task 35 ไม่ใช้รายการหลังกรอง |
-| รายการว่าง | `has_guides=false` แสดง "ยังไม่มีแนวข้อสอบสำหรับวิชานี้" ส่วน `has_guides=true` และ `items=[]` แสดง "ไม่พบแนวข้อสอบที่ตรงกับที่กรอง" พร้อมปุ่มล้างตัวกรอง ทั้งสองกรณีตอบ `200` |
-| อ่านรายละเอียด | API handler คือ `read_guide` ใช้ `guides.id` เป็น `guide_id` และอ่านข้อมูลใหม่ จึงรองรับกรณีรายการถูกลบหลังโหลดหน้ารายการ |
-| ข้อมูลที่ส่งกลับ | API แปลง Entity เป็น DTO ตาม Task 35 ก่อนส่ง JSON ส่วน DAO โหลด `course` และ `publisher` มาพร้อม Guide สำหรับชื่อวิชาและผู้เผยแพร่ |
+| Session ใช้ไม่ได้ | `401 error.code=AUTH_REQUIRED` |
+| path/query ผิด หรือส่ง query ที่ไม่รองรับ | `422 error.code=INVALID_PARAMETERS` |
+| รายวิชาไม่พบ | `404 error.code=COURSE_NOT_FOUND` |
+| แนวข้อสอบไม่พบ | `404 error.code=GUIDE_NOT_FOUND` |
+| ข้อผิดพลาดภายในที่ GuideApiRoute จัดการ | `500 error.code=INTERNAL_ERROR` |
+| Proxy ติดต่อ backend ไม่ได้หรือ timeout | `502` จาก proxy |
 
-ภาพนี้แสดงการใช้ตัวกรอง ส่วนการโหลดตัวเลือกในช่องกรองใช้ `GET /courses/{course_id}/guides/filter-options` ผ่าน `read_filter_options` ซึ่งตรวจรายวิชาและเรียก `ReadGuideDAO.get_filter_values(course_id)` ตาม Task 35
+การอ่านไม่ commit หรือเปลี่ยนข้อมูลในฐานข้อมูล ชื่อผู้เผยแพร่ใช้ helper ร่วมกับ U4 ไม่ได้ประกอบชื่อคนละกติกาในแต่ละหน้า
 
-## ข้อผิดพลาด
+## ไฟล์อ้างอิง
 
-รหัสและรูปแบบข้อผิดพลาดด้านล่างเป็นข้อกำหนดของ Task 35 ต้องมีตัวตรวจ Login, validation และ exception handler รองรับใน guides API
-
-| เงื่อนไข | HTTP / code | การจัดการ |
-|---|---|---|
-| ไม่ได้ Login หรือสถานะใช้ไม่ได้ | `401 AUTH_REQUIRED` | จบคำขอก่อนอ่านข้อมูลและนำผู้ใช้ไปหน้า Login |
-| Path/query ผิด เช่น `guide_id=0` หรือ `semester=4` | `422 INVALID_PARAMETERS` | จบคำขอก่อนอ่านข้อมูลและแจ้งข้อมูลที่ผิด |
-| `CourseDAO.get_by_id` คืน `None` | `404 COURSE_NOT_FOUND` | แจ้งไม่พบรายวิชา |
-| `ReadGuideDAO.get_by_id` คืน `None` | `404 GUIDE_NOT_FOUND` | แจ้งไม่พบแนวข้อสอบและให้กลับหน้ารายการ |
-| อ่านฐานข้อมูลล้มเหลว | `500 INTERNAL_ERROR` | จบคำขอที่ล้มเหลวและแจ้งให้ลองใหม่ |
-
-## แหล่งอ้างอิง
-
-- [Task 35](U3_%20guide%20api.md) กำหนด endpoint, DTO และข้อผิดพลาด
-- [ReadGuideDAO](../../backend/app/dao/read_guide_dao.py) และ [CourseDAO](../../backend/app/dao/course_dao.py) มีเมธอดตามภาพ
-- [Guide](../../backend/app/models/guide.py) กำหนดความสัมพันธ์กับรายวิชาและผู้เผยแพร่
-- [main.py](../../backend/app/main.py) และ [read-courses.js](../../frontend/public/js/read-courses.js) แสดงสถานะการเชื่อมต่อปัจจุบัน
+- [Guide API spec](task35-guide-api.md), [Guide Entity และ ER](task36-db-er-entity-dao.md)
+- [choose-courses.js](../../../frontend/public/js/choose-courses.js), [read-courses.js](../../../frontend/public/js/read-courses.js), [GuideApi](../../../frontend/public/js/guide-api.js) และ [proxy](../../../frontend/src/server.js)
+- [Guide Router](../../../backend/app/routers/guides.py), [GuideApiRoute](../../../backend/app/routers/guide_errors.py), [ReadGuideService](../../../backend/app/services/read_guide.py) และ [ReadGuideDAO](../../../backend/app/dao/read_guide_dao.py)

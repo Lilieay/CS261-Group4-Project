@@ -2,9 +2,9 @@
 
 ## ขอบเขต
 
-เอกสารนี้กำหนดสัญญา API สำหรับเผยแพร่แนวข้อสอบตาม U4 และ Task50 โดยอ้างอิง FastAPI, Pydantic และรูปแบบชั้น Router, Service, DAO ที่มีใน Backend ปัจจุบัน การบันทึกข้อมูลจริงเป็นงาน Task56 และ Task57
+เอกสารนี้อธิบาย API เผยแพร่แนวข้อสอบที่ใช้งานแล้ว Router รับข้อมูลและตรวจ Login ส่วน PublishGuideService ตรวจรายวิชา กำหนดเจ้าของ และควบคุม transaction ผ่าน DAO
 
-## API ที่เสนอ
+## API ที่ใช้งาน
 
 ### `POST /guides`
 
@@ -37,7 +37,7 @@ Content-Type: application/json
 |---|---|---|
 | `course_id` | integer | ต้องมากกว่า 0 และต้องตรงกับรายวิชาในระบบ |
 | `title` | string | บังคับ ห้ามเป็นค่าว่างหรือมีแต่ช่องว่าง ความยาวไม่เกิน 200 ตัวอักษรตาม Entity |
-| `academic_year` | integer | บังคับ เป็นปี พ.ศ. และต้องอยู่ในชุดปีที่ระบบอนุญาต ซึ่งต้องกำหนดแหล่งข้อมูลร่วมกันก่อนทำ Task57 |
+| `academic_year` | integer | บังคับ เป็นหนึ่งใน 2566, 2567, 2568, 2569 ตาม AcademicYear ใน schema |
 | `semester` | integer | บังคับ รับ `1`, `2`, `3` โดย `3` หมายถึงภาคฤดูร้อนตาม API อ่านเดิม |
 | `exam_period` | string | บังคับ รับ `midterm` หรือ `final` ตาม API อ่านเดิม |
 | `topics` | string | บังคับ ห้ามเป็นค่าว่างหรือมีแต่ช่องว่าง ความยาวไม่เกิน 2,000 ตัวอักษรตาม Entity |
@@ -65,8 +65,8 @@ Content-Type: application/json
   "course": {
     "id": 1,
     "course_code": "CS261",
-    "course_name": "โครงสร้างข้อมูล",
-    "instructor_names": "ชื่อผู้สอนจากข้อมูลรายวิชา"
+    "course_name": "INTRODUCTION TO SOFTWARE ENGINEERING",
+    "instructor_names": null
   },
   "topics": "การเรียงลำดับและกราฟ",
   "exam_format": "mixed",
@@ -76,7 +76,7 @@ Content-Type: application/json
 }
 ```
 
-Response DTO ควรใช้ `GuideDetailResponseDTO` ที่มีอยู่ เพื่อให้หน้าสำเร็จสามารถเปิดหน้ารายละเอียดด้วย ID ที่ได้
+Response ใช้ GuideDetailResponseDTO หน้าเว็บจึงเปิดรายละเอียดด้วย ID ที่สร้างได้ทันที
 
 ## ข้อผิดพลาด
 
@@ -97,16 +97,16 @@ Response DTO ควรใช้ `GuideDetailResponseDTO` ที่มีอย�
 }
 ```
 
-| HTTP | Code ที่เสนอ | เงื่อนไข |
+| HTTP | error.code | เงื่อนไข |
 |---|---|---|
 | `401` | `AUTH_REQUIRED` | ไม่มี token, token ไม่ถูกต้อง หรือหมดอายุ |
-| `404` | `COURSE_NOT_FOUND` | ไม่พบ `course_id` ในระบบ |
+| `404` | `COURSE_NOT_FOUND` | ไม่พบ course_id หรือรหัสวิชาอยู่นอกขอบเขต CS |
 | `422` | `INVALID_PARAMETERS` | ฟิลด์บังคับหายไป รูปแบบข้อมูลผิด หรือค่าอยู่นอกกติกา |
 | `500` | `INTERNAL_ERROR` | เกิดข้อผิดพลาดระหว่างบันทึก ระบบต้องไม่ตอบว่าสำเร็จ |
 
 กรณีบันทึกล้มเหลวต้อง rollback transaction เพื่อไม่ให้เกิดรายการบางส่วน รายละเอียดการควบคุม transaction และ DAO เป็นขอบเขตของ Task56/57
 
-## DTO ที่เสนอ
+## DTO ที่ใช้งาน
 
 | DTO | หน้าที่ | ข้อมูลหลัก |
 |---|---|---|
@@ -114,7 +114,7 @@ Response DTO ควรใช้ `GuideDetailResponseDTO` ที่มีอย�
 | `GuideDetailResponseDTO` | ส่งข้อมูลที่สร้างกลับไปให้หน้าเว็บ | ใช้ DTO รายละเอียดเดิม เพื่อเปิดหน้ารายการที่เพิ่งเผยแพร่ |
 | `ErrorResponseDTO` | ส่งข้อผิดพลาดในรูปแบบเดียวกัน | `code`, `message`, `fields` |
 
-Request DTO ควรตรวจค่าที่ขอบเขต API ด้วย Pydantic เช่น ชนิดข้อมูล ค่าบังคับ ความยาว และค่าตัวเลือก ส่วนการตรวจว่ารายวิชามีอยู่และการกำหนดผู้เผยแพร่ต้องอาศัยข้อมูลในระบบ จึงเป็นหน้าที่ Service หลัง Router ตรวจตัวตนแล้ว
+Pydantic ตรวจชนิดข้อมูล ฟิลด์บังคับ ความยาว และตัวเลือกที่ boundary ส่วน Service ตรวจรายวิชาและกำหนดผู้เผยแพร่จากบัญชีที่ Login แล้ว Request ใช้ strict integer สำหรับ course_id และจำนวนข้อ พร้อม extra=forbid เพื่อปฏิเสธ field ที่ไม่ได้กำหนด
 
 ## การแบ่งหน้าที่ของโค้ด
 
@@ -124,9 +124,9 @@ Request DTO ควรตรวจค่าที่ขอบเขต API ด้
 | `backend/app/schemas/guides.py` | ประกาศ Request, Response และ Error DTO ด้วย Pydantic |
 | `backend/app/services/publish_guide.py` | ตรวจเงื่อนไขที่ต้องอ่านข้อมูลระบบ กำหนดเจ้าของจากผู้ใช้ปัจจุบัน และประสานการสร้างรายการ |
 | `backend/app/dao/publish_guide_dao.py` | บันทึก Entity ผ่าน SQLAlchemy session ตามรูปแบบที่ทีมเลือกใน Task56 |
-| `backend/app/models/guide.py` | ใช้ Entity `Guide` เดิม หากกติกาฟอร์มกับโครงสร้างข้อมูลไม่ขัดกัน |
+| `backend/app/models/guide.py` | Guide Entity ที่ใช้ร่วมกับการอ่าน แก้ไข และลบ |
 
-Service และ DAO ควรเป็นคลาสเมื่อมี dependency และหน้าที่ต่อเนื่องตามรูปแบบเดิมของ `ReadGuideService` และ `ReadGuideDAO` ไม่เพิ่มคลาสแยกสำหรับการแปลงค่าที่มีผู้เรียกเพียงจุดเดียว
+Service รับ Session และ DAO จาก dependencies.py ส่วน DAO ทำ add/flush โดยไม่ commit เอง
 
 ## แผนภาพความสัมพันธ์
 
@@ -137,18 +137,20 @@ flowchart LR
     Router --> RequestDTO[GuidePublishRequestDTO]
     Router --> Service[PublishGuideService]
     Service --> CourseDAO[CourseDAO ตรวจรายวิชา]
+    Service --> UserDAO[UserDAO ระบุผู้เผยแพร่]
     Service --> PublishDAO[PublishGuideDAO]
     PublishDAO --> Guide[(Guide Entity)]
     Service --> ResponseDTO[GuideDetailResponseDTO]
     Router --> ErrorDTO[ErrorResponseDTO]
 ```
 
-แผนภาพนี้แสดงเฉพาะส่วนที่รับผิดชอบ API และ DTO ลำดับการเรียกเมธอดระหว่าง UI, API, DAO และฐานข้อมูลเป็นงาน Task53
+แผนภาพนี้แสดงส่วนประกอบ API และ DTO ไม่ใช่ Sequence ดูลำดับ Browser, Node proxy, API, Service, DAO และ transaction ใน [Task53](task53-publish-guide-sequence-diagram.md)
 
-## จุดที่ต้องยืนยันก่อน Task57
+## สถานะที่ implement แล้ว
 
-1. Task50 ให้เลือกปีจากชุดค่าที่ระบบเตรียมไว้ แต่ยังไม่พบแหล่งค่าที่อนุญาตใน Backend ต้องระบุชุดข้อมูลหรือกติกาสร้างชุดปี
-2. `POST /guides` เป็นเส้นทางที่เสนอให้เข้ากับ API อ่านเดิม ทีมควรยืนยันก่อนเริ่ม Task57
+1. Request schema ใช้ AcademicYear ร่วมกันสำหรับปี 2566–2569
+2. Backend ลงทะเบียน `POST /guides` แล้ว ส่วน Browser เรียก `POST /api/guides` ผ่าน Node proxy
+3. PublishGuideService เตรียม response ก่อน commit และเป็นผู้คุม transaction ของ User กับ Guide ร่วมกัน DAO ไม่ commit เอง
 
 ## เกณฑ์ตรวจรับเอกสาร
 
@@ -157,4 +159,6 @@ flowchart LR
 - ระบุชัดว่า DTO ตรวจข้อมูลรูปแบบใด และ Service ตรวจข้อมูลที่ต้องอ่านจากระบบ
 - แผนภาพแสดง Router, Auth, DTO และ Service โดยไม่ลงรายละเอียด Sequence ของ Task53
 - รูปแบบข้อสอบ จำนวนข้อ และผู้สอนตรงกับ Dropdown และ Entity ที่มีอยู่
-- จุดที่ยังต้องยืนยันก่อนเริ่มพัฒนา API ถูกระบุไว้
+- แยก contract ของ backend ออกจาก Node proxy และระบุข้อจำกัดของผลที่ยืนยันไม่ได้
+
+หาก network timeout หลังส่งฟอร์ม ไม่สามารถสรุปว่าฐานข้อมูล rollback แล้ว หน้าเว็บแจ้งให้ตรวจรายการก่อนส่งซ้ำ ส่วนปีที่อนุญาตและรูปแบบข้อสอบใช้ตาม schema ไม่สร้างตัวเลือกใหม่จาก request

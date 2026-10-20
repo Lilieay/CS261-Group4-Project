@@ -100,6 +100,19 @@ docker compose ps
 
 หน้าเว็บและ API ใช้ URL พอร์ตปริยายตามหัวข้อ Fresh Setup ด้านบน บัญชีนี้ใช้สำหรับ mock demo เท่านั้น ไม่ใช่บัญชี TU จริง
 
+ผู้ใช้ที่ Login สำเร็จถูกเก็บใน SQL Server ส่วน token เก็บในหน่วยความจำของ Backend เมื่อเริ่ม Backend ใหม่ต้อง Login ใหม่ ปุ่ม Logout จะยกเลิก token และอายุ Session ปริยายคือ 8 ชั่วโมง ปรับได้ด้วย `AUTH_SESSION_TTL_SECONDS`
+
+ตรวจการใช้งานหลังเริ่มระบบ:
+
+1. Login แล้วค้นหา CS261 เปิดรายวิชา กรองปี ภาคเรียน และช่วงสอบ แล้วเปิดอ่านแนวข้อสอบ
+2. เผยแพร่รายการ แล้วตรวจหน้าอ่าน หน้ารายวิชา และหน้าแนวข้อสอบของฉันหลัง reload
+3. แก้ไขรายการของตนเองและย้ายรายวิชา ตรวจว่าหน้าต่าง ๆ ใช้ข้อมูลล่าสุด
+4. บันทึกแนวข้อสอบแล้วนำออกจากรายการที่บันทึก โดยต้นฉบับยังอยู่
+5. ทดลองยกเลิกลบและยืนยันลบรายการของตนเอง แล้วตรวจว่าเปิดอ่านรายการที่ลบไม่ได้
+6. Logout แล้วตรวจว่าส่วนที่ต้อง Login เข้าใช้ไม่ได้
+
+ขั้นตอนนี้เป็นการตรวจเบื้องต้น ไม่แทนผล UAT ตาม DoD ของแต่ละ U ส่วนระบบรีวิวคะแนนอยู่ใน Sprint 2
+
 ## Troubleshooting
 
 **SQL Server ไม่ healthy หรือ Backend init ไม่สำเร็จ**
@@ -146,4 +159,8 @@ Compose จะ recreate services ที่จำเป็นและรัน i
 - [Course seed runbook](docs/U2/runbooks/task26-course-seed-data.md)
 - [Guide seed runbook](docs/U3/runbooks/task41-guide-seed-data.md)
 - [Task60 isolated Docker test runbook](docs/U4/runbooks/task60-docker-runbook.md)
+- [Task60 UI–API test report](docs/U4/testing/task60-ui-api-test-report.md)
+- [Task60 API–DAO test report](docs/U4/testing/task60-api-dao-test-report.md)
+- [Task60 system test report](docs/U4/testing/task60-system-test-report.md)
 - [Task81 Docker integration report](docs/U5/testing/task81-docker-integration-test-report.md)
+- [Task82 deletion test report](docs/U5/testing/task82-delete-my-guides-test-report.md)
